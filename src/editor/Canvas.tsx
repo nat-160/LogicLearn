@@ -87,7 +87,7 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
     >
       <p id="canvas-help" className="sr-only">
         Press Tab to move between parts; arrow keys move the selected part. To read the circuit,
-        open "Circuit as text". To wire with a keyboard, use the Connections panel.
+        open "Circuit as text". To wire with a keyboard, open "View and edit connections".
       </p>
       <ReactFlow
         colorMode={theme}

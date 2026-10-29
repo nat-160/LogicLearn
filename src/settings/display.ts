@@ -93,10 +93,7 @@ let fontRequested = false;
 function loadDyslexiaFont(): void {
   if (fontRequested) return;
   fontRequested = true;
-  void Promise.all([
-    import('@fontsource/opendyslexic/latin-400.css'),
-    import('@fontsource/opendyslexic/latin-700.css'),
-  ]).catch(() => {
+  void import('../styles/dyslexia-font.css').catch(() => {
     fontRequested = false; // offline: try again next time it's switched on
   });
 }

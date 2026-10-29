@@ -467,6 +467,15 @@ gates later.
 - The toggle also applies the spacing in the British Dyslexia Association's *Dyslexia Style
   Guide*: line height ≥ 1.5, slightly wider letter and word spacing, left-aligned text, and
   no italics.
+- **OpenDyslexic is drawn at 85%** (the `size-adjust` descriptor in
+  `src/styles/dyslexia-font.css`).
+  - At the same size, its text is about 1.6 times as wide as the normal font's, and in
+    beta testing content no longer fit.
+  - At 85%, its lowercase letters are still about 90% as tall as the normal font's, and
+    text takes about 40% more room instead of 60%.
+  - Lesson text keeps a slightly larger size (16px instead of 15px).
+- Layouts must not depend on text width. For example, the settings window's controls
+  shrink and wrap rather than widen it.
 - Research note:
   - Extra letter spacing has measurable benefits (Zorzi et al., 2012, *PNAS*).
   - Studies of OpenDyslexic itself found no gain in reading speed or accuracy over standard
@@ -521,9 +530,11 @@ VoiceOver and NVDA.
    - It lists every part with its label and current value, and every wire as "from → to".
    - It updates live, and a short message is announced when a light changes ("Light Y is
      now on").
-6. **Connections panel:**
+6. **View and edit connections** panel:
    - "Connect output … to input …", built from two lists and a Connect button, plus a list
      of wires with Remove buttons.
+   - It was first called "Connections (keyboard)". Beta testing showed the tool is useful
+     to everyone, so it is named for what it does, not who it is for.
    - With the palette (press Enter to add a part) and the inspector (rename, delete), a
      whole circuit can be built **without a pointer**.
    - This removes the Phase 1 limitation "circuits can't be wired with the keyboard alone".
@@ -784,7 +795,7 @@ None of these block work. Claude proceeds with the **default** shown unless told
 | Unsolvable or trivially solved lesson content written in a hurry | Medium | CI content test: solution passes, starter fails. |
 | Beta testing overlaps Thanksgiving week (Nov 26) | Medium | Line up peers now; beta build ready by about Nov 20. |
 | A district blocks the hosting domain | Medium | The app is static and can move hosts (`base: './'`); custom domain; PWA/offline build later. |
-| Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. §3.9 targets AA: high-contrast and dark themes, a dyslexia-friendly font, built-in narration, screen reader support, and a Connections panel so circuits can be built without a pointer. Checked by axe-core scans in CI plus a manual screen reader checklist. |
+| Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. §3.9 targets AA: high-contrast and dark themes, a dyslexia-friendly font, built-in narration, screen reader support, and a View and edit connections panel so circuits can be built without a pointer. Checked by axe-core scans in CI plus a manual screen reader checklist. |
 | The editor turns out too hard to build openly (proposal's worst case) | Low | Fall back to a slot-based grid editor; the data model is unchanged. |
 | Scope creep from stretch features | Medium | §4 out-of-scope list; stretch work only after M3. |
 | Simple bypass and completion codes are worked around | Low impact | Documented as discouragement only; teachers can also ask for exported project files. |
@@ -911,3 +922,14 @@ on the old code:
 - sandbox check results are announced;
 - speech pieces get shorter at slower speeds;
 - React Flow's screen reader text is reworded.
+
+**v4 beta, round 2** (2026-10-29). The author's beta testing on Windows:
+
+- The Accessibility settings window scrolled sideways, which hid its switches. Long
+  Windows voice names made the voice list wider than the window. The window's column now
+  can't grow past its width, and the list shrinks and cuts names short. An e2e test with
+  long voice names covers both fonts.
+- OpenDyslexic didn't fit: it is now drawn at 85% (§3.9).
+- "Connections (keyboard)" was renamed **View and edit connections**: the tool is useful
+  to everyone, not just keyboard users.
+- Narration was confirmed working.

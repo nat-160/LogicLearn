@@ -1,0 +1,25 @@
+/* OpenDyslexic, for the dyslexia-friendly setting. This file is only downloaded when the
+ * setting is turned on (src/settings/display.ts), and the font files come with the app.
+ *
+ * OpenDyslexic's letters are much wider than the normal font's: the same sentence takes
+ * about 1.6 times the width, so buttons, lists and the settings window run out of room.
+ * `size-adjust` draws it at 85%. Its lowercase letters are then still about 90% as tall
+ * as the normal font's, and text needs about 40% more room instead of 60%. */
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 85%;
+  src: url('@fontsource/opendyslexic/files/opendyslexic-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  size-adjust: 85%;
+  src: url('@fontsource/opendyslexic/files/opendyslexic-latin-700-normal.woff2') format('woff2');
+}

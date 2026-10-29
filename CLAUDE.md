@@ -45,7 +45,8 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
   new `aria-live` regions or `role="alert"`. Control names must include their visible text.
 - The theme is applied twice: early by the inline script in `index.html`, then by
   `src/settings/display.ts`. Keep the two in step (same storage key).
-- Every pointer action needs a keyboard path (wiring: the Connections panel).
+- Every pointer action needs a keyboard path (wiring: "View and edit connections",
+  `ConnectionsPanel` in `src/editor/AccessPanels.tsx`).
 - `e2e/accessibility.spec.ts` runs axe-core in every theme; keep it passing.
 
 ## Lessons

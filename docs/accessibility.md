@@ -9,13 +9,13 @@ Open **⚙ Accessibility** in the top-right corner of every page. Every setting 
 this device, and until you change one, LogicLearn follows the device's own settings
 (such as "increase contrast" or a dark system theme).
 
-| Setting                         | What it does                                                                                                          |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **High contrast**               | Black-and-white colors, thicker lines and outlines, a stronger focus ring.                                            |
-| **Dark mode**                   | Light text on a dark background. Works together with high contrast, so there are four themes.                         |
-| **Dyslexia-friendly font**      | The OpenDyslexic font, with wider spacing between letters, words and lines, and bold instead of italics.              |
-| **Read each lesson step aloud** | Reads each step when it opens. Every step also has a **Read this step aloud** button. Speed and voice can be changed. |
-| **Use my device's settings**    | Forgets the choices above.                                                                                            |
+| Setting                         | What it does                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **High contrast**               | Black-and-white colors, thicker lines and outlines, a stronger focus ring.                                               |
+| **Dark mode**                   | Light text on a dark background. Works together with high contrast, so there are four themes.                            |
+| **Dyslexia-friendly font**      | The OpenDyslexic font (drawn a little smaller, as its letters are wide), with wider spacing and bold instead of italics. |
+| **Read each lesson step aloud** | Reads each step when it opens. Every step also has a **Read this step aloud** button. Speed and voice can be changed.    |
+| **Use my device's settings**    | Forgets the choices above.                                                                                               |
 
 **Built-in narration** uses the browser's own speech, so it needs no account or download.
 LogicLearn only picks a voice that runs on the device; if there is none for the
@@ -27,8 +27,8 @@ are used only if you choose one.
 
 - **Tab** moves through the page. **Skip to main content** is the first stop.
 - To **add a part**, tab to it in the Parts list and press **Enter**.
-- **Connections (keyboard)** (right-hand panel): choose an output and an input, then
-  press **Connect**. Every wire is listed with a **Remove** button.
+- **View and edit connections** (right-hand panel): choose an output and an input,
+  then press **Connect**. Every wire is listed with a **Remove** button.
 - **Circuit as text** lists every part with its current value and every wire. It also
   lists inputs that are not connected.
 - Select a part with **Tab** to rename or delete it in the panel on the right. The arrow
@@ -79,8 +79,8 @@ The conventions:
 - **Forced colors:** the `@media (forced-colors: active)` block in `themes.css` must stay
   after, and outrank, the four theme blocks.
 - **Every control needs a name** that includes its visible text (WCAG 2.5.3).
-- **Every pointer action needs a keyboard path.** For wiring, that path is the
-  Connections panel.
+- **Every pointer action needs a keyboard path.** For wiring, that path is **View and
+  edit connections** (`ConnectionsPanel`).
 - **Tests:**
   - `e2e/accessibility.spec.ts` runs **axe-core** on the main pages in all four themes and
     fails on any serious or critical violation.

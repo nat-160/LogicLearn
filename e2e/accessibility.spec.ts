@@ -106,6 +106,62 @@ test.describe('display preferences', () => {
   });
 });
 
+test.describe('the Accessibility settings window', () => {
+  // Windows and Chrome voices have long names, and a list is as wide as its longest
+  // option: that once pushed the switches out of sight, behind a sideways scroll.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const voice = (name: string, lang: string, localService: boolean) => ({
+        name,
+        lang,
+        localService,
+        voiceURI: name,
+        default: false,
+      });
+      const voices = [
+        voice('Microsoft Aria Online (Natural) - English (United States)', 'en-US', false),
+        voice('Microsoft Christopher Online (Natural) - English (United States)', 'en-US', false),
+        voice('Microsoft David - English (United States)', 'en-US', true),
+      ];
+      const synth = {
+        speak: () => undefined,
+        cancel: () => undefined,
+        getVoices: () => voices,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      };
+      Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true });
+    });
+  });
+
+  for (const font of [
+    { name: 'the default font', prefs: {} },
+    { name: 'the dyslexia-friendly font', prefs: { dyslexiaFont: true } },
+  ]) {
+    test(`fits without scrolling sideways, with ${font.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.addInitScript(
+        (prefs) => localStorage.setItem('logiclearn:prefs:v1', JSON.stringify(prefs)),
+        font.prefs,
+      );
+      await page.goto('#/');
+      await openSettings(page);
+      const dialog = page.getByTestId('settings-dialog');
+      const { scrollWidth, clientWidth } = await dialog.evaluate((el) => ({
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      }));
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+      // Every switch and button is inside the window, not cut off at its right edge.
+      const box = (await dialog.boundingBox())!;
+      for (const control of await dialog.locator('button, select, input').all()) {
+        const b = (await control.boundingBox())!;
+        expect(b.x + b.width).toBeLessThanOrEqual(box.x + box.width);
+      }
+    });
+  }
+});
+
 const THEMES = [
   { name: 'light', prefs: { contrast: 'standard', colorScheme: 'light' } },
   { name: 'dark', prefs: { contrast: 'standard', colorScheme: 'dark' } },
@@ -193,8 +249,8 @@ test.describe('without a pointer', () => {
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('announcer')).toContainText('Added NOT gate 1');
 
-    // Wire it in the Connections panel.
-    await page.locator('summary', { hasText: 'Connections (keyboard)' }).click();
+    // Wire it in View and edit connections.
+    await page.locator('summary', { hasText: 'View and edit connections' }).click();
     await page.getByTestId('connect-from').selectOption({ label: 'Switch A' });
     await page.getByTestId('connect-to').selectOption({ label: 'NOT gate 1, input' });
     await page.getByTestId('connect-button').press('Enter');
@@ -238,7 +294,7 @@ test.describe('without a pointer', () => {
     const gate = page.getByRole('group', { name: 'NOT gate 1' });
     await expect(gate).toHaveAttribute('aria-roledescription', 'part');
 
-    await page.locator('summary', { hasText: 'Connections (keyboard)' }).click();
+    await page.locator('summary', { hasText: 'View and edit connections' }).click();
     await page.getByTestId('connect-from').selectOption({ label: 'Switch A' });
     await page.getByTestId('connect-to').selectOption({ label: 'NOT gate 1, input' });
     await page.getByTestId('connect-button').press('Enter');
