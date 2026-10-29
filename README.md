@@ -43,7 +43,7 @@ e2e/           Playwright tests (mouse and touch)
 docs/          project plan, curriculum outline, architecture and demo notes
 ```
 
-See [docs/architecture.md](docs/architecture.md) for how a switch flip becomes a lit
+Phase 1 status: [docs/phase-1-report.md](docs/phase-1-report.md). See [docs/architecture.md](docs/architecture.md) for how a switch flip becomes a lit
 light, and [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for the full plan.
 
 TypeScript, React, React Flow, zustand, Vite, Vitest and Playwright. Deployed to GitHub

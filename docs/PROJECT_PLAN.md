@@ -401,6 +401,8 @@ gates later.
 
 ## 4. Phase 1: work breakdown
 
+> **Status:** built and tested (2026-10-29). See [phase-1-report.md](phase-1-report.md).
+
 **Dates:** today is Thu Oct 29. **Milestone 1 is due Tue Nov 3.** Tasks are listed in build
 order, and each task is a reviewable commit or PR.
 
