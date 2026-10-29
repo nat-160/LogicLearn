@@ -2,7 +2,8 @@
  * Ways to read and build a circuit without seeing or pointing at the canvas.
  *
  *  - CircuitDescription: a text list of every part (with its current value) and wire.
- *  - ConnectionsPanel:   "connect this output to that input" with two lists and a
+ *  - ConnectionsPanel ("View and edit connections"): "connect this output to that
+ *    input" with two lists and a
  *    button, plus a Remove button for each wire. Together with the parts list (Enter adds
  *    a part) and the inspector (rename, delete), a whole circuit can be built with a
  *    keyboard or a screen reader.
@@ -106,7 +107,10 @@ export function ConnectionsPanel() {
   return (
     <section className="panel" aria-labelledby="connections-title">
       <details>
-        <summary id="connections-title">Connections (keyboard)</summary>
+        <summary id="connections-title">View and edit connections</summary>
+        <p className="muted small">
+          Connect parts without dragging: choose an output and an input, then press Connect.
+        </p>
         <div className="connect-form">
           <label className="field">
             <span>From output</span>

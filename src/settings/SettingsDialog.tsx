@@ -151,15 +151,19 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div className="setting-row">
-            <label htmlFor="voice" className="setting-label">
-              Voice
-            </label>
+            <span className="setting-label">
+              <label htmlFor="voice">Voice</label>
+              <span className="setting-hint" id="voice-hint">
+                Automatic uses a voice on this device when there is one.
+              </span>
+            </span>
             <select
               id="voice"
+              aria-describedby="voice-hint"
               value={prefs.voiceURI ?? ''}
               onChange={(e) => prefs.update({ voiceURI: e.target.value || null })}
             >
-              <option value="">Automatic (on this device if possible)</option>
+              <option value="">Automatic</option>
               {voiceOptions.map((v) => (
                 <option key={v.voiceURI} value={v.voiceURI}>
                   {v.name} {v.localService ? '(on this device)' : '(online)'}

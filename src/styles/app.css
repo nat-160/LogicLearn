@@ -1240,8 +1240,12 @@ button.next {
 .settings-dialog form,
 .settings-body {
   display: grid;
+  /* One column that never grows wider than the window: without minmax(0, …) a wide
+   * child (a list of long voice names) stretches it and hides the switches. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   padding: 16px 20px 20px;
+  overflow-wrap: anywhere;
 }
 
 .settings-dialog h2 {
@@ -1268,6 +1272,14 @@ button.next {
 .setting-row label,
 .setting-label {
   flex: 1;
+  min-width: 0;
+}
+
+/* A list is as wide as its longest option ("Microsoft Aria Online (Natural) - English
+ * (United States)"); let it shrink and cut the shown name short instead. */
+.setting-row select {
+  flex: 0 1 65%;
+  min-width: 0;
 }
 
 .setting-hint {

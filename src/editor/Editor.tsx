@@ -4,7 +4,8 @@
  * their own side panel (truth table, check, lesson instructions…).
  *
  * Every editor also gets the text version of the circuit and (unless read-only) the
- * Connections panel, so it can be used with a screen reader or keyboard alone.
+ * "View and edit connections" panel, so it can be used with a screen reader or keyboard
+ * alone.
  */
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, type ReactNode } from 'react';

@@ -58,7 +58,7 @@
   - Then the **Dyslexia-friendly font** (OpenDyslexic plus wider spacing).
   - Reload to show the settings are remembered.
 - On a lesson step press **Read this step aloud**: built-in narration, no server needed.
-- Show **Connections (keyboard)** and **Circuit as text**: a whole circuit can be built
+- Show **View and edit connections** and **Circuit as text**: a whole circuit can be built
   and read without a mouse or touch screen.
 - Mention that automated WCAG checks (axe-core) run in every theme on every change.
 

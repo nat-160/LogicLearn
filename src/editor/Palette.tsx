@@ -54,7 +54,7 @@ function PaletteItem({ type }: { type: string }) {
   /** Tell screen reader users what was added and how to wire it. */
   const added = (id: string) => {
     const part = findComponent(store.getState().doc, id);
-    if (part) announce(`Added ${partName(part)}. Wire it in the Connections panel.`);
+    if (part) announce(`Added ${partName(part)}. To wire it, open View and edit connections.`);
   };
 
   /** Add the part in a free spot near the center of this editor's visible canvas. */

@@ -96,7 +96,7 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
             className={`pin ${valueClass(valueOf(pin))}`}
             style={{ top: y }}
             // Pins are for pointers; keyboard and screen reader users wire in the
-            // Connections panel, so the pins themselves carry no label.
+            // "View and edit connections" panel, so the pins themselves carry no label.
             data-testid={`pin-${id}-${pin}`}
           />
         );
