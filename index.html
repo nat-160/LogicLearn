@@ -13,11 +13,12 @@
       // Set the theme before the first paint, so a student who chose dark mode or high
       // contrast never sees a flash of the light theme while the app downloads. The app
       // applies the same settings again when it starts (src/settings/display.ts), and the
-      // storage key must match PREFERENCES_KEY in src/settings/preferences.ts.
+      // storage key must match PREFERENCES_KEY in src/settings/preferences.ts. Vite fills in
+      // %VITE_STORAGE_PREFIX% from .env ("logiclearn-dev:" for the test version).
       (function () {
         var prefs = {};
         try {
-          prefs = JSON.parse(localStorage.getItem('logiclearn:prefs:v1') || '{}') || {};
+          prefs = JSON.parse(localStorage.getItem('%VITE_STORAGE_PREFIX%prefs:v1') || '{}') || {};
         } catch (e) {
           // no saved settings, or storage is blocked: follow the device
         }

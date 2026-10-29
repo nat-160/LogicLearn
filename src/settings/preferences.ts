@@ -9,7 +9,7 @@
  * field when loaded. Like everything else in LogicLearn, it never leaves the device.
  */
 import { create } from 'zustand';
-import { readLocal, writeLocal } from '../storage/storage';
+import { readLocal, storageKey, writeLocal } from '../storage/storage';
 
 export interface Preferences {
   /** High-contrast theme; null = follow the device ("prefers-contrast: more"). */
@@ -38,7 +38,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   locale: null,
 };
 
-export const PREFERENCES_KEY = 'logiclearn:prefs:v1';
+export const PREFERENCES_KEY = storageKey('prefs:v1');
 
 /** Keep only valid values from saved data; anything else falls back to the default. */
 export function sanitizePreferences(raw: unknown): Preferences {

@@ -33,7 +33,7 @@ import { ReadAloudButton } from '../narration/ReadAloud';
 import { useSpeaker, useStopSpeakingOnUnmount } from '../narration/useSpeaker';
 import { loadCircuit, type CheckResult, type CircuitDoc } from '../sim';
 import { usePreferences } from '../settings/preferences';
-import { readLocal, writeLocal } from '../storage/storage';
+import { readLocal, storageKey, writeLocal } from '../storage/storage';
 import { INTERFACE_LOCALE } from '../i18n/locales';
 import { useLocale } from '../settings/display';
 import { findLesson } from './catalog';
@@ -220,7 +220,7 @@ function BuildStepView({
   step: BuildStep;
   index: number;
 }) {
-  const workKey = `logiclearn:work:${stepKey(lesson.id, step.id)}`;
+  const workKey = storageKey(`work:${stepKey(lesson.id, step.id)}`);
   const visit = useProgress((s) => s.visit);
   const [checked, setChecked] = useState(false);
   // Predict-first: values stay hidden until the first Check.

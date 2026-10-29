@@ -5,7 +5,7 @@
  * completion codes and the opt-in beta export.
  */
 import { create } from 'zustand';
-import { readLocal, writeLocal } from '../storage/storage';
+import { readLocal, storageKey, writeLocal } from '../storage/storage';
 import type { Lesson } from './types';
 
 export interface StepProgress {
@@ -19,7 +19,7 @@ export interface StepProgress {
   lastSeen: string;
 }
 
-const KEY = 'logiclearn:progress:v1';
+const KEY = storageKey('progress:v1');
 
 type ProgressMap = Record<string, StepProgress>;
 

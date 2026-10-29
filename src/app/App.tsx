@@ -11,6 +11,7 @@ import { HomePage } from './HomePage';
 import { useRoute, type Route } from './routes';
 import { SandboxPage } from './SandboxPage';
 import { SharePage } from './SharePage';
+import { IS_TEST_VERSION } from './site';
 
 export function App() {
   const route = useRoute();
@@ -24,6 +25,7 @@ export function App() {
       <button type="button" className="skip-link" onClick={() => main.current?.focus()}>
         Skip to main content
       </button>
+      {IS_TEST_VERSION && <TestVersionBanner />}
       <header className="app-header">
         <a className="brand" href="#/">
           <img src="./favicon.svg" alt="" width={28} height={28} />
@@ -48,6 +50,25 @@ export function App() {
       </main>
       <LiveAnnouncer />
     </div>
+  );
+}
+
+/**
+ * Shown on every page of the test version (built from the dev branch), so testers always
+ * know which copy they're on. It is not a live region: it's there from the start.
+ */
+function TestVersionBanner() {
+  return (
+    <aside
+      className="test-version-banner"
+      aria-label="Test version"
+      data-testid="test-version-banner"
+    >
+      <p>
+        <strong>Test version</strong> (dev branch). Progress and settings here are separate from the
+        live site. <a href="../">Go to the live site</a>
+      </p>
+    </aside>
   );
 }
 

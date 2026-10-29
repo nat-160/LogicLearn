@@ -1,6 +1,13 @@
 # CI: every push and pull request is linted, type-checked, unit-tested, built and
-# end-to-end tested. Pushes to main are then deployed to GitHub Pages
-# (Settings → Pages → Source must be "GitHub Actions").
+# end-to-end tested. Pushes to main and dev then publish the site to GitHub Pages:
+#
+#   main → https://nat-160.github.io/LogicLearn/       the live site
+#   dev  → https://nat-160.github.io/LogicLearn/dev/   the test version (npm run build:dev)
+#
+# GitHub Pages holds one site per repository, so every deploy builds both branches and
+# publishes them together. Repository settings this needs (docs/branches.md):
+#   - Settings → Pages → Source: "GitHub Actions"
+#   - Settings → Environments → github-pages → Deployment branches: main and dev
 name: CI
 
 on:
@@ -31,10 +38,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v5
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          path: dist
+      - run: npm run build:dev # the test version's settings build too
 
   e2e:
     name: End-to-end tests (Chromium, touch, Firefox, WebKit)
@@ -58,17 +62,60 @@ jobs:
           retention-days: 7
 
   deploy:
-    name: Deploy to GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Deploy to GitHub Pages (main and dev)
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     needs: [check, e2e]
     runs-on: ubuntu-latest
+    # One deploy at a time: a deploy from main waits for one from dev, and the other way
+    # round. A deploy waiting behind another is replaced by a newer one, which builds the
+    # latest of both branches anyway.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: main
+      - name: Is there a dev branch?
+        id: dev
+        run: |
+          if git -C main ls-remote --exit-code --heads origin dev > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.dev.outputs.exists == 'true'
+        with:
+          ref: dev
+          path: dev
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: main/package-lock.json
+      - name: Build the live site (main)
+        working-directory: main
+        run: npm ci && npm run build
+      - name: Build the test version (dev)
+        if: steps.dev.outputs.exists == 'true'
+        working-directory: dev
+        run: npm ci && npm run build:dev
+      - name: Put them together (the test version in dev/)
+        run: |
+          cp -r main/dist site
+          if [ -d dev/dist ]; then cp -r dev/dist site/dev; fi
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
       - uses: actions/configure-pages@v6
       - id: deployment
         uses: actions/deploy-pages@v5

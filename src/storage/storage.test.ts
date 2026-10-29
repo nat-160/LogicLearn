@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { halfAdder } from '../sim/testCircuits';
-import { decodeShareData, encodeShareData, loadSandbox, saveSandbox } from './storage';
+import { decodeShareData, encodeShareData, loadSandbox, saveSandbox, storageKey } from './storage';
+
+describe('storageKey', () => {
+  it('uses the live site prefix from .env (the test version uses .env.dev-branch)', () => {
+    expect(storageKey('progress:v1')).toBe('logiclearn:progress:v1');
+  });
+});
 
 describe('share links', () => {
   it('round-trip a circuit', () => {

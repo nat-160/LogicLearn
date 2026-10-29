@@ -143,7 +143,11 @@ Because the app is fully static, it can be moved to another host with no code ch
 - **Vitest** for unit tests. **Playwright** for end-to-end smoke tests, including emulated
   iPad touch.
 - **GitHub Actions** runs lint, typecheck, test and build, then deploys to **GitHub Pages**
-  via `actions/deploy-pages`.
+  via `actions/deploy-pages`. Since 2026-10-29 there are two copies:
+  - `main` is the live site;
+  - `dev` is a test version at `/dev/`, with its own saved-data names and a banner.
+
+  Changes reach students through `dev` first (`docs/branches.md`).
 - **Hash-based routing**, because GitHub Pages has no SPA fallback. Routes:
   - `#/` home
   - `#/sandbox`

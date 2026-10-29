@@ -115,6 +115,24 @@ select {
   height: 100%;
 }
 
+/* The test version's banner (built from the dev branch; see src/app/site.ts). */
+.test-version-banner {
+  padding: 6px 16px;
+  font-size: 14px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-bottom: var(--line-width) solid var(--warning);
+}
+
+.test-version-banner p {
+  margin: 0;
+}
+
+.test-version-banner a {
+  color: inherit;
+  font-weight: 700;
+}
+
 .app-header {
   display: flex;
   align-items: center;
