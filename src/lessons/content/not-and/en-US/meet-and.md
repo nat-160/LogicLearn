@@ -1,6 +1,6 @@
 <!-- draft -->
 
-## AND: all inputs must be on
+# AND: all inputs must be on
 
 - An **AND gate** outputs **1** only when **all** of its inputs are **1**.
 - Everyday example: a car starts only if the key is turned **AND** the brake is pressed.

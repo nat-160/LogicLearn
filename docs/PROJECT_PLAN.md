@@ -327,8 +327,10 @@ gates later.
 ### 3.7 Lesson framework
 
 - **Lessons are TypeScript data modules.** This makes them type-checked and lets CI test
-  them. **Prose lives in separate Markdown files**, `src/lessons/content/<lesson>/<step>.md`,
-  imported with Vite's `?raw`, so the author can write the final text without touching code.
+  them. **Prose lives in separate Markdown files**, one folder per language:
+  `src/lessons/content/<lesson>/<locale>/<step>.md`. Each file holds the step's title,
+  text and hints, so the author can write the final text without touching code (see
+  §3.10).
   - Claude writes each file first as **short bullet points** covering the step's topics,
     starting with a `<!-- draft -->` marker.
   - `npm run lessons:drafts` lists the steps that are still drafts.
@@ -396,6 +398,155 @@ gates later.
   thin; X is gray and dashed. A setting can show 0/1 labels on wires.
 - **Layout:** tuned for Chromebooks at 1366×768 and iPads in landscape (about 1024–1180 px
   wide). The palette and lesson panel can be collapsed, and portrait mode stays usable.
+
+### 3.9 Accessibility and display preferences
+
+> Added 2026-10-29 from the author's beta testing. Target: **WCAG 2.1 AA** (and 2.2
+> where it's cheap), which also covers the ADA Title II requirement in §8.
+
+**Requirements (author's priorities)**
+
+| # | Requirement | Priority |
+|---|---|---|
+| A1 | The lessons work with a **screen reader** | Must |
+| A2 | **Narration** built in. If built-in narration needed hosting beyond GitHub Pages, the fallback would be page conventions that work well with outside narration tools | Preferred |
+| A3 | A **high-contrast theme** with an on/off toggle | Must |
+| A4 | A **dyslexia-friendly font** with an on/off toggle | Must |
+| A5 | A **dark mode** toggle. With A3 this makes four themes | Lower |
+| A6 | Every preference is **saved persistently** | Must |
+
+**Preferences (A6).**
+- One store (`src/settings/`) is saved in localStorage under `logiclearn:prefs:v1`. It holds:
+  - contrast: standard or high;
+  - color scheme: light or dark;
+  - reading font: default or dyslexia-friendly;
+  - narration: auto-read, speed, voice;
+  - language.
+- **Until a student changes a setting, it follows the device**:
+  - `prefers-contrast: more` turns on high contrast;
+  - `prefers-color-scheme: dark` turns on dark mode.
+
+  Once changed, the student's choice wins and is remembered. A "use my device's settings"
+  button clears the saved choices.
+- Preferences are applied as `data-*` attributes on `<html>` before the first render, so
+  there is no flash of the wrong theme.
+- Like everything else, preferences never leave the device.
+
+**Settings panel.**
+- An **Accessibility** button in the header opens a native `<dialog>`, which gives focus
+  trapping and closes with Esc.
+- It contains on/off switches (`role="switch"`) for high contrast, dark mode, the
+  dyslexia-friendly font, and automatic narration, plus a speech speed control and a voice
+  list. A language list appears once a second language exists (§3.10).
+- Changes apply immediately and are saved automatically.
+
+**Four themes (A3, A5).**
+- The themes are light, dark, light high-contrast and dark high-contrast. Every color in
+  the stylesheet comes from a CSS custom property (a "token"), and each theme only
+  redefines tokens, so a fifth theme would be a token block, not a rewrite.
+- High contrast means:
+  - text at **7:1 or better** (WCAG AAA);
+  - borders and parts at least 4.5:1;
+  - thicker outlines (2px) and a 4px focus ring;
+  - no faint shading or tints that carry meaning.
+- Wire states keep their non-color cues: 1 is thick, 0 is thin, X is dashed. In high
+  contrast they are thicker still.
+- **Windows High Contrast / forced colors** (`@media (forced-colors: active)`) is respected
+  using system colors.
+- React Flow's own controls follow the theme (its `colorMode` setting).
+
+**Dyslexia-friendly font (A4).**
+- The font is **OpenDyslexic** (SIL Open Font License). It is self-hosted through
+  `@fontsource` and downloaded only when the toggle is first turned on. Nothing is loaded
+  from a font CDN, which keeps "nothing leaves the device" true.
+- The toggle also applies the spacing in the British Dyslexia Association's *Dyslexia Style
+  Guide*: line height ≥ 1.5, slightly wider letter and word spacing, left-aligned text, and
+  no italics.
+- Research note:
+  - Extra letter spacing has measurable benefits (Zorzi et al., 2012, *PNAS*).
+  - Studies of OpenDyslexic itself found no gain in reading speed or accuracy over standard
+    fonts (Wery & Diliberto, 2017, *Annals of Dyslexia*).
+  - So the spacing is treated as the main effect. The font is one CSS variable and can be
+    swapped (e.g. for Lexend or Atkinson Hyperlegible, both also OFL) if testers prefer.
+
+**Built-in narration (A2).**
+- Narration uses the browser's **Web Speech API** (`speechSynthesis`). It runs entirely
+  in the browser, so it needs **no server and works on GitHub Pages**.
+- **Read aloud** reads the step's title and text, the hints already revealed, and the last
+  check result. Pause/stop is available.
+- Settings cover automatic reading when a step opens, speed, and voice.
+- **On-device voices are preferred** (`voice.localService`). Some Chrome voices are
+  generated on Google's servers, which would send lesson text (never student data) off
+  the device, so those are only used if the student picks one.
+- If the browser has no speech support, the button is hidden and the conventions below
+  keep outside tools working.
+
+**Conventions that keep outside narration tools and screen readers working.** These cover
+Read&Write for Google Chrome, ChromeOS Select-to-speak and ChromeVox, Edge Immersive Reader,
+VoiceOver and NVDA.
+- All text is real text, never images of text or text drawn on a canvas.
+- `lang` is set on `<html>`, and on lesson text when its language differs.
+- One `<h1>` per page, and headings in order.
+- Landmarks: banner, navigation, main, the lesson instructions as a labelled complementary
+  region, and the circuit as a labelled region.
+- Decorative SVG is `aria-hidden`; every control has a name.
+- Lesson text stays selectable (no `user-select: none` outside the canvas), so
+  select-to-speak works.
+- Meaning is never carried by color alone.
+- Dynamic results are announced through **persistent** live regions. Regions that are
+  created already filled are often not announced.
+
+**Screen reader support for lessons (A1).**
+1. A **skip link** jumps to the main content.
+2. Changing step **moves focus to the step heading**, so the new step is announced.
+3. Check results, revealed hints and "never settles" warnings are announced politely
+   (assertively for the warning).
+4. The truth table has a `<caption>` and properly scoped column headers. Rows can be
+   reached and activated from the keyboard.
+5. **Circuit description:** a text version of the canvas.
+   - It lists every part with its label and current value, and every wire as "from → to".
+   - It updates live, and a short message is announced when a light changes ("Light Y is
+     now on").
+6. **Connections panel:**
+   - "Connect output … to input …", built from two lists and a Connect button, plus a list
+     of wires with Remove buttons.
+   - With the palette (press Enter to add a part) and the inspector (rename, delete), a
+     whole circuit can be built **without a pointer**.
+   - This removes the Phase 1 limitation "circuits can't be wired with the keyboard alone".
+
+**Testing.**
+- **axe-core** scans run in Playwright on the home, sandbox and lesson pages in all four
+  themes. They fail on any serious or critical violation, including color contrast.
+- Unit tests cover the preferences store, the narration text, and the circuit
+  description.
+- A manual screen reader checklist is in `docs/accessibility.md`.
+
+### 3.10 Localization (skeleton)
+
+> Added 2026-10-29. Everything ships in US English for now, but lesson text is structured
+> so translations can be added without code changes.
+
+- **Locale codes** use the BCP 47 standard: `en-US` and, later, `es-US`. These are the
+  same as the author's `en_us` and `es_us`, written the way browsers and the `lang`
+  attribute expect.
+- **Lesson text per locale:** `src/lessons/content/<lesson>/<locale>/` holds:
+  - `lesson.md`, with the lesson title and a one-line summary;
+  - one `<step>.md` per step, with the step title (its first `#` heading), the step text,
+    and an optional `## Hints` list.
+
+  Everything that doesn't depend on language stays in the lesson's `index.ts`: ids,
+  circuits, checks, palettes and options.
+- The **loader** picks the student's language and falls back to `en-US` file by file, so a
+  half-finished translation never shows a blank step.
+  - `npm run lessons:drafts` reports drafts and missing files per language.
+  - The content test requires complete `en-US` text.
+- The **locale registry** is `src/i18n/locales.ts`. Adding `{ code: 'es-US', name: 'Español
+  (EE. UU.)' }` makes the language list appear in Settings, and `<html lang>` follows the
+  choice. Step-by-step instructions are in `docs/translating.md`.
+- **Not yet localized:** interface text (buttons, messages) and checker/misconception
+  messages are English. They are already keyed by stable ids (diagnostic codes,
+  misconception ids), so they can move into per-language message catalogs later. Circuit
+  labels (A, B, Y) are not translated.
 
 ---
 
@@ -498,6 +649,14 @@ Two habits run through every lesson, taken from ICER '08:
 
 ## 6. Later phases (each is built on the Phase 1 seams above)
 
+### Phase 1b: Accessibility and localization (from beta feedback, before M1)
+
+The author's beta testing (2026-10-29) added §3.9 and §3.10:
+- display preferences saved persistently (high contrast, dark mode, dyslexia-friendly font);
+- built-in narration;
+- screen reader support for lessons, including building circuits without a pointer;
+- lesson text organized by language, ready for translations.
+
 ### Phase 2: Lessons and guidance (Nov 2 – Nov 13, M2)
 
 This is the heaviest phase. Work in this **priority order**:
@@ -597,7 +756,7 @@ None of these block work. Claude proceeds with the **default** shown unless told
 | Unsolvable or trivially solved lesson content written in a hurry | Medium | CI content test: solution passes, starter fails. |
 | Beta testing overlaps Thanksgiving week (Nov 26) | Medium | Line up peers now; beta build ready by about Nov 20. |
 | A district blocks the hosting domain | Medium | The app is static and can move hosts (`base: './'`); custom domain; PWA/offline build later. |
-| Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. Meet AA where feasible (contrast, signals not shown by color alone, target size, keyboard-operable controls). Document that circuits cannot yet be built with the keyboard alone, as a post-course item. |
+| Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. §3.9 targets AA: high-contrast and dark themes, a dyslexia-friendly font, built-in narration, screen reader support, and a Connections panel so circuits can be built without a pointer. Checked by axe-core scans in CI plus a manual screen reader checklist. |
 | The editor turns out too hard to build openly (proposal's worst case) | Low | Fall back to a slot-based grid editor; the data model is unchanged. |
 | Scope creep from stretch features | Medium | §4 out-of-scope list; stretch work only after M3. |
 | Simple bypass and completion codes are worked around | Low impact | Documented as discouragement only; teachers can also ask for exported project files. |
@@ -693,3 +852,10 @@ proposal, plus the ICER '08 paper:
     Boolean expressions.
   - IB codes are accepted as correct.
 - **Hosting:** the hedged wording about hosting-site blocking stays.
+
+**v3 → v4** (2026-10-29). The author's beta feedback:
+
+- **Spec:** added §3.9 (accessibility and display preferences) and §3.10 (localization
+  skeleton), plus a Phase 1b entry for them.
+- **Risks:** the accessibility row now points at those features instead of listing
+  keyboard-only building as a gap.

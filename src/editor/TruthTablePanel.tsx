@@ -62,6 +62,8 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
     ? table.outputs.map((p) => p.label).filter((l) => spec!.outputs.includes(l))
     : [];
   const triedCount = table.rows.filter((_, i) => tried.has(i)).length;
+  // A "wrong" column appears after a check, so wrong rows are marked by more than color.
+  const showWrong = wrongRows.size > 0;
 
   return (
     <section className="panel truth-table-panel" aria-label="Truth table">
@@ -78,24 +80,41 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
       )}
       <div className="table-scroll">
         <table className="truth-table" data-testid="truth-table">
+          <caption className="sr-only">
+            Truth table. Inputs: {table.inputs.map((p) => p.label).join(', ')}. Outputs:{' '}
+            {table.outputs.map((p) => p.label).join(', ') || 'none'}. Select a row to set the
+            switches to it.
+          </caption>
           <thead>
             <tr>
-              <th aria-label="tried" />
+              <th scope="col">
+                <span className="sr-only">Tried</span>
+              </th>
               {table.inputs.map((p) => (
-                <th key={p.id} className="col-input">
+                <th key={p.id} scope="col" className="col-input">
                   {p.label}
                 </th>
               ))}
               {table.outputs.map((p) => (
-                <th key={p.id} className="col-output">
+                <th key={p.id} scope="col" className="col-output">
                   {p.label}
                 </th>
               ))}
               {expectedLabels.map((label) => (
-                <th key={`exp-${label}`} className="col-expected" title="What the target expects">
+                <th
+                  key={`exp-${label}`}
+                  scope="col"
+                  className="col-expected"
+                  title="What the target expects"
+                >
                   {label} wanted
                 </th>
               ))}
+              {showWrong && (
+                <th scope="col">
+                  <span className="sr-only">Check result</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -125,7 +144,10 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
                   title="Tap to set the switches to this row"
                   data-testid={`tt-row-${i}`}
                 >
-                  <td className="tried-mark">{tried.has(i) ? '✓' : ''}</td>
+                  <td className="tried-mark">
+                    {tried.has(i) ? '✓' : ''}
+                    {i === current && <span className="sr-only">current row</span>}
+                  </td>
                   {row.inputs.map((bit, k) => (
                     <td key={`i${k}`} className="col-input">
                       {bit}
@@ -141,6 +163,7 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
                       {expectedFor(row.inputs, label) ?? ''}
                     </td>
                   ))}
+                  {showWrong && <td className="wrong-mark">{wrongRows.has(i) ? '✗ wrong' : ''}</td>}
                 </tr>
               );
             })}

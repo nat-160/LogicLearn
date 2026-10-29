@@ -14,7 +14,9 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { getComponentDef, GRID_CELL } from '../sim';
+import { announce } from '../a11y/announcer';
+import { findComponent, getComponentDef, GRID_CELL } from '../sim';
+import { partName } from './describe';
 import { useEditor, useEditorStore } from './editorContext';
 import { findFreeSpot, partGeometry } from './geometry';
 import { PartIcon } from './nodes/shapes';
@@ -49,6 +51,12 @@ function PaletteItem({ type }: { type: string }) {
 
   const snap = (v: number) => Math.round(v / GRID_CELL) * GRID_CELL;
 
+  /** Tell screen reader users what was added and how to wire it. */
+  const added = (id: string) => {
+    const part = findComponent(store.getState().doc, id);
+    if (part) announce(`Added ${partName(part)}. Wire it in the Connections panel.`);
+  };
+
   /** Add the part in a free spot near the center of this editor's visible canvas. */
   const addNearCenter = (button: HTMLElement) => {
     const canvas = button.closest('.editor')?.querySelector('.react-flow')?.getBoundingClientRect();
@@ -58,7 +66,7 @@ function PaletteItem({ type }: { type: string }) {
           y: canvas.top + canvas.height / 2,
         })
       : { x: 0, y: 0 };
-    addPart(type, findFreeSpot(store.getState().doc, type, center));
+    added(addPart(type, findFreeSpot(store.getState().doc, type, center)));
   };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -83,7 +91,7 @@ function PaletteItem({ type }: { type: string }) {
     if (!sameEditor || !target?.closest('.react-flow')) return; // dropped outside the canvas
     const g = partGeometry(type);
     const at = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-    addPart(type, { x: snap(at.x - g.width / 2), y: snap(at.y - g.height / 2) });
+    added(addPart(type, { x: snap(at.x - g.width / 2), y: snap(at.y - g.height / 2) }));
   };
 
   const onClick = (e: ReactMouseEvent<HTMLButtonElement>) => {

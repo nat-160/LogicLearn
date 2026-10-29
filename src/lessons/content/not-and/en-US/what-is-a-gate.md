@@ -1,6 +1,6 @@
 <!-- draft -->
 
-## What is a logic gate?
+# What is a logic gate?
 
 - Computers work with **signals** that are either **on (1)** or **off (0)**.
 - A **logic gate** takes one or more input signals and produces an output signal by following a simple rule.

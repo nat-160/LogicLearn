@@ -1,9 +1,13 @@
 /**
- * The app shell: a header with navigation, and the page for the current route.
+ * The app shell: a skip link, a header with navigation and the Accessibility settings,
+ * the page for the current route, and the screen reader announcement regions.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useAnnouncer } from '../a11y/announcer';
 import { LessonList } from '../lessons/LessonList';
 import { LessonPage } from '../lessons/LessonPage';
+import { useNarration } from '../narration/speech';
+import { SettingsButton } from '../settings/SettingsDialog';
 import { HomePage } from './HomePage';
 import { useRoute, type Route } from './routes';
 import { SandboxPage } from './SandboxPage';
@@ -11,9 +15,16 @@ import { SharePage } from './SharePage';
 
 export function App() {
   const route = useRoute();
+  const main = useRef<HTMLElement>(null);
   useNoPagePinchZoom();
+  useFocusOnPageChange(routeKey(route), main);
+
   return (
     <div className="app">
+      {/* A button, not a "#main" link: the part of the address after # picks the page. */}
+      <button type="button" className="skip-link" onClick={() => main.current?.focus()}>
+        Skip to main content
+      </button>
       <header className="app-header">
         <a className="brand" href="#/">
           <img src="./favicon.svg" alt="" width={28} height={28} />
@@ -30,12 +41,51 @@ export function App() {
             Sandbox
           </a>
         </nav>
+        <span className="header-spacer" />
+        <SettingsButton />
       </header>
-      <main className="app-main">
+      <main className="app-main" id="main-content" ref={main} tabIndex={-1}>
         <Page key={routeKey(route)} route={route} />
       </main>
+      <LiveAnnouncer />
     </div>
   );
+}
+
+/** The always-present live regions that `announce()` writes into (see announcer.ts). */
+function LiveAnnouncer() {
+  const polite = useAnnouncer((s) => s.polite);
+  const assertive = useAnnouncer((s) => s.assertive);
+  return (
+    <>
+      <div className="sr-only" aria-live="polite" aria-atomic="true" data-testid="announcer">
+        {polite}
+      </div>
+      <div className="sr-only" aria-live="assertive" aria-atomic="true">
+        {assertive}
+      </div>
+    </>
+  );
+}
+
+/**
+ * When the page (or lesson step) changes, move keyboard focus to its main heading, so a
+ * screen reader announces the new page instead of staying silent. Reading aloud stops.
+ */
+function useFocusOnPageChange(key: string, main: React.RefObject<HTMLElement | null>) {
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    useNarration.getState().stop();
+    const heading = main.current?.querySelector<HTMLElement>('h1');
+    const target = heading ?? main.current;
+    if (!target) return;
+    if (heading && !heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+    target.focus();
+  }, [key, main]);
 }
 
 /**

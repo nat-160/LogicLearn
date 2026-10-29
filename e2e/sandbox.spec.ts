@@ -47,7 +47,8 @@ test('build a half adder from scratch', async ({ page }, testInfo) => {
   // Columns: tried, A, B, Y, Z
   await expect(rows.nth(0).locator('td')).toHaveText(['✓', '0', '0', '0', '0']);
   await expect(rows.nth(2).locator('td')).toHaveText(['✓', '1', '0', '1', '0']);
-  await expect(rows.nth(3).locator('td')).toHaveText(['✓', '1', '1', '0', '1']);
+  // Row 3 is the current row, so its first cell also says so (for screen readers).
+  await expect(rows.nth(3).locator('td')).toHaveText(['✓current row', '1', '1', '0', '1']);
 });
 
 test('checking OR against the XOR target marks only the 1,1 row', async ({ page }, testInfo) => {

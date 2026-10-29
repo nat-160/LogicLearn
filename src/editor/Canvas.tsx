@@ -18,6 +18,7 @@ import {
 } from '@xyflow/react';
 import { useCallback } from 'react';
 import { GRID_CELL, pinDirection } from '../sim';
+import { useDisplay } from '../settings/display';
 import { useEditor, useEditorStore } from './editorContext';
 import { PartNodeComponent } from './nodes/PartNode';
 import type { WireEdge } from './store';
@@ -27,6 +28,7 @@ const nodeTypes = { part: PartNodeComponent };
 const edgeTypes = { wire: WireEdgeComponent };
 
 export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
+  const { theme } = useDisplay();
   const store = useEditorStore();
   const nodes = useEditor((s) => s.nodes);
   const edges = useEditor((s) => s.edges);
@@ -52,8 +54,19 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   const onConnect = useCallback((c: Connection) => connect(c), [connect]);
 
   return (
-    <div className="canvas" data-testid="canvas">
+    <div
+      className="canvas"
+      data-testid="canvas"
+      role="region"
+      aria-label="Circuit canvas"
+      aria-describedby="canvas-help"
+    >
+      <p id="canvas-help" className="sr-only">
+        Press Tab to move between parts; arrow keys move the selected part. To read the circuit,
+        open "Circuit as text". To wire with a keyboard, use the Connections panel.
+      </p>
       <ReactFlow
+        colorMode={theme}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}

@@ -29,5 +29,5 @@ export function light(page: Page, label: string): Locator {
 }
 
 export function switchButton(page: Page, label: string): Locator {
-  return page.getByRole('button', { name: new RegExp(`^Switch ${label}:`) });
+  return page.getByRole('button', { name: new RegExp(`^Switch ${label}: (on|off)`) });
 }
