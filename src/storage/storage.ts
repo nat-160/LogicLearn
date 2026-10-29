@@ -15,6 +15,16 @@ import {
   type LoadResult,
 } from '../sim';
 
+/**
+ * The name something is saved under in the browser, e.g. "logiclearn:progress:v1". The
+ * test version (built from the dev branch) uses "logiclearn-dev:progress:v1" instead:
+ * both copies of the site are on the same web address, so they share one localStorage,
+ * and testing must not change a student's real progress. (.env and .env.dev-branch)
+ */
+export function storageKey(name: string): string {
+  return `${import.meta.env.VITE_STORAGE_PREFIX}${name}`;
+}
+
 export function readLocal(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
@@ -43,8 +53,8 @@ export function requestPersistentStorage(): void {
 
 // --- The sandbox's autosave -------------------------------------------------
 
-const SANDBOX_KEY = 'logiclearn:sandbox:v1';
-const UNREADABLE_KEY = 'logiclearn:sandbox:unreadable';
+const SANDBOX_KEY = storageKey('sandbox:v1');
+const UNREADABLE_KEY = storageKey('sandbox:unreadable');
 
 /**
  * The saved sandbox circuit, or null. A save that can't be read (e.g. made by a newer

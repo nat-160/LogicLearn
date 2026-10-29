@@ -6,6 +6,9 @@ It runs on Chromebooks, tablets and laptops with no install and no account.
 
 **Live site:** https://nat-160.github.io/LogicLearn/ (deployed from `main`)
 
+**Test version:** https://nat-160.github.io/LogicLearn/dev/ (deployed from `dev`; see
+[docs/branches.md](docs/branches.md))
+
 ## What's in Phase 1
 
 - **Editor** – drag or tap gates (AND, OR, NOT, NAND, NOR, XOR, XNOR), switches and lights
@@ -53,4 +56,5 @@ Phase 1 status: [docs/phase-1-report.md](docs/phase-1-report.md). See [docs/arch
 light, and [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for the full plan.
 
 TypeScript, React, React Flow, zustand, Vite, Vitest and Playwright. Deployed to GitHub
-Pages by GitHub Actions on every push to `main`.
+Pages by GitHub Actions on every push to `main` (the live site) or `dev` (the test
+version). Changes go through `dev` first: [docs/branches.md](docs/branches.md).

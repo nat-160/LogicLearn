@@ -10,6 +10,7 @@ is in `docs/curriculum-outline.md`. Read the plan's §3 before changing architec
 npm run dev            # local dev server
 npm test               # unit tests (Vitest)
 npm run e2e            # end-to-end tests (Playwright; builds + serves the app itself)
+npm run build:dev      # build the test version (dev branch settings, .env.dev-branch)
 npm run lint           # ESLint
 npm run typecheck      # tsc -b (three projects: sim, app, node)
 npm run format         # Prettier
@@ -68,4 +69,8 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 - Simulation changes need unit tests; UI flows get Playwright tests using `data-testid`
   and accessible names. E2E helpers in `e2e/helpers.ts` click or tap per project.
 - Do not copy code or assets from Logisim, Logisim-evolution or Digital (GPL).
-- `main` deploys to GitHub Pages via `.github/workflows/ci.yml`; develop on a branch.
+- **Branches** (`docs/branches.md`): `main` is the live site and `dev` the test version
+  (…/LogicLearn/dev/). Work on a feature branch and open pull requests **into `dev`**;
+  releases are pull requests from `dev` into `main`. Every deploy publishes both.
+- Save in the browser only through `storageKey()` names (`src/storage/storage.ts`): the
+  test version uses its own prefix (`.env.dev-branch`), so it never touches live data.

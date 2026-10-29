@@ -74,6 +74,8 @@ describe('effectiveDisplay', () => {
 
 describe('the early theme script in index.html', () => {
   it('reads the same storage key as the app', () => {
-    expect(indexHtml).toContain(`'${PREFERENCES_KEY}'`);
+    // Vite replaces %VITE_STORAGE_PREFIX% with the prefix from .env when it builds.
+    expect(indexHtml).toContain("'%VITE_STORAGE_PREFIX%prefs:v1'");
+    expect(PREFERENCES_KEY).toBe(`${import.meta.env.VITE_STORAGE_PREFIX}prefs:v1`);
   });
 });
