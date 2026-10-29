@@ -1,6 +1,7 @@
 # Project Plan: Web-Based Logic Circuit Learning Platform
 
-> Status: **Draft for review**, drafted 2026-10-29 from the approved project proposal.
+> Status: **Draft v2 for review**, drafted 2026-10-29 from the approved project proposal.
+> v2 adds the findings of an independent review and of Herman et al. (ICER '08); see §10.
 > Scope: a detailed plan for **Phase 1**, plus a roadmap for later phases. Phase 1 includes
 > design "seams" so that later phases add to the code rather than rewrite it.
 
@@ -31,8 +32,20 @@ together because the repository currently holds only a README.
 |---|---|
 | Starting point | Start fresh in this repo (no prior prototype code). |
 | Wire model | **Port-to-port now, routing later.** Wires connect an output pin to an input pin. The data model keeps an optional `waypoints` field so drawn routing can be added later without a migration. |
-| Data / backend | **Static, no accounts.** Everything stays in the browser (localStorage). Sharing is by file or link. No student data is ever collected. |
+| Data / backend | **Static, no accounts.** Everything stays in the browser (localStorage). **The app never sends data anywhere.** Anything that leaves the device is a file or link the student chooses to create. Beta surveys and evaluation tests are run separately (see §6). |
 | Devices | **Touch and mouse are both first-class from day one** (Chromebook + iPad). |
+
+### ⚠ Prerequisite: an action for the author today
+
+`nat-160/CS6460` is currently **private** and has **Pages disabled**, as reported by the
+GitHub API. GitHub Pages on a private repository requires a paid plan. Claude does not have
+admin rights on the repo, so the author must make one of these changes:
+
+1. **Make the repo public**, or enable **GitHub Pro** (free with the GitHub Student Developer
+   Pack).
+2. Then go to **Settings → Pages → Source: GitHub Actions**.
+
+Until this is done, P1.0's deploy step cannot pass, and M1 cannot be shown from a public URL.
 
 ---
 
@@ -40,49 +53,87 @@ together because the repository currently holds only a README.
 
 | Tool | What it is | Takeaway for this project |
 |---|---|---|
-| **Logisim / Logisim-evolution** (Java desktop); **logisim.app** (web port) | The classic teaching simulator. Each bit can be 0, 1, unknown or error. It reports oscillation after a fixed number of iterations rather than truly detecting a loop. | Reuse the value model (0/1/X now, E reserved) and the iteration-cap approach to oscillation. Both are GPL, so **do not copy code or assets**. |
-| **Digital** (hneemann, Java, GPL-3) | Educational simulator with **built-in test cases** that check a circuit's outputs for given inputs. Event-driven with one shared gate delay, a "switch-on" settling phase, oscillation detection and single-step tracing. | Model for our checker (declarative input→output specs). The single-step tracer is a good later-phase teaching feature ("watch the signal propagate"). |
-| **CircuitVerse** (web, MIT) | Browser-based. Teacher groups and assignments with deadlines and grading, subcircuits, multi-bit wires, and an Interactive Book with embedded circuits and quizzes. | **The closest existing competitor, and the proposal does not mention it.** Reviewers are likely to ask "why not CircuitVerse?" Our differentiators: **no accounts** (no student data), a **high-school-level scaffolded path** where each guided step is **checked automatically** and sends students to **remediation** when they fail, and **built-in teacher materials**. CircuitVerse's content is college-level (it draws on Mano's *Digital Design*). |
+| **Logisim / Logisim-evolution** (Java desktop); **logisim.app** (web port) | The classic teaching simulator. Each bit can be on, off, unspecified or error. It reports oscillation after a fixed number of iterations rather than truly detecting a loop. | Reuse the value model (0/1/X now, E reserved) and the iteration-cap approach to oscillation. Both are GPL, so **do not copy code or assets**. |
+| **Digital** (hneemann, Java, GPL-3) | Educational simulator with **built-in test cases**. Event-driven with one shared gate delay. Uses a "switch-on" phase with random update order so that latches can settle; has oscillation detection and single-gate stepping. | Model for our checker (declarative input→output specs) and for how sequential logic should settle in Phase 4. The single-gate stepper is a good later-phase teaching feature. |
+| **CircuitVerse** (web, MIT) | Browser-based. Teacher groups and assignments with grading, subcircuits, multi-bit wires, and an Interactive Book with embedded circuits and quizzes. | **The closest existing competitor, and the proposal does not mention it.** Reviewers are likely to ask "why not CircuitVerse?" Our differentiators: **no accounts** (no student data), a **high-school-level scaffolded path** where each guided step is **checked automatically** and sends students to **remediation** when they fail, and **built-in teacher materials**. CircuitVerse's book draws mostly on Mano's *Digital Design*, a college text. |
 | **NandGame** (web) | Puzzle levels. You build a circuit, toggle its inputs, then submit it for a check. Finished levels become reusable parts. | Proves the "submit and auto-check" loop is engaging. "Completed circuits become components" is a strong later feature (subcircuits). As the proposal notes, it has no free-form projects. |
 | **Nand2Tetris** | A college course based on an HDL, not on a visual editor. | Out of our audience's range. A good source for sequencing ideas. |
 | **Digital Logic Sim** (Sebastian Lague, desktop) | Start from NAND, build custom chips in layers. | Its community repeatedly asks for **undo/redo** and for editing existing chips. **Undo/redo is in Phase 1.** |
 | **React Flow (@xyflow/react)** | MIT-licensed library for node-based editors. Pan/zoom, snap-to-grid and custom nodes and edges are built in. On touch screens you can **tap two handles to connect them** (`connectOnClick`) or drag a connection line. | Our canvas. Several open-source React Flow logic simulators already exist, which lowers the technical risk. |
 
-**Research on learning (assessment and remediation design).** Herman, Loui, Zilles and others
-(University of Illinois) built the *Digital Logic Concept Inventory*. They found that
-**translating English specifications into Boolean logic** is a foundational skill and a common
-source of difficulty, and that students struggle most with abstraction and with transferring a
-concept to a new context. This shapes our design:
+### Research on learning, and how it shapes the design
 
-- One lesson is dedicated to translating English into logic ("either/or", "unless", "only if").
-- The checker produces data that lets hints target the specific wrong rows of a truth table.
-- The DLCI targets university students, but some of its items could inform the pre/post
-  evaluation, with permission from its authors.
+**Herman, Kaczmarczyk, Loui and Zilles (2008), "Proof by Incomplete Enumeration and Other
+Logical Misconceptions" (ICER '08).** In think-aloud interviews, students who had just
+finished a digital logic course translated English specifications into Boolean logic.
+The main findings:
 
-**Standards alignment**, to verify against official documents before building the evaluation
-index:
+- **"Easy" operators (AND, OR, XOR) vs "hard" ones (NAND, if-then, if-and-only-if).**
+  Students quietly replace a hard operator with an easy one that agrees on most rows:
+  - More than half translated "not both" as **XOR**, when it means **NAND**. The two differ
+    only on the 0,0 row.
+  - **No student** translated "if and only if" correctly. Most reduced it to a one-way
+    "if-then", and several went on to AND, which differs from XNOR only on the 0,0 row.
+  - Four students translated "if-then" as AND.
+- **Proof by incomplete enumeration** (the second most common code): students checked only
+  the one to three rows that confirmed their guess. They **rarely checked the all-zeros
+  row**, and they dropped negated variables for "by itself" and "without".
+- **Recall over reasoning** (the most common code), **"cowboy composition"** (combining
+  several rules in their heads instead of translating each rule and ANDing them together),
+  and **little metacognition** (rarely checking the answer against the English again).
+- **Interference** from programming: a causal reading of "if", and `!` used for NOT.
+- **The authors recommend:** concrete, relatable examples for "if-then", "if and only if",
+  "by itself" and "not both"; teaching the translate-each-rule-then-combine method; and
+  insisting on **checking every case** with a truth table.
+
+**What this means for the design.** These are the participants' patterns, college students
+who earned B or C grades. Whether high school students make the same mistakes is a
+hypothesis for our evaluation to test.
+
+1. The checker enumerates every row, but it must **show the student which rows are wrong**,
+   not just "wrong". A **"misconception signature"** table (§3.6) maps sets of wrong rows to
+   targeted hints.
+2. The truth-table panel tracks **which input combinations the student has actually tried**
+   ("you've tried 3 of 4"). In Phase 2 it nudges the student before they can press Check.
+3. A lesson option **hides live outputs** ("predict first" / "blind" mode), so a challenge
+   cannot be solved just by toggling switches until the lights match. A **prediction mode**
+   lets students fill in the truth table before the tool reveals the answer (Phase 2; the
+   seam is in Phase 1).
+4. The curriculum (§5) puts XOR next to OR, contrasts NAND with XOR, and teaches English →
+   logic as rule-by-rule translation followed by AND.
+5. The sandwich-shop and apple-pie interview items are candidates, with attribution, for
+   the pre/post evaluation or for think-aloud sessions.
+
+Related work from the same group: *Describing the What and Why of Students' Difficulties in
+Boolean Logic* (ACM TOCE, 2012), and the **Digital Logic Concept Inventory** (DLCI),
+a validated multiple-choice instrument for university students.
+
+### Standards alignment (verify against official documents before building the evaluation index)
 
 - **IB Computer Science** (new syllabus, first assessment May 2027) has A1.2.3 (purpose and use
-  of logic gates), A1.2.4 (constructing truth tables) and A1.2.5 (logic diagrams), covering
-  AND, OR, NOT, NAND, NOR, XOR and XNOR. *These come from third-party course materials; check
-  them against the official IB guide.*
-- **CSTA 3B-CS-02**: "Illustrate ways computing systems implement logic, input, and output
-  through hardware components." California's 9–12 specialty standard explicitly names gates
-  and adders built from gates.
+  of logic gates), A1.2.4 (truth tables) and A1.2.5 (logic diagrams), covering AND, OR, NOT,
+  NAND, NOR, XOR and XNOR. *These come from third-party course materials; check them against
+  the official IB guide.*
+- **CSTA 3B-CS-02** (2017 standards): "Illustrate ways computing systems implement logic,
+  input, and output through hardware components." California's 9–12 specialty standard
+  explicitly names gates and adders built from gates. *CSTA has been revising its standards,
+  so confirm that this identifier hasn't changed.*
 - **AP CSP** clearly covers *Boolean expressions* (Topic 3.5). I could **not confirm** that the
   current Course and Exam Description covers *logic gates*. Check this before the proposal's
   evaluation relies on AP items.
 
-**Deployment risk.** Some school districts block GitHub Pages, along with Vercel, Netlify and
-Cloudflare, as a category. Mitigations for later phases: a custom domain that a district IT
-team can allowlist, an installable offline-capable PWA, and possibly a single-file offline
-build. Because the app is fully static, it can be moved to another host with no code changes.
+### Deployment risk
+
+School web filters sometimes block developer and hosting sites. The evidence I found is
+anecdotal: a student petition about a district blocking GitHub. Mitigations for later phases:
+a custom domain that district IT can allowlist, and an installable offline-capable PWA.
+Because the app is fully static, it can be moved to another host with no code changes.
 
 ---
 
 ## 3. Architecture (decided in Phase 1, built on in every later phase)
 
-### 3.1 Stack
+### 3.1 Stack, hosting and browser support
 
 - **TypeScript + React + Vite** (current stable versions at scaffold time).
 - **@xyflow/react** (React Flow) for the canvas.
@@ -91,8 +142,23 @@ build. Because the app is fully static, it can be moved to another host with no 
   iPad touch.
 - **GitHub Actions** runs lint, typecheck, test and build, then deploys to **GitHub Pages**
   via `actions/deploy-pages`.
-- **Hash-based routing** (`/#/lesson/2`), because GitHub Pages has no SPA fallback. Vite's
-  `base` is set to `/CS6460/` (or `./`).
+- **Hash-based routing**, because GitHub Pages has no SPA fallback. Routes:
+  - `#/` home
+  - `#/sandbox`
+  - `#/lesson/:id/:step`
+  - `#/share/:payload`
+
+  Vite's `base` is set to `'./'`, so the same build works under `/CS6460/`, under a custom
+  domain, or on any other static host.
+- **Browser support matrix** (proposed; confirm with a partner school's devices if one is
+  available):
+  - Chrome / ChromeOS 100+ (school Chromebooks past their Auto Update Expiration stay on
+    older Chrome).
+  - Safari on iPadOS 15+ (older iPads cannot update past 15).
+
+  Set Vite's `build.target` explicitly to match, because the default assumes newer browsers.
+  Avoid APIs newer than the matrix (for example, `structuredClone` and `Array.prototype.at`
+  need Safari 15.4).
 
 ### 3.2 Module layout and dependency rule
 
@@ -107,9 +173,15 @@ src/
   app/        Routes, layout, theming.
 ```
 
-**Rule:** `sim/` must never import from `editor/`, `lessons/` or React. This keeps the engine
-fully unit-testable, makes it reusable in a Web Worker or a headless grader, and keeps
-simulation results stable while the UI changes.
+**Rule:** `sim/` must never import from `editor/`, `lessons/`, React or the DOM. Two
+mechanisms enforce this:
+
+- ESLint `no-restricted-imports`.
+- A separate `tsconfig` for `sim/` with **no `dom` library**, so DOM globals fail to typecheck.
+
+All `sim/` inputs and outputs are **plain data** that can be serialized, with no functions.
+This keeps the engine fully unit-testable, makes it usable in a Web Worker or a headless
+grader, and keeps simulation results stable while the UI changes.
 
 ### 3.3 Circuit document (the source of truth; serializable and versioned)
 
@@ -157,6 +229,7 @@ Each component type is registered once:
 interface ComponentDef {
   type: string;
   category: "io" | "gate" | "display" | "sequential";
+  io?: "input" | "output";            // marks parts the truth table and checker treat as I/O
   pins(props): { inputs: PinDef[]; outputs: PinDef[] };
   evaluate(inputs: Value[], props, state?): { outputs: Value[]; state? };
   defaultProps: Record<string, unknown>;
@@ -164,13 +237,14 @@ interface ComponentDef {
 ```
 
 The view (SVG gate shape, touch targets) is registered separately, in `components/*/View.tsx`.
-New components in later phases (seven-segment display, push button, clock, flip-flops,
-subcircuits) are **added to the registry, and the engine does not change**. The optional
-`state` argument exists now so that sequential components can be added later.
+New components in later phases (push button, seven-segment display, clock, flip-flops,
+subcircuits) are **added to the registry, and the engine and checker do not change**. They
+find I/O through the `io` role, never through type names. The optional `state` argument
+exists now so that sequential components can be added later.
 
-**Phase 1 component set:** Switch (toggle input), Light (output), AND, OR, NOT, NAND, NOR,
-XOR, XNOR. Gates have 2 inputs (NOT has 1). The `inputs` prop is in place for 2–4-input gates
-later.
+**Phase 1 component set:** Switch (`io: input`), Light (`io: output`), AND, OR, NOT, NAND,
+NOR, XOR, XNOR. Gates have 2 inputs (NOT has 1). The `inputs` prop is in place for 2–4-input
+gates later.
 
 ### 3.5 Simulation engine
 
@@ -180,35 +254,48 @@ later.
   distinct "unknown" style, which teaches students to look for loose wires.
 - **Compile:** `CircuitDoc` → a netlist with integer indices. There is one net per output pin,
   and a fan-out list for each net.
-- **Run:** event-driven with unit delay. Changed nets schedule the components that read them.
-  Each "tick" evaluates all scheduled components, then applies all of their new outputs at
-  once. This repeats until nothing changes.
-- **Oscillation:** if the circuit has not settled after a step budget (about 4× the component
-  count, minimum 100), the engine stops and reports the components that are still changing.
-  The editor highlights them with the message "This circuit never settles".
-- **Why event-driven rather than topological ordering?** It handles feedback loops (SR
-  latches, flip-flops) without redesign, which is the Phase 4 stretch goal. It also makes a
+- **Reset:** every net is set to X, and **every component is scheduled once**. This is how
+  switches (and later, constants and clocks) put their values onto the circuit.
+- **Run:** event-driven with unit delay. Each **tick** evaluates all scheduled components, then
+  applies all of their new outputs at once, and schedules the readers of any net that changed.
+  This repeats until nothing changes.
+- **Oscillation:** the step budget is counted in **ticks**: `max(100, 4 × componentCount)`.
+  That is always more than the depth of an acyclic circuit. If the circuit has not settled
+  within the budget, the engine stops and reports the components that are still changing,
+  and the editor highlights them with the message "This circuit never settles".
+  - Note: a NOT gate looped back on itself **settles at X** (NOT(X) = X), because its value
+    is never pinned down. The editor still shows the `HAS_CYCLE` notice for it.
+  - A real oscillation needs a known value to enter the loop. Example: a NAND gate whose
+    second input is its own output. With A=0 it settles at 1; switching A to 1 then makes
+    it oscillate.
+- **Why event-driven rather than topological ordering?** The engine's structure already
+  supports feedback loops (latches, flip-flops), the Phase 4 stretch goal. It also makes a
   "slow motion" propagation view possible later. For the small lesson circuits it is fast
-  enough. Target: under 2 ms per update for 200 components.
+  enough. Phase 4 must still add a **settling strategy**: with one uniform delay, a NOR SR
+  latch whose S and R are released *at the same moment* oscillates forever. The options are
+  Digital-style settling with random update order, or providing latches and flip-flops as
+  primitive components. When a student toggles switches one at a time, this case does not
+  arise.
 - **Cycle check:** a graph check (DFS) flags combinational loops. In Phase 1 the checker
   rejects looped circuits with a friendly message ("loops come later, in the memory lesson").
 
 ### 3.6 Truth table and checker
 
-- **I/O discovery:** inputs are Switch components and outputs are Light components. They are
-  ordered by label: auto-labeled A, B, C… for inputs, and editable. Lessons fix the labels, so
-  checks match parts by **label, not by position**.
-- **Truth table:** for each of the 2ⁿ input combinations, reset to all-X, apply the inputs, and
-  let the circuit settle. The table can be shown for up to 6 inputs (64 rows); the checker can
+- **I/O discovery:** inputs and outputs are the components whose `ComponentDef.io` is
+  `input` or `output`. They are ordered by label: auto-labeled A, B, C… for inputs, and
+  editable. Lessons fix the labels, so checks match parts by **label, not by position**.
+- **Truth table:** for each of the 2ⁿ input combinations, reset, apply the inputs, and let
+  the circuit settle. Rows are shown in binary counting order, so the **all-zeros row is
+  always first**. The panel shows the table for up to 6 inputs (64 rows); the checker can
   check up to 10 inputs.
-- **Check spec**, used by lessons, challenges and later the project grader:
+- **Check spec**: plain data, used by lessons, challenges and later the project grader:
 
   ```ts
   interface CheckSpec {
     inputs: string[];                 // labels, in order
     outputs: string[];
-    expected: TruthTableRow[] | ((ins: Bit[]) => Bit[]);
-    constraints?: {
+    expected: TruthTableRow[];        // data only; lesson authors may use rowsFrom(fn) to generate
+    constraints?: {                   // gate constraints never count I/O parts
       allowedTypes?: string[];        // e.g. only NAND
       maxGates?: number;
       requiredTypes?: string[];
@@ -222,54 +309,84 @@ later.
   interface CheckResult {
     pass: boolean;
     mismatches: { inputs: Bit[]; expected: Bit[]; actual: Value[] }[];
-    diagnostics: Diagnostic[];  // codes: MISSING_IO, UNCONNECTED_INPUT, OUTPUT_UNKNOWN,
-                                // HAS_CYCLE, DISALLOWED_TYPE, TOO_MANY_GATES, OSCILLATES
+    diagnostics: Diagnostic[];  // MISSING_IO, EXTRA_IO, DUPLICATE_LABEL, UNCONNECTED_INPUT,
+                                // OUTPUT_UNKNOWN, HAS_CYCLE, OSCILLATES,
+                                // DISALLOWED_TYPE, TOO_MANY_GATES
   }
   ```
 
-  The codes and the set of wrong rows are what the Phase 2 hint system uses. For example, if
-  only the `1,1` row is wrong, the student probably built OR instead of XOR, and the hint can
-  ask "What should happen when both inputs are on?"
+- **Misconception signatures.** Phase 1 builds the data and tests it; Phase 2 adds the hint
+  text. Each signature is a target gate, a common wrong gate, and the set of rows where the
+  two differ. These rows come from ICER '08 and from comparing the gates' truth tables.
+
+  | Target | Common wrong answer | Wrong rows | Hint direction |
+  |---|---|---|---|
+  | NAND ("not both") | XOR ("exactly one") | {0,0} | "What should happen when *neither* is on?" |
+  | XNOR ("if and only if", "exactly when") | AND | {0,0} | "Check the case where both are off." |
+  | XOR ("one or the other, not both") | OR | {1,1} | "What should happen when *both* are on?" |
+  | ¬A + B ("if A then B"; an extension topic) | AND | {0,0}, {0,1} | "If A is off, does the rule say anything?" |
+  | Any spec | — | only the all-zeros row | "Did you check the case where every input is 0?" |
 
 ### 3.7 Lesson framework
 
 - **Lessons are TypeScript data modules**, with Markdown strings for prose. This makes them
-  type-checked, lets them include check specs inline, and lets CI test them. Each lesson is a
-  list of **steps**:
+  type-checked and lets CI test them. Each lesson is a list of **steps**:
   - `explain`: text, an optional picture, an optional read-only embedded circuit.
   - `guided`: a starter circuit (with locked I/O), a restricted palette, a `CheckSpec`,
     `hints[]`, and a **reference solution**.
   - `challenge`: the end-of-lesson mastery check. It has the same shape as `guided` but
     gives less help.
-  - `remediation` *(Phase 2)*: smaller guided steps, chosen by failure pattern.
+  - `remediation` *(Phase 2)*: smaller guided steps, chosen by misconception signature.
   - `project` *(Phase 2)*: open-ended, checked against basic criteria.
-- **Every guided or challenge step ships a reference solution, and a unit test checks that the
-  solution passes the step's own `CheckSpec`.** This catches unsolvable or mis-specified
-  lessons before students do, which matters more as lessons are written quickly in Phase 2.
+- **Step options (seams):**
+  - `liveOutputs: boolean` (default true). When false, lights show "?" until the student
+    presses Check: the "predict first" / blind mode.
+  - `truthTable: "live" | "hidden" | "predict"`. `predict` is Phase 2.
+- **Every guided or challenge step ships a reference solution.** A content test in CI asserts
+  that each **solution passes** its `CheckSpec` and each **starter circuit fails** it. This
+  catches unsolvable or trivially solved steps before students see them, which matters more
+  as lessons are written quickly in Phase 2.
 - **Progress store** (localStorage, versioned) records, for each step: status, number of
-  attempts, number of hints used, and first/last timestamps. It holds **no personal
-  information**. These fields cost almost nothing now, and they later drive gating, test-outs
-  and teacher completion codes. Students can also choose to export them as data for the beta
-  evaluation.
+  attempts, hints used, the input rows the student tried, and first/last timestamps. It holds
+  **no personal information**. These fields cost almost nothing now; later they drive
+  gating, test-outs, completion codes and the opt-in beta export.
+  - **Durability.** Safari's tracking prevention can erase a site's localStorage after
+    7 days without a visit (Home Screen web apps are exempt), and shared or guest-mode
+    Chromebooks wipe storage when the session ends. So:
+    - Phase 1 calls `navigator.storage.persist()` where it is available.
+    - Phase 2 adds a student-facing **progress export/import** ("save my progress to a
+      file"), which is required, not only a beta feature.
 
 ### 3.8 Editor: interaction design for touch and mouse
 
-- **Add parts:** drag from the palette (implemented with pointer events, not the HTML5 drag
-  API, which is unreliable with touch on iPad Safari), **or tap a palette item to drop it at
-  the center of the view**.
+- **Add parts:**
+  - Drag from the palette, implemented with pointer events, not the HTML5 drag API, which is
+    unreliable with touch on iPad Safari.
+  - **Or tap a palette item** to place it in the **next free grid cell near the center of the
+    view**, so new parts don't pile up in one spot.
 - **Connect:** drag from pin to pin, **or tap a pin, then tap another pin** (React Flow
   `connectOnClick`). `isValidConnection` rejects connections from input to input or from
   output to output.
-- **Touch targets:** pins look small but have hit areas of at least 24 px (WCAG 2.2
-  target-size minimum), aiming for about 44 px on touch screens. Toolbar buttons are at least
-  44 px.
+- **Touch targets:**
+  - Pins look small but have hit areas of at least 24 px (WCAG 2.2 target-size minimum),
+    aiming for about 44 px on touch screens. Toolbar buttons are at least 44 px.
+  - React Flow handles scale with zoom, so set **`minZoom`** (for example 0.5) high enough
+    that hit areas stay at least 24 px on screen, or scale the handles inversely.
+  - Space pins at least one hit area apart.
+- **iPad gestures:**
+  - `touch-action: none` on the canvas, so React Flow owns pan and pinch.
+  - `-webkit-touch-callout: none` and `user-select: none` on editor controls, so a long press
+    doesn't select text or open the callout menu.
+  - Stop page-level pinch-zoom outside the canvas (iOS ignores `user-scalable=no`), using
+    `touch-action: manipulation` and `gesturestart` handling.
 - **Toggling a switch** is a tap or click. A drag threshold (`nodeDragThreshold`) keeps a tap
   from being read as a move.
 - **Delete:** the Delete or Backspace key, plus a toolbar trash button for touch. **Undo/redo**
   works with Ctrl/Cmd+Z and Shift+Z, plus toolbar buttons. A drag counts as one history entry,
   recorded when the drag ends.
-- **Snap to grid** is on by default. This builds in the proposal's fallback of snapping to a
-  grid instead of fully open editing.
+- **Snap to grid** is on by default, for tidy circuits. The proposal's worst-case fallback,
+  a slot-based grid editor instead of open editing, should not be needed with React Flow. It
+  stays in §8 as a contingency.
 - **Wire state is never shown by color alone.** A 1 is a bright, thick wire; a 0 is dark and
   thin; X is gray and dashed. A setting can show 0/1 labels on wires.
 - **Layout:** tuned for Chromebooks at 1366×768 and iPads in landscape (about 1024–1180 px
@@ -285,39 +402,54 @@ order, and each task is a reviewable commit or PR.
 
 | # | Task | Acceptance criteria | Target |
 |---|---|---|---|
-| **P1.0** | **Scaffold and CI/CD.** Vite + React + TS, ESLint + Prettier, Vitest, Playwright, a GitHub Actions workflow (lint, typecheck, test, build, deploy to Pages), hash router, `base` path. Add a `CLAUDE.md` with commands and the architecture rules, so future Claude Code sessions follow them. | `npm run build`, `npm test` and `npm run lint` pass in CI, and the Pages URL loads a placeholder page. | Oct 29 |
+| **P1.0** | **Scaffold and CI/CD.** Vite + React + TS, ESLint + Prettier, Vitest, Playwright, the GitHub Actions workflow (lint, typecheck, test, build, deploy to Pages), hash router, `base: './'`, explicit `build.target`, and the **`sim/` boundary** (separate no-DOM tsconfig plus an import lint rule). Add a `CLAUDE.md` with commands and architecture rules, so future Claude Code sessions follow them. *Deploying needs the §1 prerequisite.* | `npm run build`, `npm test` and `npm run lint` pass in CI. The Pages URL loads a placeholder. A test file in `sim/` that imports React fails lint. | Oct 29 |
 | **P1.1** | **Circuit model and serialization.** Types, `validate()`, `migrate()`, JSON round-trip. | Round-trip and validation tests pass. Wires that break the single-driver rule are rejected. | Oct 29 |
-| **P1.2** | **Component registry and the 9 Phase 1 components** (logic only). | Every gate's full truth table, including X cases, is unit-tested. | Oct 30 |
-| **P1.3** | **Simulation engine.** Compile, event loop, settle, step budget, oscillation report, cycle check. | Tests: half adder and full adder give correct outputs; fan-out; an unconnected input gives X; a NOT gate feeding itself is reported as oscillating; 200 components update in under 2 ms on CI. | Oct 30 |
-| **P1.4** | **Truth table and checker.** Truth table generation, `CheckSpec`, `CheckResult`, diagnostics, constraints. | Tests: a correct XOR passes; OR used in place of XOR fails on exactly the `1,1` row; a missing output gives `MISSING_IO`; "only NAND" rejects an AND gate. | Oct 30 |
-| **P1.5** | **Editor canvas.** Custom nodes with hand-drawn ANSI gate SVGs, palette (drag and tap-to-add), connect by drag or tap, single-driver replacement, delete, undo/redo, snap grid, pan/zoom, live coloring of wires and lights, switch toggling, a banner when the circuit oscillates. | With mouse **and** emulated iPad touch, a user can build a half adder from scratch, toggle its inputs and see correct outputs. Covered by a Playwright test in both modes. | Oct 31 |
-| **P1.6** | **Truth table panel.** Updates live; the row matching the current switch settings is highlighted; tapping a row sets the switches to that combination. | Manual check plus a component test. This ties the circuit diagram to the truth table (IB A1.2.4–A1.2.5). | Oct 31 |
+| **P1.2** | **Component registry and the 9 Phase 1 components** (logic only, with `io` roles). | Every gate's full truth table, including X cases, is unit-tested. | Oct 30 |
+| **P1.3** | **Simulation engine.** Compile, reset (schedule everything once), tick loop, tick budget, oscillation report, cycle check. | Tests: half adder and full adder give correct outputs; fan-out; an unconnected input gives X; a NOT gate looped back on itself **settles at X** and shows `HAS_CYCLE`; NAND(A, its own output) settles at 1 with A=0, then **oscillates** after A is switched to 1; a 200-component circuit settles within a loose time bound (or measure with `vitest bench`, not a hard 2 ms gate in CI). | Oct 30 |
+| **P1.4** | **Truth table and checker.** Truth table generation, `CheckSpec` (data only, plus a `rowsFrom()` helper), `CheckResult`, all diagnostics, constraints that skip I/O parts, and the misconception-signature data. | Tests: a correct XOR passes; OR used in place of XOR fails on exactly the `1,1` row and matches its signature; XOR used in place of NAND fails on exactly `0,0`; a missing output gives `MISSING_IO`; two inputs labeled "A" give `DUPLICATE_LABEL`; "only NAND" rejects an AND gate but not the switches. | Oct 30 |
+| **P1.5a** | **Editor core.** Custom nodes with hand-drawn ANSI gate SVGs, palette (drag, and tap to place in the next free cell), connect by drag or tap, single-driver replacement, delete, snap grid, pan/zoom with `minZoom`, live coloring of wires and lights, switch toggling. | With mouse **and** emulated touch, a user can build a half adder from scratch and see correct outputs. The Playwright touch test uses **taps only** (tap to add, tap to connect, tap to toggle), because Playwright's touchscreen API only supports `tap()`. | Oct 31 |
+| **P1.5b** | **Editor ergonomics.** Undo/redo (one history entry per drag), "never settles" banner and highlighting, iPad gesture CSS, label editing. | Undo/redo unit tests on the store. Manual check in Safari (on a real iPad if one is available). | Nov 1 |
+| **P1.6** | **Truth table and check panel.** Updates live; the current row is highlighted; tapping a row sets the switches to that combination; rows the student has tried are marked. Includes a **minimal "Target" check**: choose a hard-coded target (e.g. XOR, half adder), press **Check**, and see pass or fail with the wrong rows highlighted. | A component test, plus the M1 demo: OR built for an XOR target shows the `1,1` row wrong. | Oct 31 – Nov 1 |
 | **P1.7** | **Curriculum outline (scaffolded lesson plan).** Revise the draft in §5 with the author. | The author has reviewed it. It is saved as `docs/curriculum-outline.md`. | Nov 1 |
-| **P1.8** | **Milestone 1 demo.** Deploy, write a demo script, record the video. | The deployed build shows: sandbox, live simulation, truth table, and a checker pass and fail. | **M1 due** |
-| **P1.9** | **Saving and sharing.** Autosave the sandbox to localStorage; export and import a `.circuit.json` file; share link (circuit compressed into the URL hash with `lz-string`, falling back to a file when the link would be too long). | A link reopens the same circuit in a fresh browser profile. Malformed files or links give a friendly error, not a crash. | Nov 2 |
-| **P1.10** | **Lesson framework skeleton.** Lesson schema, runner UI (instruction panel, step progress, a "Check" button that uses the checker, hints revealed one at a time), progress store, and **one demo lesson** ("NOT and AND") with reference solutions, plus the content test for solutions. | The demo lesson can be completed end to end; progress survives a page reload; the solution test runs in CI. | Nov 3–4 |
+| **P1.8** | **Milestone 1 demo.** Deploy, write a demo script, record the video. | The deployed build shows: sandbox, live simulation, truth table, and the checker passing and failing. | **M1 due** |
+| **P1.9** | **Saving and sharing.** Autosave the sandbox to localStorage plus `navigator.storage.persist()`; export and import a `.circuit.json` file; share link at `#/share/<lz-string payload>`, falling back to a file when the link would be too long. **Opening a share link creates a copy and never overwrites the student's autosaved work.** | A link reopens the same circuit in a fresh browser profile, and the existing sandbox is unchanged. Malformed files or links give a friendly error, not a crash. | Nov 2 |
+| **P1.10** | **Lesson framework skeleton.** Lesson schema (with the `liveOutputs` and `truthTable` options), runner UI (instruction panel, steps unlocked in order, a "Check" button that uses the checker, hints revealed one at a time), progress store, and **one demo lesson** ("NOT and AND") with reference solutions, plus the content test (solution passes, starter fails). | The demo lesson can be completed end to end; progress survives a page reload; the content test runs in CI. | Nov 3–4 |
 
-**Milestone 1 cut line:** P1.0–P1.8 is the minimum to demo. P1.9–P1.10 finish at the start of
-the week of Nov 2 and overlap with Phase 2. P1.10 must be done before lessons 1–4 are written.
+**Milestone 1 cut line:**
+
+- **Required for M1:** P1.0–P1.4, P1.5a, P1.6, P1.7 and P1.8.
+- **Wanted for M1 but can slip a day:** P1.5b.
+- **After M1:** P1.9 and P1.10 finish at the start of the week of Nov 2, overlapping with
+  Phase 2. P1.10 must be done before lessons 1–4 are written.
 
 ### Phase 1 exit criteria
 
-- [ ] On Chrome (ChromeOS or desktop) and on Safari (iPad, or emulated touch), a student can
-      build, simulate and inspect a circuit using **only** touch or **only** a mouse.
-- [ ] The checker verifies a circuit against a spec and reports the exact wrong rows and the
-      structural problems.
-- [ ] A demo lesson runs end to end with gated steps, hints and saved progress.
+- [ ] On Chrome (ChromeOS or desktop) and on iPad Safari, a student can build, simulate and
+      inspect a circuit using **only** touch or **only** a mouse. Verified by the Playwright
+      tests plus **one manual pass on a real iPad** (or flagged as untested if no device is
+      available).
+- [ ] The checker verifies a circuit against a spec, reports the exact wrong rows and the
+      structural problems, and matches the misconception signatures.
+- [ ] The demo lesson runs end to end: steps unlock in order, hints work, and progress is
+      saved.
 - [ ] CI is green and `main` deploys to GitHub Pages automatically.
-- [ ] `sim/` has no React or DOM imports, enforced by a lint rule.
-- [ ] Unit tests cover all gate truth tables and every engine and checker scenario listed above.
+- [ ] The `sim/` boundary is enforced by both the tsconfig and the lint rule.
+- [ ] Unit tests cover all gate truth tables and every engine and checker scenario listed
+      above.
 
 ### Explicitly out of scope for Phase 1
 
-Drawn wire routing; multi-bit buses; seven-segment and other displays (Phase 2); lesson
-content beyond the demo lesson (Phase 2); hints keyed to failure patterns (Phase 2); teacher
-features (Phase 3); sequential logic and clocks (Phase 4 stretch); subcircuits (later or
-stretch); building circuits with the keyboard alone (a known accessibility limit; toolbar and
-lesson navigation will still work from the keyboard).
+- Drawn wire routing.
+- Multi-bit buses.
+- Push button, seven-segment and other displays (Phase 2).
+- Lesson content beyond the demo lesson (Phase 2).
+- Hint *text* for misconception signatures, prediction mode, and the "tried rows" nudge
+  (Phase 2).
+- Teacher features (Phase 3).
+- Sequential logic and clocks (Phase 4 stretch).
+- Subcircuits (post-course).
+- Building circuits with the keyboard alone. This is a known accessibility limit; the toolbar
+  and lesson navigation still work from the keyboard. See §8.
 
 ---
 
@@ -325,20 +457,26 @@ lesson navigation will still work from the keyboard).
 
 Each lesson moves from **direct instruction** to **guided construction** (with locked I/O and
 a restricted palette) to **open construction**, then ends with an automatically checked
-**challenge**. Failing the challenge leads to **remediation**. Each unit ends with an **open
-project**. Optional test-outs come before each unit.
+**challenge**. Failing the challenge leads to **remediation**, chosen by misconception
+signature. Each unit ends with an **open project**. Optional test-outs come before each unit.
+
+Two habits run through every lesson, taken from ICER '08:
+
+- **"Check every row, starting with all zeros."** The tried-rows indicator and a closing
+  "re-read the rule and check each row" prompt support this.
+- **At least one challenge per lesson in predict-first mode**, with live outputs hidden.
 
 | # | Lesson | Key ideas | Example challenge | Standards |
 |---|---|---|---|---|
 | 0 | *Editor tour* (skippable) | Placing parts, wiring, toggling, undo | Wire a switch to a light | — |
-| 1 | Signals: on/off, 0/1 | Inputs, outputs, binary signals, unknown (X) | Two switches, two lights; label them | IB A1.2.3 |
-| 2 | NOT and AND | Gate behavior, reading a truth table | "The light is on only when both buttons are pressed" | A1.2.3–A1.2.4 |
-| 3 | OR, and combining gates | Multi-gate circuits; tracing signals | Build `(A AND B) OR C` from its truth table | A1.2.4–A1.2.5 |
-| 4 | From circuit to truth table | Building truth tables by hand, then checking with the tool | Predict the table, then verify it | A1.2.4 |
+| 1 | Signals: on/off, 0/1 | Inputs, outputs, binary signals, unknown (X) means "not connected" | Two switches, two lights; label them | IB A1.2.3 |
+| 2 | NOT and AND | Gate behavior, reading a truth table | "The light is on only when both switches are on" | A1.2.3–A1.2.4 |
+| 3 | OR and XOR | Inclusive vs exclusive "or" (everyday "or" often means XOR); tracing multi-gate circuits | Build `(A AND B) OR C` from its table; tell OR and XOR apart on the `1,1` row | A1.2.4–A1.2.5 |
+| 4 | From circuit to truth table | Building full truth tables by hand, then checking with the tool | Predict the whole table (predict mode), then verify it | A1.2.4 |
 | **U1 project** | *Open project:* e.g. a door alarm or voting machine | Free design with basic automatic criteria | Rubric (hidden; for teachers) | CSTA 3B-CS-02 |
-| 5 | NAND and NOR: universal gates | Build NOT, AND and OR from NAND only | "Only NAND" constraint | A1.2.3 |
-| 6 | XOR/XNOR and English → logic | "Either… or", "unless", "only if" (the DLCI's hardest area) | Turn a word problem into a circuit | A1.2.5 |
-| 7 | From truth table to circuit | Sum of products, Boolean expressions ↔ diagrams | Build a circuit from any 3-input table | A1.2.4–A1.2.5 |
+| 5 | NAND and NOR | "Not both" (NAND) vs "exactly one" (XOR): they differ only when both are off. NAND is universal: build NOT, AND and OR from NAND only. | "Only NAND" constraint | A1.2.3 |
+| 6 | XNOR and English → logic | "If and only if" / "exactly when" (XNOR, not AND); "by itself" and "without" need NOTs; method: **translate each rule separately, then AND them**. *Extension:* "if-then" in logic vs in code. | A word problem with 2–3 rules (sandwich-shop style) | A1.2.5 |
+| 7 | From truth table to circuit | Sum of products, Boolean expressions ↔ diagrams, notation (`NOT A` = `Ā` = `!A`) | Build a circuit from any 3-input table | A1.2.4–A1.2.5 |
 | 8 | Useful circuits: adders | Half adder, full adder, 2-bit adder | Full adder | CSTA 3B-CS-02 |
 | **U2 project** | *Open project:* e.g. drive a seven-segment display from switches | Uses Phase 2 display parts | Rubric | — |
 | 9 *(stretch)* | Memory: latches and clocks | Feedback, SR latch, D latch | Store one bit | — |
@@ -347,12 +485,65 @@ project**. Optional test-outs come before each unit.
 
 ## 6. Later phases (each is built on the Phase 1 seams above)
 
-| Phase | Weeks (from the proposal) | Scope | Seam it relies on |
-|---|---|---|---|
-| **2: Lessons and guidance** | Nov 2 – Nov 13 (M2) | Lessons 1–8 content; hints and reminders (a progressive hint ladder, a gate-reference "reminder" card, hints chosen from wrong rows and diagnostics); progress gating; optional test-outs; remediation branches; seven-segment display and multi-color lights; automatic project grader (criteria such as "uses at least N gates", "every output depends on every input", "drives a seven-segment display"). | Registry; structured `CheckResult`; progress store; lesson step types. |
-| **3: Instructor support and beta** | Nov 16 – Nov 27 (M3) | Teacher guide (onboarding, pacing for 45/50/90-minute periods, hidden rubrics), downloadable PDFs, **bypass codes** (checked as hashes in the browser; they discourage students but are not secure, and the docs say so), **completion codes** or a printable progress report a student can show a teacher (tamper-evident rather than tamper-proof), a teacher "answer key" view, and a beta-testing round with an opt-in progress export plus surveys. | Progress store holds no personal information and can be serialized; lesson data includes reference solutions. |
-| **4: Stretch, polish, report** | Nov 30 – Dec 14 | Sequential logic (clock, SR/D latches, flip-flops), possibly checked with sequence-based tests like Digital's; a single-step "slow motion" propagation view; accessibility and performance polish; offline PWA; final report and walkthrough video. | Event-driven engine; `state` in `evaluate`; oscillation handling. |
-| **Later / post-course** | — | Drawn wire routing (`waypoints`); subcircuits / custom chips (flattened at compile time, as Digital does); multi-bit buses; custom domain; optional backend (never required). | Wire waypoints; registry type namespaces; storage adapter. |
+### Phase 2: Lessons and guidance (Nov 2 – Nov 13, M2)
+
+This is the heaviest phase. Work in this **priority order**:
+
+1. **Lessons 1–4**, progress gating, the hint ladder (progressive hints, plus a gate-reference
+   "reminder" card), and progress export/import. *Week of Nov 2.*
+2. The **misconception-signature hints**, the tried-rows nudge, and the Unit 1 project with
+   the automatic grader's basic criteria ("uses at least N gates", "every output depends on
+   every input"). *Week of Nov 9.*
+3. **Lessons 5–8**, push button, seven-segment display and multi-color lights, and the Unit 2
+   project. *Week of Nov 9.*
+4. **Prediction mode**, optional test-outs, and remediation branches. *These can slip into
+   Phase 3.*
+
+**Fallbacks** (from the proposal's feasibility section): shorter lessons and written
+material, and briefer feedback on projects.
+
+*Seams it relies on:* the registry and `io` roles; the structured `CheckResult` and
+signatures; the progress store; the lesson step types and options.
+
+### Phase 3: Instructor support and beta (Nov 16 – Nov 27, M3)
+
+- **Teacher materials:** a teacher guide (onboarding, pacing for 45/50/90-minute periods,
+  hidden rubrics) and downloadable PDFs.
+- **Bypass codes**, checked as hashes in the browser. They discourage students but are not
+  secure, and the docs say so.
+- **Completion codes** or a printable progress report a student can show a teacher. These are
+  tamper-evident rather than tamper-proof.
+- A teacher "answer key" view.
+- **Beta testing:**
+  - **Recruit testers now.** Prefer adults (classmates, teachers). Testers who are minors need
+    parental consent and a check against course and IRB policy.
+  - Have the **beta build, opt-in progress export and survey ready by about Nov 20**, because
+    Thanksgiving (Nov 26) falls in the testing week.
+
+*Seams it relies on:* the progress store holds no personal information and can be
+serialized; lesson data includes reference solutions.
+
+### Phase 4: Stretch, polish, report (Nov 30 – Dec 14)
+
+- **Sequential logic** (clock, SR/D latches, flip-flops), with the §3.5 settling strategy and
+  possibly sequence-based tests like Digital's.
+- A single-step "slow motion" propagation view.
+- Accessibility and performance polish; offline PWA.
+- **Proposal deliverables:**
+  - Write the **user instructions**.
+  - Complete the **evaluation document**. It *designs* the high-school control-group study
+    (pre/post index built from AP/IB items, candidate ICER '08 / DLCI items, surveys, board
+    and parental approval). The study is not run this term.
+  - Write the final report and record the walkthrough video.
+
+*Seams it relies on:* the event-driven engine; `state` in `evaluate`; oscillation handling.
+
+### Later / post-course
+
+Drawn wire routing (`waypoints`); subcircuits / custom chips, flattened at compile time as
+Digital does; multi-bit buses; a custom domain; an optional backend, never required.
+
+*Seams it relies on:* wire waypoints; the registry and type namespaces; the storage adapter.
 
 ---
 
@@ -360,20 +551,22 @@ project**. Optional test-outs come before each unit.
 
 1. **Milestone 1 due date**, and what the course expects the video to show. This decides the
    P1.8 cut line.
-2. **Gate symbols:** ANSI/IEEE distinctive shapes (default, and familiar from IB and US
+2. **Repo visibility vs GitHub Pro** for Pages (the §1 prerequisite), and the **license**.
+   MIT is suggested. CircuitVerse is MIT; Logisim and Digital are GPL, so no code or assets
+   are copied from them.
+3. **Gate symbols:** ANSI/IEEE distinctive shapes (default, and familiar from IB and US
    materials), or IEC rectangular symbols, or a toggle between them later?
-3. **Name and branding** for the site (needed for the page title and the Pages URL; it could
-   also be a custom domain).
-4. **License** (MIT is suggested; it is compatible with using CircuitVerse ideas, while
-   Logisim and Digital code must not be copied) and **repo visibility**: GitHub Pages on a
-   private repo requires a paid plan. Also enable Pages with **Source: GitHub Actions** in the
-   repo settings.
+4. **Name and branding** for the site (needed for the page title; it could also be a custom
+   domain).
 5. **Who writes the lesson prose?** The author writes it and Claude turns it into lesson data,
    or Claude drafts it for the author to edit.
-6. **Evaluation instrument:** confirm whether AP CSP actually covers logic gates (§2), and
-   whether you want to ask the DLCI authors about adapting items.
-7. **Beta testers:** who are they, and when (week of Nov 23)? This decides when the opt-in
-   progress export and the survey links must be ready.
+6. **Curriculum:** do the §5 reorderings work for you (XOR in Lesson 3; NAND vs XOR in 5;
+   English → logic in 6)? Should "if-then" as a logical operator (implication) be taught,
+   included as an extension, or left out?
+7. **Evaluation instrument:** confirm whether AP CSP actually covers logic gates (§2), and
+   whether to ask the ICER '08 / DLCI authors about adapting their items.
+8. **Beta testers and devices:** who will test, and on which devices? Is there a partner
+   school whose Chromebook and iPad models we can target (§3.1 support matrix)?
 
 ---
 
@@ -381,10 +574,17 @@ project**. Optional test-outs come before each unit.
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Phase 1 is compressed (the Oct 19 prototype was not built) | High | Strict M1 cut line; the headless engine first so Claude Code can test it quickly; one demo lesson rather than many. |
-| Touch problems in iPad Safari | Medium | Playwright touch emulation in CI; test early on a real iPad if available; tap-to-add and tap-to-connect fallbacks. |
-| Unsolvable or wrong lesson content written in a hurry | Medium | A reference solution for every check, plus a CI test. |
-| A district blocks GitHub Pages | Medium | The app is static and can move hosts; custom domain; PWA/offline build later. |
+| Pages can't deploy (the repo is private) | **Certain until fixed** | §1 prerequisite: the author makes the change today. |
+| Phase 1 is compressed (the Oct 19 prototype was not built) | High | Strict M1 cut line; the headless engine first so Claude Code can test it quickly; split the editor work into P1.5a and P1.5b; one demo lesson rather than many. |
+| Phase 2 is overloaded | High | §6 priority order; the proposal's fallbacks (shorter lessons and written material, briefer project feedback); test-outs and remediation may slip into Phase 3. |
+| Touch problems in iPad Safari | Medium | Tap-only Playwright tests in CI; a manual pass on a real iPad; tap-to-add and tap-to-connect fallbacks; the §3.8 gesture CSS. |
+| Progress lost (Safari's 7-day storage deletion, shared or guest Chromebooks) | Medium | `navigator.storage.persist()`; student progress export/import (Phase 2); later, a PWA added to the Home Screen. |
+| Older school devices (Chromebooks past their update expiration, iPadOS 15) | Medium | An explicit support matrix and `build.target` (§3.1); avoid newer APIs. |
+| Unsolvable or trivially solved lesson content written in a hurry | Medium | CI content test: solution passes, starter fails. |
+| Beta testing overlaps Thanksgiving week (Nov 26) | Medium | Recruit now; beta build ready by about Nov 20; prefer adult testers. |
+| A district blocks the hosting domain | Medium | The app is static and can move hosts (`base: './'`); custom domain; PWA/offline build later. |
+| Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. Meet AA where feasible (contrast, signals not shown by color alone, target size, keyboard-operable controls). Document that circuits cannot yet be built with the keyboard alone, as a post-course item. |
+| The editor turns out too hard to build openly (proposal's worst case) | Low | Fall back to a slot-based grid editor; the data model is unchanged. |
 | Scope creep from stretch features | Medium | §4 out-of-scope list; stretch work only after M3. |
 | Simple bypass and completion codes are worked around | Low impact | Documented as discouragement only; teachers can also ask for exported project files. |
 
@@ -392,13 +592,69 @@ project**. Optional test-outs come before each unit.
 
 ## 9. Sources
 
+- Herman, G. L., Kaczmarczyk, L., Loui, M. C., & Zilles, C. (2008). *Proof by Incomplete
+  Enumeration and Other Logical Misconceptions.* ICER '08. (The author provided a copy; it is
+  not committed, per the ACM copyright notice.)
+- Herman, G. L., Loui, M. C., Kaczmarczyk, L., & Zilles, C. (2012). *Describing the What and
+  Why of Students' Difficulties in Boolean Logic.* ACM TOCE.
+- DLCI: https://ideals.illinois.edu/items/25021 ·
+  https://people.cs.vt.edu/~kafura/CS6604/Papers/Digital-Logic-Concept-Inventory.pdf
 - Logisim oscillation docs: https://cburch.com/logisim/docs/2.3.0/guide/prop/oscillate.html
 - Logisim value model ("shortcomings"): https://cburch.com/logisim/docs/2.0.3/guide/prop/shortcome.html
 - Digital (hneemann): https://github.com/hneemann/Digital
 - CircuitVerse docs: https://docs.circuitverse.org/ · Interactive Book: https://learn.circuitverse.org/about.html
 - React Flow touch-device example: https://reactflow.dev/examples/interaction/touch-device
-- Herman, Loui, Zilles et al. — DLCI / misconceptions: https://ideals.illinois.edu/items/25021 ,
-  https://people.cs.vt.edu/~kafura/CS6604/Papers/Digital-Logic-Concept-Inventory.pdf
-- CSTA K-12 standards (revised): https://csteachers.org/wp-content/uploads/2025/03/csta-k-12-computer-science-standards-revised.pdf
+- CSTA K-12 standards (2017 revision): https://csteachers.org/wp-content/uploads/2025/03/csta-k-12-computer-science-standards-revised.pdf
 - IB CS 2027 A1.2 (third-party summary): https://www.tes.com/teaching-resource/ib-computer-science-2027-a1-2-data-representation-and-computer-logic-complete-bundle-13550815
-- District blocking GitHub Pages (example): https://www.change.org/p/unban-github-for-lcps-high-school-students
+- ADA Title II deadline extension: https://www.sog.unc.edu/node/374666 ·
+  https://3playmedia.com/blog/title-ii-deadline-extended/
+- School filter blocking GitHub (anecdotal): https://www.change.org/p/unban-github-for-lcps-high-school-students
+
+*Not independently verified from this environment (hosts blocked): the cburch.com,
+reactflow.dev and csteachers.org pages, and the change.org petition.*
+
+---
+
+## 10. Review log
+
+**v1 → v2** (2026-10-29). Changes from an independent sub-agent review of v1 against the
+proposal, plus the ICER '08 paper:
+
+- **Prerequisite:** added the Pages prerequisite (repo is private, Pages disabled).
+- **M1 demo:** added a "Target" check panel to P1.6 so the M1 demo can show the checker.
+- **Engine:**
+  - Fixed the oscillation test: a NOT gate looped on itself settles at X.
+  - Defined the tick budget, and reset schedules every component.
+  - Documented that the SR latch needs a settling strategy in Phase 4.
+- **Truth table and checker:**
+  - Added `io` roles, plus the `EXTRA_IO` and `DUPLICATE_LABEL` diagnostics.
+  - `CheckSpec` is now data only.
+  - Constraints skip I/O parts.
+  - Added misconception signatures from ICER '08.
+- **Routing and sharing:**
+  - Separate `#/share/` route, which opens a copy.
+  - `base: './'`.
+- **Browsers and devices:**
+  - Browser support matrix.
+  - iPad gesture CSS.
+  - Handle hit areas under zoom.
+  - Tap-to-add uses the next free cell.
+  - Tap-only Playwright tests.
+  - Split P1.5.
+  - A manual pass on a real iPad.
+- **Progress storage:** durability (`persist()` and progress export/import).
+- **Lessons:**
+  - Content test also checks that starters fail.
+  - `liveOutputs` and predict-mode seams.
+  - Tried-rows tracking.
+  - Curriculum reordered per ICER '08.
+- **Phases and wording:**
+  - Phase 2 priority order and the proposal's fallbacks.
+  - Thanksgiving and beta-tester consent.
+  - Restored the Dec 7 deliverables (instructions, evaluation document).
+  - Clarified that the evaluation study is designed, not run.
+  - Reworded "no data collected" to "the app never sends data".
+- **Risks and sources:**
+  - ADA Title II risk.
+  - Corrected the research attribution.
+  - Softened the claim about districts blocking hosting sites.
