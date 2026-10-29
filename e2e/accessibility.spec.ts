@@ -56,6 +56,46 @@ test.describe('display preferences', () => {
     await expect(html(page)).toHaveAttribute('data-theme', 'light');
   });
 
+  test('the saved theme is on the page before the app has loaded (no light flash)', async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem(
+        'logiclearn:prefs:v1',
+        JSON.stringify({ contrast: 'high', colorScheme: 'dark' }),
+      ),
+    );
+    await page.route(/\.js$/, (route) => route.abort()); // the app itself never starts
+    await page.goto('#/');
+    await expect(html(page)).toHaveAttribute('data-theme', 'dark');
+    await expect(html(page)).toHaveAttribute('data-contrast', 'high');
+    expect(
+      await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor),
+    ).toBe('rgb(0, 0, 0)');
+  });
+
+  test('in a Windows contrast theme, lit lights and the current row still stand out', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'forced colors can only be emulated in Chromium');
+    // A dark Windows contrast theme also reports dark mode, the case that used to break.
+    await page.emulateMedia({ forcedColors: 'active', colorScheme: 'dark' });
+    await page.addInitScript(() =>
+      localStorage.setItem('logiclearn:prefs:v1', JSON.stringify({ contrast: 'high' })),
+    );
+    await page.goto('#/lesson/not-and/1'); // NOT example: A is off, so Y is lit
+    const background = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(await background('.light-body.v1')).not.toBe(await background('.switch-body.off'));
+    expect(await background('tr.is-current td')).not.toBe(
+      await background('tr:not(.is-current) td'),
+    );
+  });
+
   test('the settings dialog closes with Escape and keeps keyboard focus inside', async ({
     page,
   }) => {
@@ -78,6 +118,29 @@ const PAGES = [
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
   { name: 'sandbox', hash: '#/sandbox' },
 ];
+
+test.describe('focus on the highlighted truth-table row', () => {
+  test.skip(({ hasTouch }) => !!hasTouch, 'keyboard focus');
+
+  for (const theme of THEMES) {
+    test(`is visible in the ${theme.name} theme`, async ({ page }) => {
+      await page.addInitScript(
+        (prefs) => localStorage.setItem('logiclearn:prefs:v1', JSON.stringify(prefs)),
+        theme.prefs,
+      );
+      await page.goto('#/lesson/not-and/1');
+      const row = page.locator('tr.is-current');
+      await row.focus();
+      const { shown, ring, fill } = await row.evaluate((el) => ({
+        shown: el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none',
+        ring: getComputedStyle(el).outlineColor,
+        fill: getComputedStyle(el.querySelector('td')!).backgroundColor,
+      }));
+      expect(shown).toBe(true);
+      expect(ring).not.toBe(fill);
+    });
+  }
+});
 
 test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
   test.skip(({ hasTouch }) => !!hasTouch, 'one run is enough');
@@ -153,6 +216,55 @@ test.describe('without a pointer', () => {
     await expect(page.getByTestId('announcer')).toContainText('Correct! Every row matches.');
   });
 
+  test('parts and wires on the canvas have names, and deleting keeps focus nearby', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const done = {
+        done: true,
+        attempts: 0,
+        hintsUsed: 0,
+        triedRows: [],
+        firstSeen: '',
+        lastSeen: '',
+      };
+      localStorage.setItem(
+        'logiclearn:progress:v1',
+        JSON.stringify({ 'not-and/what-is-a-gate': done }),
+      );
+    });
+    await page.goto('#/lesson/not-and/2');
+    await page.getByTestId('palette-NOT').press('Enter');
+    const gate = page.getByRole('group', { name: 'NOT gate 1' });
+    await expect(gate).toHaveAttribute('aria-roledescription', 'part');
+
+    await page.locator('summary', { hasText: 'Connections (keyboard)' }).click();
+    await page.getByTestId('connect-from').selectOption({ label: 'Switch A' });
+    await page.getByTestId('connect-to').selectOption({ label: 'NOT gate 1, input' });
+    await page.getByTestId('connect-button').press('Enter');
+    await expect(
+      page.getByRole('group', { name: 'Wire from Switch A to NOT gate 1, input' }),
+    ).toHaveCount(1);
+
+    await expect(page.getByTestId('announcer')).toHaveText(
+      'Connected Switch A to NOT gate 1, input.',
+    );
+
+    // Removing the only wire: its button disappears, so focus goes back to the form.
+    await page.getByRole('button', { name: /^Remove wire/ }).press('Enter');
+    await expect(page.getByTestId('announcer')).toHaveText(
+      'Removed the wire from Switch A to NOT gate 1, input.',
+    );
+    await expect(page.getByTestId('connect-from')).toBeFocused();
+
+    // Deleting a part with the Delete key: focus stays on the canvas.
+    await gate.focus();
+    await page.keyboard.press('Enter'); // select it
+    await page.keyboard.press('Delete');
+    await expect(page.getByTestId('announcer')).toHaveText('Deleted NOT gate 1.');
+    await expect(page.getByTestId('canvas')).toBeFocused();
+  });
+
   test('moving to the next step puts keyboard focus on its heading', async ({ page }) => {
     await page.goto('#/lesson/not-and/1');
     await page.getByTestId('continue').press('Enter');
@@ -172,14 +284,26 @@ test.describe('narration', () => {
   // Replace the browser's speech engine with a recorder, so tests can see what was said.
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
+      // Like a real engine, speech is queued and "said" a moment later; cancel() drops
+      // whatever hasn't been said yet.
       const spoken: string[] = [];
       (window as unknown as { spoken: string[] }).spoken = spoken;
+      let queue: SpeechSynthesisUtterance[] = [];
+      const sayNext = () => {
+        const u = queue.shift();
+        if (!u) return;
+        spoken.push(u.text);
+        u.onend?.(new Event('end') as SpeechSynthesisEvent);
+        if (queue.length) setTimeout(sayNext, 10);
+      };
       const synth = {
         speak: (u: SpeechSynthesisUtterance) => {
-          spoken.push(u.text);
-          setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), 10);
+          queue.push(u);
+          if (queue.length === 1) setTimeout(sayNext, 10);
         },
-        cancel: () => undefined,
+        cancel: () => {
+          queue = [];
+        },
         getVoices: () => [],
         addEventListener: () => undefined,
         removeEventListener: () => undefined,
@@ -194,8 +318,8 @@ test.describe('narration', () => {
   test('"Read this step aloud" reads the title and the text', async ({ page }, testInfo) => {
     await page.goto('#/lesson/not-and/1');
     await press(page.getByTestId('read-aloud-step'), testInfo);
-    await expect.poll(() => spoken(page)).toContain('What is a logic gate?');
-    expect(await spoken(page)).toContain('A, NOT A. 0, 1. 1, 0.');
+    await expect.poll(() => spoken(page)).toContain('What is a logic gate? Computers work');
+    await expect.poll(() => spoken(page)).toContain('A, NOT A. 0, 1. 1, 0.');
   });
 
   test('with automatic reading on, each step is read when it opens', async ({ page }, testInfo) => {

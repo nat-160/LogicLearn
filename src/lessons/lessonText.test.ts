@@ -25,6 +25,16 @@ describe('parseStepText', () => {
     });
   });
 
+  it('forgives small slips in the markers, and takes numbered hints', () => {
+    const md = '<!--Draft-->\n# Title\n\nText.\n\n<!--hints-->\n\n1. First\n2) Second';
+    expect(parseStepText(md)).toEqual({
+      title: 'Title',
+      prose: 'Text.',
+      hints: ['First', 'Second'],
+      draft: true,
+    });
+  });
+
   it('works without a draft marker or hints', () => {
     expect(parseStepText('# Title\n\nText.')).toEqual({
       title: 'Title',
@@ -70,6 +80,12 @@ describe('languages', () => {
       ['Uno', 'es-US'],
       ['Two', 'en-US'],
     ]);
+  });
+
+  it('uses en-US for a translated file that has no text yet', () => {
+    const started = { ...files, './content/demo/es-US/two.md': '<!-- draft -->\n' };
+    const lesson = localizeLesson(def, 'es-US', started);
+    expect(lesson.steps[1]).toMatchObject({ title: 'Two', prose: 'English two.', locale: 'en-US' });
   });
 
   it('finds the default-language file when the language has none', () => {

@@ -3,11 +3,11 @@
  *
  * Speech runs entirely in the browser, so it needs no server and works on GitHub Pages.
  * On-device voices are preferred: some Chrome voices are generated on Google's servers,
- * which would send the lesson text (never student data) off the device, so those are
- * only used if the student picks one in Settings.
+ * which would send the lesson text (never student data) off the device, so LogicLearn
+ * never picks one of those itself – only the student can, in Settings.
  *
- * Long text is spoken in sentence-sized pieces, because some browsers stop a single long
- * utterance after about 15 seconds.
+ * Long text is spoken in pieces of about ten seconds, because some browsers stop a single
+ * long utterance after about 15 seconds.
  */
 import { create } from 'zustand';
 
@@ -38,26 +38,29 @@ interface VoiceLike {
 }
 
 /**
- * The voice to use: the student's choice if it still exists; otherwise an on-device voice
- * for the language (exact match, then same language), then any voice for the language.
- * Returns undefined to let the browser use its default.
+ * The voice to use: the student's choice, if it still exists and speaks the language;
+ * otherwise an on-device voice for the language (exact match, then same language).
+ * Returns undefined to let the browser use its own default voice for the language.
  */
 export function pickVoice<V extends VoiceLike>(
   voices: readonly V[],
   lang: string,
   preferredURI: string | null,
 ): V | undefined {
-  const chosen = preferredURI ? voices.find((v) => v.voiceURI === preferredURI) : undefined;
-  if (chosen) return chosen;
   const language = lang.split('-')[0].toLowerCase();
   const exact = (v: V) => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase();
   const sameLanguage = (v: V) => v.lang.toLowerCase().startsWith(language);
+  const chosen = preferredURI ? voices.find((v) => v.voiceURI === preferredURI) : undefined;
+  if (chosen && sameLanguage(chosen)) return chosen;
   return (
     voices.find((v) => v.localService && exact(v)) ??
-    voices.find((v) => v.localService && sameLanguage(v)) ??
-    voices.find(exact) ??
-    voices.find(sameLanguage)
+    voices.find((v) => v.localService && sameLanguage(v))
   );
+}
+
+/** About ten seconds of speech at this speed (people say about 15 characters a second). */
+export function chunkLength(rate: number): number {
+  return Math.min(250, Math.max(60, Math.round(150 * rate)));
 }
 
 /** Split text into pieces of at most `max` characters, breaking between sentences. */
@@ -110,6 +113,9 @@ interface NarrationState {
 
 export const useNarration = create<NarrationState>()((set, get) => {
   let session = 0;
+  // Keep the utterances being spoken referenced: Chrome can garbage-collect one mid-speech
+  // and then never report that it ended, which would leave "Stop reading" showing.
+  let queued: SpeechSynthesisUtterance[] = [];
   return {
     speaking: null,
     speak(id, text, { lang, rate, voiceURI }) {
@@ -118,7 +124,8 @@ export const useNarration = create<NarrationState>()((set, get) => {
       synth.cancel();
       const mySession = ++session;
       const voice = pickVoice(getVoices(), lang, voiceURI);
-      const chunks = splitIntoChunks(text);
+      const chunks = splitIntoChunks(text, chunkLength(rate));
+      queued = [];
       chunks.forEach((chunk, i) => {
         const utterance = new SpeechSynthesisUtterance(chunk);
         utterance.lang = voice?.lang ?? lang;
@@ -126,17 +133,21 @@ export const useNarration = create<NarrationState>()((set, get) => {
         if (voice) utterance.voice = voice;
         if (i === chunks.length - 1) {
           const done = () => {
-            if (session === mySession) set({ speaking: null });
+            if (session !== mySession) return;
+            queued = [];
+            set({ speaking: null });
           };
           utterance.onend = done;
           utterance.onerror = done;
         }
+        queued.push(utterance);
         synth.speak(utterance);
       });
       set({ speaking: id });
     },
     stop() {
       session++;
+      queued = [];
       if (isSpeechSupported()) window.speechSynthesis.cancel();
       if (get().speaking) set({ speaking: null });
     },

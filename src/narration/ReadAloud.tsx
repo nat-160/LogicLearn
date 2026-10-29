@@ -22,7 +22,7 @@ export function ReadAloudButton({
   return (
     <button
       type="button"
-      className="read-aloud"
+      className={`read-aloud ${active ? 'is-reading' : ''}`}
       onClick={() => (active ? stop() : speak(id, getText(), lang))}
       data-testid={`read-aloud-${id}`}
     >

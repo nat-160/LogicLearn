@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { markdownToSpeech } from './plainText';
-import { pickVoice, splitIntoChunks } from './speech';
+import { chunkLength, pickVoice, splitIntoChunks } from './speech';
 
 const voice = (voiceURI: string, lang: string, localService: boolean) => ({
   voiceURI,
@@ -16,8 +16,9 @@ describe('pickVoice', () => {
     voice('local-es', 'es-US', true),
   ];
 
-  it("uses the student's choice when it exists", () => {
+  it("uses the student's choice when it exists and speaks the language", () => {
     expect(pickVoice(voices, 'en-US', 'google-us')?.voiceURI).toBe('google-us');
+    expect(pickVoice(voices, 'es-US', 'google-us')?.voiceURI).toBe('local-es');
   });
 
   it('otherwise prefers an on-device voice for the exact language', () => {
@@ -28,6 +29,19 @@ describe('pickVoice', () => {
   it('falls back to the same language, then to nothing (the browser default)', () => {
     expect(pickVoice(voices, 'en-AU', null)?.voiceURI).toBe('local-gb');
     expect(pickVoice(voices, 'fr-FR', null)).toBeUndefined();
+  });
+
+  it('never picks an online voice by itself', () => {
+    const onlineOnly = [voice('google-us', 'en-US', false)];
+    expect(pickVoice(onlineOnly, 'en-US', null)).toBeUndefined();
+  });
+});
+
+describe('chunkLength', () => {
+  it('keeps each piece to about ten seconds at any speed', () => {
+    expect(chunkLength(1)).toBe(150);
+    expect(chunkLength(0.5)).toBe(75);
+    expect(chunkLength(2)).toBe(250);
   });
 });
 

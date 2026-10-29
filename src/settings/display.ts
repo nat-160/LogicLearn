@@ -2,12 +2,13 @@
  * Turning preferences into what the page actually shows.
  *
  * The result is written as attributes on <html> – data-theme, data-contrast, data-font
- * and lang – and the stylesheet does the rest (see the theme blocks in app.css). It runs
- * once before the first render, so the page never flashes the wrong theme, and again
- * whenever a preference or a device setting changes.
+ * and lang – and the stylesheet does the rest (see the theme blocks in themes.css). It runs
+ * once before the first render and again whenever a preference or a device setting
+ * changes. (A small script in index.html sets the theme even earlier, before the app has
+ * downloaded, so the page never flashes the wrong theme.)
  */
 import { useSyncExternalStore } from 'react';
-import { resolveLocale } from '../i18n/locales';
+import { INTERFACE_LOCALE, resolveLocale } from '../i18n/locales';
 import { usePreferences, type Preferences } from './preferences';
 
 export interface DeviceSettings {
@@ -104,7 +105,7 @@ export function applyDisplay(display: Display, root: HTMLElement = document.docu
   root.dataset.theme = display.theme;
   root.dataset.contrast = display.contrast;
   root.dataset.font = display.font;
-  root.lang = display.locale;
+  root.lang = INTERFACE_LOCALE; // lesson text carries its own lang (see LessonPage)
   if (display.font === 'dyslexic') loadDyslexiaFont();
 }
 

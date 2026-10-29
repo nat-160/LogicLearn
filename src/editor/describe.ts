@@ -86,3 +86,25 @@ export function describeCircuit(
   );
   return { parts, wires, loose };
 }
+
+/** "from Switch A to AND gate 1, input 1" */
+export function wireEnds(doc: CircuitDoc, wire: { from: PinRef; to: PinRef }): string {
+  return `from ${pinName(doc, wire.from)} to ${pinName(doc, wire.to)}`;
+}
+
+/**
+ * What a deletion removed, as a sentence for screen readers: "Deleted AND gate 1 and 2
+ * wires." or "Removed the wire from Switch A to Light Y." Empty if nothing was removed.
+ */
+export function describeRemoval(before: CircuitDoc, after: CircuitDoc): string {
+  const keptParts = new Set(after.components.map((c) => c.id));
+  const keptWires = new Set(after.wires.map((w) => w.id));
+  const parts = before.components.filter((c) => !keptParts.has(c.id)).map(partName);
+  const wires = before.wires.filter((w) => !keptWires.has(w.id));
+  const wireCount = wires.length === 1 ? '1 wire' : `${wires.length} wires`;
+  if (parts.length > 0) {
+    return `Deleted ${parts.join(', ')}${wires.length ? ` and ${wireCount}` : ''}.`;
+  }
+  if (wires.length === 1) return `Removed the wire ${wireEnds(before, wires[0])}.`;
+  return wires.length ? `Removed ${wireCount}.` : '';
+}

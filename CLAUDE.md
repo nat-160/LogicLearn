@@ -42,7 +42,9 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 - **Colors only from theme tokens** in `src/styles/themes.css` (four themes: light, dark,
   and their high-contrast versions). Never hard-code a color in `app.css` or a component.
 - Never use color as the only cue. Announce changes with `announce()` (`src/a11y/`), not
-  new `aria-live` regions. Control names must include their visible text.
+  new `aria-live` regions or `role="alert"`. Control names must include their visible text.
+- The theme is applied twice: early by the inline script in `index.html`, then by
+  `src/settings/display.ts`. Keep the two in step (same storage key).
 - Every pointer action needs a keyboard path (wiring: the Connections panel).
 - `e2e/accessibility.spec.ts` runs axe-core in every theme; keep it passing.
 

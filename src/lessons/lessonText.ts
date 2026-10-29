@@ -9,18 +9,18 @@
  *   <step-id>.md      <!-- draft -->            ← optional: still placeholder text
  *                     # Step title
  *                     The step's text (Markdown).
- *                     <!-- hints -->            ← optional: the hints, one bullet each
+ *                     <!-- hints -->            ← optional: the hints, one list item each
  *                     - First hint
  *                     - Second hint
  *
  * The markers are HTML comments, so they read the same in every language. If a file is
- * missing in the student's language, the en-US file is used instead (file by file), so a
- * half-finished translation never shows an empty step.
+ * missing (or still empty) in the student's language, the en-US file is used instead,
+ * file by file, so a half-finished translation never shows an empty step.
  */
 import { DEFAULT_LOCALE } from '../i18n/locales';
 import {
-  DRAFT_MARKER,
-  HINTS_MARKER,
+  DRAFT_PATTERN,
+  HINTS_PATTERN,
   type Lesson,
   type LessonDef,
   type Step,
@@ -57,14 +57,14 @@ export function findLessonFile(
 /** Split a step's Markdown into title, text and hints. */
 export function parseStepText(markdown: string): Omit<StepText, 'locale'> {
   let text = markdown.replace(/\r\n/g, '\n').trim();
-  const draft = text.startsWith(DRAFT_MARKER);
-  if (draft) text = text.slice(DRAFT_MARKER.length).trim();
+  const draftMarker = DRAFT_PATTERN.exec(text);
+  if (draftMarker) text = text.slice(draftMarker[0].length).trim();
 
   let hints: string[] = [];
-  const hintsAt = text.indexOf(HINTS_MARKER);
-  if (hintsAt >= 0) {
-    hints = parseBullets(text.slice(hintsAt + HINTS_MARKER.length));
-    text = text.slice(0, hintsAt).trim();
+  const hintsMarker = HINTS_PATTERN.exec(text);
+  if (hintsMarker) {
+    hints = parseListItems(text.slice(hintsMarker.index + hintsMarker[0].length));
+    text = text.slice(0, hintsMarker.index).trim();
   }
 
   let title = '';
@@ -73,14 +73,14 @@ export function parseStepText(markdown: string): Omit<StepText, 'locale'> {
     title = heading[1].trim();
     text = text.replace(heading[0], '').trim();
   }
-  return { title, prose: text, hints, draft };
+  return { title, prose: text, hints, draft: !!draftMarker };
 }
 
-/** "- one\n  continued\n- two" → ["one continued", "two"] */
-function parseBullets(markdown: string): string[] {
+/** "- one\n  continued\n- two" → ["one continued", "two"]; numbered lists work too. */
+function parseListItems(markdown: string): string[] {
   const items: string[] = [];
   for (const line of markdown.split('\n')) {
-    const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+    const bullet = line.match(/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/);
     if (bullet) items.push(bullet[1].trim());
     else if (line.trim() && items.length) items[items.length - 1] += ` ${line.trim()}`;
   }
@@ -89,7 +89,7 @@ function parseBullets(markdown: string): string[] {
 
 /** "# Title\n\nSummary…" → { title, summary } */
 export function parseLessonInfo(markdown: string): { title: string; summary: string } {
-  const text = markdown.replace(/\r\n/g, '\n').replace(DRAFT_MARKER, '').trim();
+  const text = markdown.replace(/\r\n/g, '\n').trim().replace(DRAFT_PATTERN, '').trim();
   const heading = text.match(/^# (.+)$/m);
   return {
     title: heading ? heading[1].trim() : '',
@@ -97,14 +97,38 @@ export function parseLessonInfo(markdown: string): { title: string; summary: str
   };
 }
 
+/**
+ * A step's text in the requested language, or in the default language if that file is
+ * missing or has no text yet (a translation that was started but not written).
+ */
+function findStepText(
+  lessonId: string,
+  locale: string,
+  stepId: string,
+  files: LessonFiles,
+): StepText | undefined {
+  for (const candidate of [locale, DEFAULT_LOCALE]) {
+    const file = files[filePath(lessonId, candidate, stepId)];
+    if (file === undefined) continue;
+    const text = parseStepText(file);
+    if (text.title || text.prose) return { ...text, locale: candidate };
+  }
+  return undefined;
+}
+
 /** Join a lesson definition with its text in the given language. */
 export function localizeLesson(def: LessonDef, locale: string, files: LessonFiles = FILES): Lesson {
   const info = findLessonFile(def.id, locale, 'lesson', files);
   const { title, summary } = parseLessonInfo(info?.text ?? '');
   const steps = def.steps.map((stepDef): Step => {
-    const file = findLessonFile(def.id, locale, stepDef.id, files);
-    const text = parseStepText(file?.text ?? '');
-    return { ...stepDef, ...text, title: text.title || stepDef.id, locale: file?.locale ?? locale };
+    const text = findStepText(def.id, locale, stepDef.id, files) ?? {
+      title: '',
+      prose: '',
+      hints: [],
+      draft: false,
+      locale,
+    };
+    return { ...stepDef, ...text, title: text.title || stepDef.id };
   });
   return { ...def, title: title || def.id, summary, locale: info?.locale ?? locale, steps };
 }

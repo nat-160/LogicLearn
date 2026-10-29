@@ -84,8 +84,11 @@ export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDe
   return step.kind === 'guided' || step.kind === 'challenge';
 }
 
-/** Markdown files whose first line is this marker still have placeholder text. */
-export const DRAFT_MARKER = '<!-- draft -->';
-
-/** In a step's Markdown file, the bullet list after this line is the step's hints. */
-export const HINTS_MARKER = '<!-- hints -->';
+/**
+ * The two markers in lesson text files (written `<!-- draft -->` and `<!-- hints -->`),
+ * forgiving small slips such as "<!--hints-->" or "<!-- Hints -->".
+ *  - A file whose first line is the draft marker still has placeholder text.
+ *  - In a step file, the list after the hints marker is the step's hints.
+ */
+export const DRAFT_PATTERN = /^<!--\s*draft\s*-->/i;
+export const HINTS_PATTERN = /<!--\s*hints\s*-->/i;

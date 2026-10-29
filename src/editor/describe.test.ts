@@ -1,5 +1,5 @@
-import { Simulator, buildCircuit } from '../sim';
-import { describeCircuit, partName } from './describe';
+import { Simulator, buildCircuit, removeItems } from '../sim';
+import { describeCircuit, describeRemoval, partName } from './describe';
 
 const doc = buildCircuit({
   parts: [
@@ -41,5 +41,24 @@ describe('describeCircuit', () => {
     const { parts } = describeCircuit(doc, values, { hideValues: true });
     expect(parts[0]).toBe('Switch A: on (1)');
     expect(parts[3]).toBe('Light Y: value hidden until you check');
+  });
+});
+
+describe('describeRemoval', () => {
+  it('says which part was deleted, and how many wires went with it', () => {
+    expect(describeRemoval(doc, removeItems(doc, ['and-1']))).toBe(
+      'Deleted AND gate 1 and 2 wires.',
+    );
+    expect(describeRemoval(doc, removeItems(doc, ['B']))).toBe('Deleted Switch B.');
+  });
+
+  it('names a single removed wire by its ends', () => {
+    expect(describeRemoval(doc, removeItems(doc, [], [doc.wires[1].id]))).toBe(
+      'Removed the wire from AND gate 1, output to Light Y.',
+    );
+  });
+
+  it('is empty when nothing was removed', () => {
+    expect(describeRemoval(doc, doc)).toBe('');
   });
 });

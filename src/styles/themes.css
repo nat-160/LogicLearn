@@ -77,7 +77,7 @@
   --warning: #b45309;
   --warning-bg: #fef3c7;
   --warning-text: #78350f;
-  --ok: #16a34a;
+  --ok: #15803d;
   --ok-bg: #dcfce7;
   --ok-text: #14532d;
   --draft-bg: #ede9fe;
@@ -86,6 +86,10 @@
   /* Truth table */
   --row-current-bg: #dbeafe;
   --row-current-text: inherit;
+  /* The current row's left bar, and the focus ring drawn inside it: they must stand out
+   * against --row-current-bg, not just against the page. */
+  --row-current-bar: var(--accent);
+  --row-current-focus: var(--focus);
   --row-hover-bg: #f1f5f9;
   --row-wrong-bg: #fee2e2;
   --row-wrong-text: #7f1d1d;
@@ -295,6 +299,8 @@
 
   --row-current-bg: #ffdd00;
   --row-current-text: #000000;
+  --row-current-bar: #000000; /* the accent and focus colors are this same yellow */
+  --row-current-focus: #000000;
   --row-hover-bg: #222222;
   --row-wrong-bg: #000000;
   --row-wrong-text: #ff6b6b;
@@ -303,9 +309,13 @@
   color-scheme: dark;
 }
 
-/* Windows contrast themes: use the system's colors for everything that carries meaning. */
+/* Windows contrast themes: use the system's colors for everything that carries meaning.
+ * (The browser keeps colors given as system color names, and replaces all others.) The
+ * second selector outranks the four theme blocks above, which still apply – Windows dark
+ * contrast themes report dark mode, for example. */
 @media (forced-colors: active) {
-  :root {
+  :root,
+  :root[data-theme][data-contrast] {
     --signal-on: Highlight;
     --signal-off: CanvasText;
     --signal-unknown: GrayText;
@@ -325,6 +335,8 @@
     --light-blue: Highlight;
     --row-current-bg: Highlight;
     --row-current-text: HighlightText;
+    --row-current-bar: HighlightText;
+    --row-current-focus: HighlightText;
   }
 }
 

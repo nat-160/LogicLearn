@@ -16,7 +16,7 @@ import {
   type Connection,
   type IsValidConnection,
 } from '@xyflow/react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { GRID_CELL, pinDirection } from '../sim';
 import { useDisplay } from '../settings/display';
 import { useEditor, useEditorStore } from './editorContext';
@@ -26,6 +26,27 @@ import { WireEdgeComponent } from './WireEdge';
 
 const nodeTypes = { part: PartNodeComponent };
 const edgeTypes = { wire: WireEdgeComponent };
+
+/**
+ * React Flow's own screen reader text, in our words: "parts" and "wires" instead of
+ * "nodes" and "edges", and moves announced without pixel coordinates.
+ */
+const PART_HELP =
+  'Press Enter or Space to select this part, then the arrow keys to move it or Delete to remove it.';
+const EDIT_LABELS = {
+  'node.a11yDescription.default': PART_HELP,
+  'node.a11yDescription.keyboardDisabled': PART_HELP,
+  'node.a11yDescription.ariaLiveMessage': ({ direction }: { direction: string }) =>
+    `Moved ${direction}.`,
+  'edge.a11yDescription.default':
+    'Press Enter or Space to select this wire, then Delete to remove it.',
+};
+const EXAMPLE_LABELS = {
+  ...EDIT_LABELS,
+  'node.a11yDescription.default': 'Part of the example circuit.',
+  'node.a11yDescription.keyboardDisabled': 'Part of the example circuit.',
+  'edge.a11yDescription.default': 'Wire of the example circuit.',
+};
 
 export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   const { theme } = useDisplay();
@@ -38,6 +59,7 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   const beginDrag = useEditor((s) => s.beginDrag);
   const endDrag = useEditor((s) => s.endDrag);
   const removeItems = useEditor((s) => s.removeItems);
+  const region = useRef<HTMLDivElement>(null);
 
   // Only allow output → input connections between pins that exist.
   const isValidConnection = useCallback<IsValidConnection<WireEdge>>(
@@ -55,11 +77,13 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
 
   return (
     <div
+      ref={region}
       className="canvas"
       data-testid="canvas"
       role="region"
       aria-label="Circuit canvas"
       aria-describedby="canvas-help"
+      tabIndex={-1}
     >
       <p id="canvas-help" className="sr-only">
         Press Tab to move between parts; arrow keys move the selected part. To read the circuit,
@@ -67,6 +91,7 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
       </p>
       <ReactFlow
         colorMode={theme}
+        ariaLabelConfig={readOnly ? EXAMPLE_LABELS : EDIT_LABELS}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -76,12 +101,13 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
         onConnect={onConnect}
         onNodeDragStart={beginDrag}
         onNodeDragStop={endDrag}
-        onDelete={({ nodes: n, edges: e }) =>
+        onDelete={({ nodes: n, edges: e }) => {
           removeItems(
             n.map((x) => x.id),
             e.map((x) => x.id),
-          )
-        }
+          );
+          region.current?.focus(); // the focused part is gone; stay on the canvas
+        }}
         isValidConnection={isValidConnection}
         connectOnClick
         snapToGrid
@@ -116,7 +142,8 @@ function StatusBanner() {
 
   if (!settled) {
     return (
-      <div className="banner banner-error" role="alert">
+      // No role="alert": useEditorAnnouncements announces this once (assertively).
+      <div className="banner banner-error">
         This circuit never settles – the red parts keep flipping on and off.
       </div>
     );

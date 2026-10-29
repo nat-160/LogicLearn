@@ -34,6 +34,7 @@ import { useSpeaker, useStopSpeakingOnUnmount } from '../narration/useSpeaker';
 import { loadCircuit, type CheckResult, type CircuitDoc } from '../sim';
 import { usePreferences } from '../settings/preferences';
 import { readLocal, writeLocal } from '../storage/storage';
+import { INTERFACE_LOCALE } from '../i18n/locales';
 import { useLocale } from '../settings/display';
 import { findLesson } from './catalog';
 import { Markdown, MarkdownInline } from './Markdown';
@@ -98,8 +99,10 @@ function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
                   {done ? '✓' : i + 1}
                 </a>
               ) : (
-                <span className="step-dot locked" aria-label={label} title={label}>
-                  {i + 1}
+                // A plain <span> can't have an aria-label, so the full text is hidden text.
+                <span className="step-dot locked" title={label}>
+                  <span aria-hidden>{i + 1}</span>
+                  <span className="sr-only">{label}</span>
                 </span>
               )}
             </li>
@@ -112,12 +115,22 @@ function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
 
 /** Everything a step's text should sound like when read aloud. */
 function stepSpeech(step: Step, hintsShown: number, result: CheckResult | null): string {
-  const parts = [`${step.title}.`, markdownToSpeech(step.prose)];
+  // A pause after the title, unless it already ends in one ("What is a logic gate?").
+  const title = /[.!?:]$/.test(step.title) ? step.title : `${step.title}.`;
+  const parts = [title, markdownToSpeech(step.prose)];
   step.hints.slice(0, hintsShown).forEach((hint, i) => {
     parts.push(`Hint ${i + 1}: ${inlineMarkdownToSpeech(hint)}`);
   });
   if (result) parts.push(summarizeCheck(result));
   return parts.join(' ');
+}
+
+/**
+ * The `lang` to put on a step's own text: only needed when it differs from the interface
+ * language (which is the page's lang).
+ */
+function textLang(step: Step): string | undefined {
+  return step.locale !== INTERFACE_LOCALE ? step.locale : undefined;
 }
 
 /**
@@ -134,25 +147,24 @@ function StepText({
   /** The full text to read aloud (title, text, hints, result). */
   speech: () => string;
 }) {
-  const pageLocale = useLocale();
   const autoRead = usePreferences((s) => s.autoRead);
   const { supported, speak } = useSpeaker();
-  const lang = step.locale !== pageLocale ? step.locale : undefined;
+  const lang = textLang(step);
   useStopSpeakingOnUnmount();
 
   useEffect(() => {
-    if (autoRead && supported) speak('step', speech(), lang);
+    if (autoRead && supported) speak('step', speech(), step.locale);
     // Only when the step opens, not on every change to its hints or result.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step.id]);
 
   return (
     <>
-      <h1 className="step-title" lang={lang}>
-        {step.title}
+      <h1 className="step-title">
+        <span lang={lang}>{step.title}</span>
         {tag && <span className="tag">{tag}</span>}
       </h1>
-      <ReadAloudButton id="step" getText={speech} label="Read this step aloud" lang={lang} />
+      <ReadAloudButton id="step" getText={speech} label="Read this step aloud" lang={step.locale} />
       <Markdown source={step.prose} draft={step.draft} lang={lang} />
     </>
   );
@@ -325,23 +337,23 @@ function BuildPanel({
   const { speak } = useSpeaker();
 
   /** Tell the student – on screen, to screen readers and (if chosen) out loud. */
-  const tell = (id: string, text: string) => {
+  const tell = (id: string, text: string, lang: string) => {
     announce(text);
-    if (autoRead) speak(id, text);
+    if (autoRead) speak(id, text, lang);
   };
 
   const onCheck = () => {
     const r = run(step.spec);
     recordAttempt(lesson.id, step.id, r.pass, triedRows);
     onChecked();
-    tell('result', summarizeCheck(r));
+    tell('result', summarizeCheck(r), INTERFACE_LOCALE);
   };
 
   const showHint = () => {
     const next = hintsShown + 1;
     setHintsShown(next);
     recordHint(lesson.id, step.id);
-    tell('hint', `Hint ${next}: ${inlineMarkdownToSpeech(step.hints[next - 1])}`);
+    tell('hint', `Hint ${next}: ${inlineMarkdownToSpeech(step.hints[next - 1])}`, step.locale);
   };
 
   return (
@@ -359,7 +371,7 @@ function BuildPanel({
             <p key={i} className="hint">
               <span aria-hidden>💡 </span>
               <span className="sr-only">Hint {i + 1}: </span>
-              <MarkdownInline source={hint} />
+              <MarkdownInline source={hint} lang={textLang(step)} />
             </p>
           ))}
           {hintsShown < step.hints.length && (

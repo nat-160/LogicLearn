@@ -15,6 +15,13 @@ export interface Locale {
 
 export const DEFAULT_LOCALE = 'en-US';
 
+/**
+ * The language of the interface: buttons, messages and the checker's explanations. Only
+ * English so far (docs/translating.md). It is the page's `lang`; lesson text in another
+ * language is marked with its own `lang`, so screen readers switch voice just for it.
+ */
+export const INTERFACE_LOCALE = 'en-US';
+
 export const LOCALES: Locale[] = [
   { code: 'en-US', name: 'English (US)' },
   // { code: 'es-US', name: 'Español (EE. UU.)' },  ← add once the lessons are translated

@@ -18,12 +18,23 @@ interface AnnouncerState {
 
 export const useAnnouncer = create<AnnouncerState>()(() => ({ polite: '', assertive: '' }));
 
-let timer: ReturnType<typeof setTimeout> | undefined;
+type Priority = keyof AnnouncerState;
 
-export function announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
+/** Messages waiting to be written, and the timer that will write them, per region. */
+const pending: Record<Priority, string[]> = { polite: [], assertive: [] };
+const timers: Partial<Record<Priority, ReturnType<typeof setTimeout>>> = {};
+
+export function announce(message: string, priority: Priority = 'polite'): void {
   if (!message.trim()) return;
+  // Messages posted at the same moment (one switch flip can turn on a light *and* start an
+  // oscillation) are read together, instead of the last one replacing the others.
+  if (!pending[priority].includes(message)) pending[priority].push(message);
+  if (timers[priority] !== undefined) return;
   // Clear first, then set, so the same message twice in a row is read twice.
   useAnnouncer.setState({ [priority]: '' });
-  clearTimeout(timer);
-  timer = setTimeout(() => useAnnouncer.setState({ [priority]: message }), 50);
+  timers[priority] = setTimeout(() => {
+    timers[priority] = undefined;
+    useAnnouncer.setState({ [priority]: pending[priority].join(' ') });
+    pending[priority] = [];
+  }, 50);
 }

@@ -23,6 +23,7 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 import { createStore, type StoreApi } from 'zustand/vanilla';
+import { announce } from '../a11y/announcer';
 import {
   addComponent,
   connect as connectPins,
@@ -40,6 +41,7 @@ import {
   type SettleReport,
   type Value,
 } from '../sim';
+import { describeRemoval, partName, wireEnds } from './describe';
 
 export interface PartNodeData extends Record<string, unknown> {
   type: string;
@@ -235,7 +237,12 @@ export function createEditorStore(
       },
 
       removeItems(componentIds, wireIds) {
-        commit(removeFromDoc(get().doc, componentIds, wireIds));
+        const before = get().doc;
+        const after = removeFromDoc(before, componentIds, wireIds);
+        const removed = describeRemoval(before, after);
+        if (!removed) return; // nothing could be removed (e.g. only locked parts)
+        commit(after);
+        announce(removed); // however it was deleted: Delete key, inspector or Remove button
       },
 
       removeSelected() {
@@ -298,12 +305,18 @@ export function createEditorStore(
   });
 }
 
+// Screen readers call React Flow's nodes and edges "node" and "edge"; ours are parts and wires.
+const PART_ROLE = { 'aria-roledescription': 'part' };
+const WIRE_ROLE = { 'aria-roledescription': 'wire' };
+
 /** React Flow nodes for the doc, keeping each node's measured size and selection. */
 function buildNodes(doc: CircuitDoc, previous: PartNode[]): PartNode[] {
   const old = new Map(previous.map((n) => [n.id, n]));
   return doc.components.map((c) => ({
     ...old.get(c.id),
     id: c.id,
+    ariaLabel: partName(c), // what a screen reader says when the part gets focus
+    domAttributes: PART_ROLE,
     type: 'part',
     position: c.position,
     data: { type: c.type, label: c.label, locked: !!c.locked, props: c.props },
@@ -317,6 +330,8 @@ function buildEdges(doc: CircuitDoc, previous: WireEdge[]): WireEdge[] {
   return doc.wires.map((w) => ({
     ...old.get(w.id),
     id: w.id,
+    ariaLabel: `Wire ${wireEnds(doc, w)}`,
+    domAttributes: WIRE_ROLE,
     type: 'wire',
     source: w.from.component,
     sourceHandle: w.from.pin,

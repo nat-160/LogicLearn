@@ -6,7 +6,6 @@ import { useEffect, useRef } from 'react';
 import { useAnnouncer } from '../a11y/announcer';
 import { LessonList } from '../lessons/LessonList';
 import { LessonPage } from '../lessons/LessonPage';
-import { useNarration } from '../narration/speech';
 import { SettingsButton } from '../settings/SettingsDialog';
 import { HomePage } from './HomePage';
 import { useRoute, type Route } from './routes';
@@ -70,7 +69,11 @@ function LiveAnnouncer() {
 
 /**
  * When the page (or lesson step) changes, move keyboard focus to its main heading, so a
- * screen reader announces the new page instead of staying silent. Reading aloud stops.
+ * screen reader announces the new page instead of staying silent.
+ *
+ * (It doesn't stop narration: each page stops its own reading when it closes, which
+ * happens before the new step starts reading. Stopping here, after the new step has
+ * started, would cut off automatic reading.)
  */
 function useFocusOnPageChange(key: string, main: React.RefObject<HTMLElement | null>) {
   const first = useRef(true);
@@ -79,7 +82,6 @@ function useFocusOnPageChange(key: string, main: React.RefObject<HTMLElement | n
       first.current = false;
       return;
     }
-    useNarration.getState().stop();
     const heading = main.current?.querySelector<HTMLElement>('h1');
     const target = heading ?? main.current;
     if (!target) return;

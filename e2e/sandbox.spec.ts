@@ -89,9 +89,10 @@ test('a circuit that never settles is reported', async ({ page }, testInfo) => {
   await addPart(page, testInfo, 'NAND'); // nand-1
   await connect(page, testInfo, ['A', 'out'], ['nand-1', 'in0']);
   await connect(page, testInfo, ['nand-1', 'out'], ['nand-1', 'in1']);
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  const banner = page.locator('.banner-error');
+  await expect(banner).toHaveCount(0);
   await press(switchButton(page, 'A'), testInfo);
-  await expect(page.getByRole('alert')).toContainText('never settles');
+  await expect(banner).toContainText('never settles');
 });
 
 test('a share link opens a copy without touching the sandbox', async ({ page }, testInfo) => {

@@ -8,7 +8,8 @@
  *    keyboard or a screen reader.
  * (useEditorAnnouncements.ts tells screen reader users when a light changes.)
  */
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { announce } from '../a11y/announcer';
 import { pinsOf } from '../sim';
 import { describeCircuit, pinName } from './describe';
@@ -57,6 +58,8 @@ export function ConnectionsPanel() {
   const doc = useEditor((s) => s.doc);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const fromSelect = useRef<HTMLSelectElement>(null);
+  const wireList = useRef<HTMLUListElement>(null);
 
   const outputs = doc.components.flatMap((c) =>
     pinsOf(c.type, c.props).outputs.map((p) => ({
@@ -108,6 +111,7 @@ export function ConnectionsPanel() {
           <label className="field">
             <span>From output</span>
             <select
+              ref={fromSelect}
               value={from}
               onChange={(e) => setFrom(e.target.value)}
               data-testid="connect-from"
@@ -144,8 +148,8 @@ export function ConnectionsPanel() {
         {doc.wires.length === 0 ? (
           <p className="muted small">No wires yet.</p>
         ) : (
-          <ul className="wire-list">
-            {doc.wires.map((w) => {
+          <ul className="wire-list" ref={wireList}>
+            {doc.wires.map((w, i) => {
               const text = `${pinName(doc, w.from)} → ${pinName(doc, w.to)}`;
               return (
                 <li key={w.id}>
@@ -154,8 +158,11 @@ export function ConnectionsPanel() {
                     type="button"
                     aria-label={`Remove wire ${text}`}
                     onClick={() => {
-                      store.getState().removeItems([], [w.id]);
-                      announce(`Removed wire ${text}.`);
+                      // The store announces the removal. This button disappears with the
+                      // wire, so keep focus in the list: the next wire, or the form.
+                      flushSync(() => store.getState().removeItems([], [w.id]));
+                      const buttons = wireList.current?.querySelectorAll('button') ?? [];
+                      (buttons[Math.min(i, buttons.length - 1)] ?? fromSelect.current)?.focus();
                     }}
                   >
                     Remove

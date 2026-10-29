@@ -159,7 +159,7 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
               value={prefs.voiceURI ?? ''}
               onChange={(e) => prefs.update({ voiceURI: e.target.value || null })}
             >
-              <option value="">Automatic (on this device)</option>
+              <option value="">Automatic (on this device if possible)</option>
               {voiceOptions.map((v) => (
                 <option key={v.voiceURI} value={v.voiceURI}>
                   {v.name} {v.localService ? '(on this device)' : '(online)'}

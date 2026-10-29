@@ -428,8 +428,9 @@ gates later.
 
   Once changed, the student's choice wins and is remembered. A "use my device's settings"
   button clears the saved choices.
-- Preferences are applied as `data-*` attributes on `<html>` before the first render, so
-  there is no flash of the wrong theme.
+- Preferences are applied as `data-*` attributes on `<html>`. A small inline script in
+  `index.html` sets them before the first paint, before the app has even downloaded, so
+  there is no flash of the wrong theme. The app then keeps them up to date.
 - Like everything else, preferences never leave the device.
 
 **Settings panel.**
@@ -452,7 +453,11 @@ gates later.
 - Wire states keep their non-color cues: 1 is thick, 0 is thin, X is dashed. In high
   contrast they are thicker still.
 - **Windows High Contrast / forced colors** (`@media (forced-colors: active)`) is respected
-  using system colors.
+  using system colors. This block must outrank all four theme blocks, because dark Windows
+  contrast themes also report dark mode.
+- Focus rings must stand out against what they are drawn on. For example, on the
+  highlighted truth-table row in dark high contrast the ring is black, not the theme's
+  yellow.
 - React Flow's own controls follow the theme (its `colorMode` setting).
 
 **Dyslexia-friendly font (A4).**
@@ -473,11 +478,17 @@ gates later.
 - Narration uses the browser's **Web Speech API** (`speechSynthesis`). It runs entirely
   in the browser, so it needs **no server and works on GitHub Pages**.
 - **Read aloud** reads the step's title and text, the hints already revealed, and the last
-  check result. Pause/stop is available.
+  check result. The same button stops reading. There is no pause: pausing and resuming
+  is unreliable in some browsers, and steps are short.
 - Settings cover automatic reading when a step opens, speed, and voice.
 - **On-device voices are preferred** (`voice.localService`). Some Chrome voices are
   generated on Google's servers, which would send lesson text (never student data) off
-  the device, so those are only used if the student picks one.
+  the device.
+  - LogicLearn never picks one of those itself. If the device has no voice of its own
+    for the language, the browser's default is used.
+  - The student can still choose an online voice; the list marks them "(online)".
+- Text is spoken in pieces of about ten seconds (shorter at slower speeds), because some
+  browsers stop a long utterance after about 15 seconds.
 - If the browser has no speech support, the button is hidden and the conventions below
   keep outside tools working.
 
@@ -485,7 +496,8 @@ gates later.
 Read&Write for Google Chrome, ChromeOS Select-to-speak and ChromeVox, Edge Immersive Reader,
 VoiceOver and NVDA.
 - All text is real text, never images of text or text drawn on a canvas.
-- `lang` is set on `<html>`, and on lesson text when its language differs.
+- `lang` on `<html>` is the interface language (English for now). Lesson text in another
+  language carries its own `lang`, so screen readers switch voice only for that text.
 - One `<h1>` per page, and headings in order.
 - Landmarks: banner, navigation, main, the lesson instructions as a labelled complementary
   region, and the circuit as a labelled region.
@@ -494,13 +506,15 @@ VoiceOver and NVDA.
   select-to-speak works.
 - Meaning is never carried by color alone.
 - Dynamic results are announced through **persistent** live regions. Regions that are
-  created already filled are often not announced.
+  created already filled are often not announced. Messages posted at the same moment are
+  read together, rather than the last one replacing the others.
 
 **Screen reader support for lessons (A1).**
 1. A **skip link** jumps to the main content.
 2. Changing step **moves focus to the step heading**, so the new step is announced.
-3. Check results, revealed hints and "never settles" warnings are announced politely
-   (assertively for the warning).
+3. These are announced politely: check results (in lessons and the sandbox), revealed
+   hints, added and deleted parts, and connections made or removed. "Never settles"
+   warnings are announced assertively, once.
 4. The truth table has a `<caption>` and properly scoped column headers. Rows can be
    reached and activated from the keyboard.
 5. **Circuit description:** a text version of the canvas.
@@ -513,12 +527,22 @@ VoiceOver and NVDA.
    - With the palette (press Enter to add a part) and the inspector (rename, delete), a
      whole circuit can be built **without a pointer**.
    - This removes the Phase 1 limitation "circuits can't be wired with the keyboard alone".
+   - After a delete, focus moves to the next wire in the list, or to the canvas, never to
+     the top of the page.
+7. **Parts and wires on the canvas have names:** "AND gate 1, part" and "Wire from Switch
+   A to AND gate 1, input 1". React Flow's own screen reader text is reworded to say
+   parts and wires, and moves are announced without pixel coordinates.
 
 **Testing.**
 - **axe-core** scans run in Playwright on the home, sandbox and lesson pages in all four
   themes. They fail on any serious or critical violation, including color contrast.
-- Unit tests cover the preferences store, the narration text, and the circuit
-  description.
+- More Playwright checks cover things axe can't see:
+  - the theme before the app loads;
+  - forced colors;
+  - the focus ring on the highlighted row in every theme;
+  - focus after deletes.
+- Unit tests cover the preferences store, the narration text, announcements, and the
+  circuit description.
 - A manual screen reader checklist is in `docs/accessibility.md`.
 
 ### 3.10 Localization (skeleton)
@@ -532,17 +556,21 @@ VoiceOver and NVDA.
 - **Lesson text per locale:** `src/lessons/content/<lesson>/<locale>/` holds:
   - `lesson.md`, with the lesson title and a one-line summary;
   - one `<step>.md` per step, with the step title (its first `#` heading), the step text,
-    and an optional `## Hints` list.
+    and an optional hints list after a `<!-- hints -->` marker. The marker is an HTML
+    comment so it is the same in every language. Bulleted and numbered lists both work.
 
   Everything that doesn't depend on language stays in the lesson's `index.ts`: ids,
   circuits, checks, palettes and options.
 - The **loader** picks the student's language and falls back to `en-US` file by file, so a
-  half-finished translation never shows a blank step.
-  - `npm run lessons:drafts` reports drafts and missing files per language.
-  - The content test requires complete `en-US` text.
+  half-finished translation never shows a blank step. A file that exists but has no text
+  yet also falls back.
+  - `npm run lessons:drafts` reports drafts, missing files, and hint counts that differ
+    from `en-US`, per language.
+  - The content test requires complete `en-US` text, and the same number of hints in
+    every translated step.
 - The **locale registry** is `src/i18n/locales.ts`. Adding `{ code: 'es-US', name: 'Español
-  (EE. UU.)' }` makes the language list appear in Settings, and `<html lang>` follows the
-  choice. Step-by-step instructions are in `docs/translating.md`.
+  (EE. UU.)' }` makes the language list appear in Settings, and lesson text is marked with
+  the chosen `lang`. Step-by-step instructions are in `docs/translating.md`.
 - **Not yet localized:** interface text (buttons, messages) and checker/misconception
   messages are English. They are already keyed by stable ids (diagnostic codes,
   misconception ids), so they can move into per-language message catalogs later. Circuit
@@ -859,3 +887,27 @@ proposal, plus the ICER '08 paper:
   skeleton), plus a Phase 1b entry for them.
 - **Risks:** the accessibility row now points at those features instead of listing
   keyboard-only building as a gap.
+
+**v4 review** (2026-10-29). An accessibility review by a sub-agent tested the build in a
+browser and confirmed 11 defects. All are fixed, each with a regression test that fails
+on the old code:
+
+- Automatic reading was cut off when the step changed.
+- Windows contrast themes lost lit lights and the current row in dark or high contrast.
+- The light theme flashed while the app loaded.
+- Announcements made at the same moment replaced each other.
+- The focus ring was invisible on the highlighted row in dark high contrast.
+- The automatic voice could be an online one.
+- Canvas parts had no names.
+- Deleting dropped focus and said nothing.
+- "Never settles" was announced twice.
+- Lesson text loader edge cases: tolerant markers, numbered hints, empty translations,
+  and checked hint counts.
+- Locked step dots were read as bare numbers.
+
+§3.9 and §3.10 were updated to match. Also done:
+
+- the interface language is now separate from the lesson language;
+- sandbox check results are announced;
+- speech pieces get shorter at slower speeds;
+- React Flow's screen reader text is reworded.

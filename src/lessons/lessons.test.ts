@@ -34,6 +34,16 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
     }
   });
 
+  it('every translation gives each step as many hints as en-US does', () => {
+    for (const { code } of LOCALES.filter((l) => l.code !== DEFAULT_LOCALE)) {
+      const translated = localizeLesson(def, code);
+      translated.steps.forEach((step, i) => {
+        if (step.locale !== code) return; // not translated yet: shows the en-US text
+        expect(step.hints.length, `${code}/${step.id}.md`).toBe(lesson.steps[i].hints.length);
+      });
+    }
+  });
+
   it('every text file belongs to a step (no misspelled file names)', () => {
     const names = new Set(['lesson', ...def.steps.map((s) => s.id)]);
     for (const file of listLessonFiles().filter((f) => f.lesson === def.id)) {

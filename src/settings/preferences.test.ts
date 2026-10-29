@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import indexHtml from '../../index.html?raw';
 import { effectiveDisplay, applyDisplay } from './display';
 import {
   DEFAULT_PREFERENCES,
@@ -68,5 +69,11 @@ describe('effectiveDisplay', () => {
     applyDisplay(display, root);
     expect(root.dataset).toMatchObject({ theme: 'light', contrast: 'standard', font: 'dyslexic' });
     expect(root.lang).toBe('en-US'); // French lessons don't exist yet
+  });
+});
+
+describe('the early theme script in index.html', () => {
+  it('reads the same storage key as the app', () => {
+    expect(indexHtml).toContain(`'${PREFERENCES_KEY}'`);
   });
 });

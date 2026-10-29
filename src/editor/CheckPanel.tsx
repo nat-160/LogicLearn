@@ -7,7 +7,9 @@
  * The sandbox uses <TargetCheckPanel>; lessons reuse `useCheck` (useCheck.ts) and
  * <CheckResultView>.
  */
+import { announce } from '../a11y/announcer';
 import type { CheckResult } from '../sim';
+import { summarizeCheck } from './checkSummary';
 import { TARGETS } from './targets';
 import { useCheck } from './useCheck';
 
@@ -99,7 +101,7 @@ export function TargetCheckPanel({
           <button
             type="button"
             className="primary"
-            onClick={() => run(target.spec)}
+            onClick={() => announce(summarizeCheck(run(target.spec)))}
             data-testid="check-button"
           >
             Check my circuit

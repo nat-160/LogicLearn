@@ -33,7 +33,9 @@ The step's text, in Markdown: lists, **bold**, tables…
 ```
 
 The `<!-- draft -->` and `<!-- hints -->` markers are HTML comments, so they stay in
-English in every language. Don't translate them.
+English in every language. Don't translate them. Hints can be a bulleted or a numbered
+list. Each translated step needs as many hints as the English one (`npm test` checks this
+for every language in `locales.ts`).
 
 ## Adding a language (example: US Spanish, `es-US`)
 
@@ -52,11 +54,18 @@ English in every language. Don't translate them.
    A **Lesson language** picker then appears in ⚙ Accessibility. Students whose browser
    is set to Spanish get Spanish by default.
 
-4. Run `npm run lessons:drafts` to see which files are still drafts or not yet translated,
-   and `npm test` to check that every file belongs to a real step.
+4. Run `npm run lessons:drafts` to see which files are still drafts, not yet translated,
+   or have a different number of hints. Run `npm test` to check that every file belongs
+   to a real step.
 
-A step that hasn't been translated yet shows its English text (marked as English for
-screen readers and narration), so a half-finished translation never leaves a step empty.
+A step that hasn't been translated yet shows its English text, so a half-finished
+translation never leaves a step empty. This also applies to a file that exists but has no
+text yet, such as one holding only `<!-- draft -->`.
+
+The page's `lang` is the interface language, which is English until the interface is
+translated. Lesson text in another language is marked with its own `lang` (for example
+`lang="es-US"`), so screen readers and narration switch to a Spanish voice just for the
+lesson text.
 
 ## Not translated yet
 

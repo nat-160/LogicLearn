@@ -529,6 +529,12 @@ select {
   outline-offset: 5px;
 }
 
+/* A selected part that is also outlined for a problem keeps the dashes of a selection. */
+.part.is-selected.is-highlighted,
+.part.is-selected.is-in-loop {
+  outline-style: dashed;
+}
+
 .part.is-unstable {
   animation: unstable 0.6s ease-in-out infinite alternate;
 }
@@ -826,6 +832,11 @@ select {
   outline-offset: calc(-1 * var(--focus-width));
 }
 
+/* The ring is drawn inside the row, so on the highlighted row it needs its own color. */
+.truth-table tbody tr.is-current:not(.is-wrong):focus-visible {
+  outline-color: var(--row-current-focus);
+}
+
 .truth-table tbody tr:hover td {
   background: var(--row-hover-bg);
 }
@@ -837,7 +848,7 @@ select {
 
 /* The current row also gets a bar on the left, so it doesn't rely on color. */
 .truth-table tr.is-current td:first-child {
-  box-shadow: inset 4px 0 0 var(--accent);
+  box-shadow: inset 4px 0 0 var(--row-current-bar);
 }
 
 .truth-table tr.is-wrong td {
@@ -864,7 +875,7 @@ select {
 
 .tried-mark {
   width: 18px;
-  color: var(--signal-on);
+  color: var(--ok);
   font-weight: 700;
 }
 
@@ -1008,10 +1019,6 @@ select {
 .prose {
   font-size: 15px;
   line-height: var(--leading);
-}
-
-.prose h2 {
-  display: none; /* the step title already says this */
 }
 
 .prose table {
@@ -1327,7 +1334,7 @@ button.next {
   margin: 4px 0 8px;
 }
 
-.read-aloud[aria-pressed='true'] {
+.read-aloud.is-reading {
   border-color: var(--accent);
   border-width: 2px;
 }
