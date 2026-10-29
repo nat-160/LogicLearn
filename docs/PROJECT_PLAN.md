@@ -1,7 +1,9 @@
 # Project Plan: Web-Based Logic Circuit Learning Platform
 
-> Status: **Draft v2 for review**, drafted 2026-10-29 from the approved project proposal.
-> v2 adds the findings of an independent review and of Herman et al. (ICER '08); see §10.
+> Status: **v3**, 2026-10-29. Drafted from the approved project proposal. v2 added the
+> findings of an independent review and of Herman et al. (ICER '08); v3 adds the author's
+> answers (see §10).
+> Repository: `nat-160/LogicLearn` (formerly `CS6460`). Working name for the site: **LogicLearn**.
 > Scope: a detailed plan for **Phase 1**, plus a roadmap for later phases. Phase 1 includes
 > design "seams" so that later phases add to the code rather than rewrite it.
 
@@ -33,19 +35,17 @@ together because the repository currently holds only a README.
 | Starting point | Start fresh in this repo (no prior prototype code). |
 | Wire model | **Port-to-port now, routing later.** Wires connect an output pin to an input pin. The data model keeps an optional `waypoints` field so drawn routing can be added later without a migration. |
 | Data / backend | **Static, no accounts.** Everything stays in the browser (localStorage). **The app never sends data anywhere.** Anything that leaves the device is a file or link the student chooses to create. Beta surveys and evaluation tests are run separately (see §6). |
-| Devices | **Touch and mouse are both first-class from day one** (Chromebook + iPad). |
+| Devices | **Touch and mouse are both first-class in the design** (tap-to-add, tap-to-connect, large hit areas). **Testing targets current desktop browsers** (Chrome, Edge, Firefox, Safari). There is no partner school or target device fleet, so touch is checked with browser touch emulation. A real-iPad pass is optional. |
+| Lesson text | The author writes the final lesson prose. Claude builds each lesson's structure, check specs, circuits and hints, with **short bullet-point placeholder text** covering each topic (§3.7). |
+| Curriculum | The §5 order is confirmed. **Implication ("if-then") is taught**, in Lesson 6. |
+| Beta testers | The author and peers (adults). |
 
-### ⚠ Prerequisite: an action for the author today
+### Hosting (resolved)
 
-`nat-160/CS6460` is currently **private** and has **Pages disabled**, as reported by the
-GitHub API. GitHub Pages on a private repository requires a paid plan. Claude does not have
-admin rights on the repo, so the author must make one of these changes:
-
-1. **Make the repo public**, or enable **GitHub Pro** (free with the GitHub Student Developer
-   Pack).
-2. Then go to **Settings → Pages → Source: GitHub Actions**.
-
-Until this is done, P1.0's deploy step cannot pass, and M1 cannot be shown from a public URL.
+The repo was renamed to `nat-160/LogicLearn`, made public, and has Pages enabled. Expected
+URL: `https://nat-160.github.io/LogicLearn/`. The P1.0 workflow deploys with
+`actions/deploy-pages`, which requires **Settings → Pages → Source: GitHub Actions**. If Pages
+was set to "Deploy from a branch", switch that one setting (see §7).
 
 ---
 
@@ -108,19 +108,21 @@ Related work from the same group: *Describing the What and Why of Students' Diff
 Boolean Logic* (ACM TOCE, 2012), and the **Digital Logic Concept Inventory** (DLCI),
 a validated multiple-choice instrument for university students.
 
-### Standards alignment (verify against official documents before building the evaluation index)
+### Standards alignment
 
 - **IB Computer Science** (new syllabus, first assessment May 2027) has A1.2.3 (purpose and use
   of logic gates), A1.2.4 (truth tables) and A1.2.5 (logic diagrams), covering AND, OR, NOT,
-  NAND, NOR, XOR and XNOR. *These come from third-party course materials; check them against
-  the official IB guide.*
+  NAND, NOR, XOR and XNOR. *These codes come from third-party materials; the author has
+  accepted them as correct for now.*
 - **CSTA 3B-CS-02** (2017 standards): "Illustrate ways computing systems implement logic,
   input, and output through hardware components." California's 9–12 specialty standard
   explicitly names gates and adders built from gates. *CSTA has been revising its standards,
   so confirm that this identifier hasn't changed.*
-- **AP CSP** clearly covers *Boolean expressions* (Topic 3.5). I could **not confirm** that the
-  current Course and Exam Description covers *logic gates*. Check this before the proposal's
-  evaluation relies on AP items.
+- **AP CSP does not cover logic gates** (the author confirmed this). It covers only *Boolean
+  expressions* (Topic 3.5). The proposal's evaluation index ("drawn from the AP and IB
+  standards") should therefore be built from **IB A1.2.3–A1.2.5** and CSTA. AP CSP can
+  contribute only Boolean-expression items. **Suggested change to the proposal or report
+  wording:** say that AP CSP covers only Boolean expressions, not gates.
 
 ### Deployment risk
 
@@ -148,17 +150,12 @@ Because the app is fully static, it can be moved to another host with no code ch
   - `#/lesson/:id/:step`
   - `#/share/:payload`
 
-  Vite's `base` is set to `'./'`, so the same build works under `/CS6460/`, under a custom
+  Vite's `base` is set to `'./'`, so the same build works under `/LogicLearn/`, under a custom
   domain, or on any other static host.
-- **Browser support matrix** (proposed; confirm with a partner school's devices if one is
-  available):
-  - Chrome / ChromeOS 100+ (school Chromebooks past their Auto Update Expiration stay on
-    older Chrome).
-  - Safari on iPadOS 15+ (older iPads cannot update past 15).
-
-  Set Vite's `build.target` explicitly to match, because the default assumes newer browsers.
-  Avoid APIs newer than the matrix (for example, `structuredClone` and `Array.prototype.at`
-  need Safari 15.4).
+- **Browser support:** the current versions of desktop Chrome, Edge, Firefox and Safari.
+  There is no partner school or legacy device fleet, so Vite's default `build.target` is
+  fine. If a school with older Chromebooks or iPads adopts the app later, set an explicit
+  target then.
 
 ### 3.2 Module layout and dependency rule
 
@@ -324,13 +321,21 @@ gates later.
   | NAND ("not both") | XOR ("exactly one") | {0,0} | "What should happen when *neither* is on?" |
   | XNOR ("if and only if", "exactly when") | AND | {0,0} | "Check the case where both are off." |
   | XOR ("one or the other, not both") | OR | {1,1} | "What should happen when *both* are on?" |
-  | ¬A + B ("if A then B"; an extension topic) | AND | {0,0}, {0,1} | "If A is off, does the rule say anything?" |
+  | ¬A + B ("if A then B"; Lesson 6) | AND | {0,0}, {0,1} | "If A is off, has the rule been broken?" |
   | Any spec | — | only the all-zeros row | "Did you check the case where every input is 0?" |
 
 ### 3.7 Lesson framework
 
-- **Lessons are TypeScript data modules**, with Markdown strings for prose. This makes them
-  type-checked and lets CI test them. Each lesson is a list of **steps**:
+- **Lessons are TypeScript data modules.** This makes them type-checked and lets CI test
+  them. **Prose lives in separate Markdown files**, `src/lessons/content/<lesson>/<step>.md`,
+  imported with Vite's `?raw`, so the author can write the final text without touching code.
+  - Claude writes each file first as **short bullet points** covering the step's topics,
+    starting with a `<!-- draft -->` marker.
+  - `npm run lessons:drafts` lists the steps that are still drafts.
+  - Hints are short. Claude drafts them in the TypeScript step definitions, and the author
+    can revise them.
+
+  Each lesson is a list of **steps**:
   - `explain`: text, an optional picture, an optional read-only embedded circuit.
   - `guided`: a starter circuit (with locked I/O), a restricted palette, a `CheckSpec`,
     `hints[]`, and a **reference solution**.
@@ -396,38 +401,41 @@ gates later.
 
 ## 4. Phase 1: work breakdown
 
-**Date assumption:** today is Thu Oct 29, and the Milestone 1 video is due at the end of the
-week of Oct 26. **Please confirm the actual due date** (see §7). Tasks are listed in build
+**Dates:** today is Thu Oct 29. **Milestone 1 is due Tue Nov 3.** Tasks are listed in build
 order, and each task is a reviewable commit or PR.
 
 | # | Task | Acceptance criteria | Target |
 |---|---|---|---|
-| **P1.0** | **Scaffold and CI/CD.** Vite + React + TS, ESLint + Prettier, Vitest, Playwright, the GitHub Actions workflow (lint, typecheck, test, build, deploy to Pages), hash router, `base: './'`, explicit `build.target`, and the **`sim/` boundary** (separate no-DOM tsconfig plus an import lint rule). Add a `CLAUDE.md` with commands and architecture rules, so future Claude Code sessions follow them. *Deploying needs the §1 prerequisite.* | `npm run build`, `npm test` and `npm run lint` pass in CI. The Pages URL loads a placeholder. A test file in `sim/` that imports React fails lint. | Oct 29 |
+| **P1.0** | **Scaffold and CI/CD.** Vite + React + TS, ESLint + Prettier, Vitest, Playwright, the GitHub Actions workflow (lint, typecheck, test, build, deploy to Pages), hash router, `base: './'`, and the **`sim/` boundary** (separate no-DOM tsconfig plus an import lint rule). Add a `CLAUDE.md` with commands and architecture rules, so future Claude Code sessions follow them. *Deploying needs Pages Source set to GitHub Actions (§1).* | `npm run build`, `npm test` and `npm run lint` pass in CI. `https://nat-160.github.io/LogicLearn/` loads a placeholder. A test file in `sim/` that imports React fails lint. | Oct 29 |
 | **P1.1** | **Circuit model and serialization.** Types, `validate()`, `migrate()`, JSON round-trip. | Round-trip and validation tests pass. Wires that break the single-driver rule are rejected. | Oct 29 |
 | **P1.2** | **Component registry and the 9 Phase 1 components** (logic only, with `io` roles). | Every gate's full truth table, including X cases, is unit-tested. | Oct 30 |
 | **P1.3** | **Simulation engine.** Compile, reset (schedule everything once), tick loop, tick budget, oscillation report, cycle check. | Tests: half adder and full adder give correct outputs; fan-out; an unconnected input gives X; a NOT gate looped back on itself **settles at X** and shows `HAS_CYCLE`; NAND(A, its own output) settles at 1 with A=0, then **oscillates** after A is switched to 1; a 200-component circuit settles within a loose time bound (or measure with `vitest bench`, not a hard 2 ms gate in CI). | Oct 30 |
-| **P1.4** | **Truth table and checker.** Truth table generation, `CheckSpec` (data only, plus a `rowsFrom()` helper), `CheckResult`, all diagnostics, constraints that skip I/O parts, and the misconception-signature data. | Tests: a correct XOR passes; OR used in place of XOR fails on exactly the `1,1` row and matches its signature; XOR used in place of NAND fails on exactly `0,0`; a missing output gives `MISSING_IO`; two inputs labeled "A" give `DUPLICATE_LABEL`; "only NAND" rejects an AND gate but not the switches. | Oct 30 |
+| **P1.4** | **Truth table and checker.** Truth table generation, `CheckSpec` (data only, plus a `rowsFrom()` helper), `CheckResult`, all diagnostics, constraints that skip I/O parts, and the misconception-signature data. | Tests: a correct XOR passes; OR used in place of XOR fails on exactly the `1,1` row and matches its signature; XOR used in place of NAND fails on exactly `0,0`; AND used in place of implication fails on exactly `0,0` and `0,1`; a missing output gives `MISSING_IO`; two inputs labeled "A" give `DUPLICATE_LABEL`; "only NAND" rejects an AND gate but not the switches. | Oct 30–31 |
 | **P1.5a** | **Editor core.** Custom nodes with hand-drawn ANSI gate SVGs, palette (drag, and tap to place in the next free cell), connect by drag or tap, single-driver replacement, delete, snap grid, pan/zoom with `minZoom`, live coloring of wires and lights, switch toggling. | With mouse **and** emulated touch, a user can build a half adder from scratch and see correct outputs. The Playwright touch test uses **taps only** (tap to add, tap to connect, tap to toggle), because Playwright's touchscreen API only supports `tap()`. | Oct 31 |
-| **P1.5b** | **Editor ergonomics.** Undo/redo (one history entry per drag), "never settles" banner and highlighting, iPad gesture CSS, label editing. | Undo/redo unit tests on the store. Manual check in Safari (on a real iPad if one is available). | Nov 1 |
-| **P1.6** | **Truth table and check panel.** Updates live; the current row is highlighted; tapping a row sets the switches to that combination; rows the student has tried are marked. Includes a **minimal "Target" check**: choose a hard-coded target (e.g. XOR, half adder), press **Check**, and see pass or fail with the wrong rows highlighted. | A component test, plus the M1 demo: OR built for an XOR target shows the `1,1` row wrong. | Oct 31 – Nov 1 |
-| **P1.7** | **Curriculum outline (scaffolded lesson plan).** Revise the draft in §5 with the author. | The author has reviewed it. It is saved as `docs/curriculum-outline.md`. | Nov 1 |
-| **P1.8** | **Milestone 1 demo.** Deploy, write a demo script, record the video. | The deployed build shows: sandbox, live simulation, truth table, and the checker passing and failing. | **M1 due** |
+| **P1.5b** | **Editor ergonomics.** Undo/redo (one history entry per drag), "never settles" banner and highlighting, touch gesture CSS, label editing. | Undo/redo unit tests on the store. Playwright smoke test passes in Chromium, Firefox and WebKit. | Nov 1 |
+| **P1.6** | **Truth table and check panel.** Updates live; the current row is highlighted; tapping a row sets the switches to that combination; rows the student has tried are marked. Includes a **minimal "Target" check**: choose a hard-coded target (e.g. XOR, half adder), press **Check**, and see pass or fail with the wrong rows highlighted. | A component test, plus the M1 demo: OR built for an XOR target shows the `1,1` row wrong. | Nov 1 |
+| **P1.7** | **Curriculum outline.** Write `docs/curriculum-outline.md` from §5 (order confirmed), with bullet-point topics for each lesson step. These bullets become the placeholder lesson text. | The author has reviewed it. | Nov 1 |
 | **P1.9** | **Saving and sharing.** Autosave the sandbox to localStorage plus `navigator.storage.persist()`; export and import a `.circuit.json` file; share link at `#/share/<lz-string payload>`, falling back to a file when the link would be too long. **Opening a share link creates a copy and never overwrites the student's autosaved work.** | A link reopens the same circuit in a fresh browser profile, and the existing sandbox is unchanged. Malformed files or links give a friendly error, not a crash. | Nov 2 |
-| **P1.10** | **Lesson framework skeleton.** Lesson schema (with the `liveOutputs` and `truthTable` options), runner UI (instruction panel, steps unlocked in order, a "Check" button that uses the checker, hints revealed one at a time), progress store, and **one demo lesson** ("NOT and AND") with reference solutions, plus the content test (solution passes, starter fails). | The demo lesson can be completed end to end; progress survives a page reload; the content test runs in CI. | Nov 3–4 |
+| **P1.10** | **Lesson framework skeleton.** Lesson schema (with the `liveOutputs` and `truthTable` options, and Markdown prose files), runner UI (instruction panel, steps unlocked in order, a "Check" button that uses the checker, hints revealed one at a time), progress store, `lessons:drafts` script, and **one demo lesson** ("NOT and AND") with draft bullet text and reference solutions, plus the content test (solution passes, starter fails). | The demo lesson can be completed end to end; progress survives a page reload; the content test runs in CI. | Nov 2–3 |
+| **P1.8** | **Milestone 1 demo.** Deploy, write a demo script, record the video. | The deployed build shows: sandbox, live simulation, truth table, and the checker passing and failing. If ready, it also shows the share link and the demo lesson. | **Tue Nov 3** |
 
 **Milestone 1 cut line:**
 
-- **Required for M1:** P1.0–P1.4, P1.5a, P1.6, P1.7 and P1.8.
-- **Wanted for M1 but can slip a day:** P1.5b.
-- **After M1:** P1.9 and P1.10 finish at the start of the week of Nov 2, overlapping with
-  Phase 2. P1.10 must be done before lessons 1–4 are written.
+- **Required for M1:** P1.0–P1.7 and P1.8.
+- **Planned before M1, but can slip:**
+  - P1.9 (saving and sharing).
+  - P1.10 (lesson skeleton), which can slip to Nov 4 at the latest, because lessons 1–4
+    depend on it.
+- **If time runs short,** cut in this order: label editing and gesture CSS (from P1.5b),
+  then P1.9's share link (keep file export), then P1.10's runner polish. Never cut the
+  checker or the tests.
 
 ### Phase 1 exit criteria
 
-- [ ] On Chrome (ChromeOS or desktop) and on iPad Safari, a student can build, simulate and
-      inspect a circuit using **only** touch or **only** a mouse. Verified by the Playwright
-      tests plus **one manual pass on a real iPad** (or flagged as untested if no device is
-      available).
+- [ ] In current desktop Chrome, Edge, Firefox and Safari, a student can build, simulate and
+      inspect a circuit with a mouse. With touch emulation, they can do the same using taps
+      only. Verified by the Playwright tests (Chromium, Firefox and WebKit). A manual pass on
+      a real iPad is optional.
 - [ ] The checker verifies a circuit against a spec, reports the exact wrong rows and the
       structural problems, and matches the misconception signatures.
 - [ ] The demo lesson runs end to end: steps unlock in order, hints work, and progress is
@@ -453,7 +461,10 @@ order, and each task is a reviewable commit or PR.
 
 ---
 
-## 5. Draft scaffolded lesson plan (for the author to revise)
+## 5. Scaffolded lesson plan (order confirmed by the author)
+
+The author writes the final lesson text. Claude's placeholder text is short bullet points
+covering these topics (§3.7).
 
 Each lesson moves from **direct instruction** to **guided construction** (with locked I/O and
 a restricted palette) to **open construction**, then ends with an automatically checked
@@ -475,8 +486,8 @@ Two habits run through every lesson, taken from ICER '08:
 | 4 | From circuit to truth table | Building full truth tables by hand, then checking with the tool | Predict the whole table (predict mode), then verify it | A1.2.4 |
 | **U1 project** | *Open project:* e.g. a door alarm or voting machine | Free design with basic automatic criteria | Rubric (hidden; for teachers) | CSTA 3B-CS-02 |
 | 5 | NAND and NOR | "Not both" (NAND) vs "exactly one" (XOR): they differ only when both are off. NAND is universal: build NOT, AND and OR from NAND only. | "Only NAND" constraint | A1.2.3 |
-| 6 | XNOR and English → logic | "If and only if" / "exactly when" (XNOR, not AND); "by itself" and "without" need NOTs; method: **translate each rule separately, then AND them**. *Extension:* "if-then" in logic vs in code. | A word problem with 2–3 rules (sandwich-shop style) | A1.2.5 |
-| 7 | From truth table to circuit | Sum of products, Boolean expressions ↔ diagrams, notation (`NOT A` = `Ā` = `!A`) | Build a circuit from any 3-input table | A1.2.4–A1.2.5 |
+| 6 | XNOR, implication, and English → logic | "If and only if" / "exactly when" is XNOR, not AND. **"If A then B" is implication, `NOT A OR B`**: it is broken only when A is on and B is off, and **a false "if" never breaks the rule**. Logic "if" is a rule, not cause and effect, unlike `if` in code. Method: **translate each rule separately, then AND them**. | Build "if A then B" from NOT and OR. Then a word problem with 2–3 rules (sandwich-shop style) | A1.2.5 |
+| 7 | From truth table to circuit | Sum of products: each 1-row is "exactly this combination", so "by itself" and "without" need NOTs. Boolean expressions ↔ diagrams; notation (`NOT A` = `Ā` = `!A`) | Build a circuit from any 3-input table | A1.2.4–A1.2.5 |
 | 8 | Useful circuits: adders | Half adder, full adder, 2-bit adder | Full adder | CSTA 3B-CS-02 |
 | **U2 project** | *Open project:* e.g. drive a seven-segment display from switches | Uses Phase 2 display parts | Rubric | — |
 | 9 *(stretch)* | Memory: latches and clocks | Feedback, SR latch, D latch | Store one bit | — |
@@ -499,6 +510,12 @@ This is the heaviest phase. Work in this **priority order**:
 4. **Prediction mode**, optional test-outs, and remediation branches. *These can slip into
    Phase 3.*
 
+**Lesson text:** Claude ships each lesson with bullet-point placeholder prose (from
+`docs/curriculum-outline.md`), check specs, circuits and hints. The author replaces the
+prose in the Markdown files whenever ready; this is independent of the code, and
+`lessons:drafts` tracks what is left. Lesson 6 is the heaviest, so implication gets its own
+guided steps and remediation (the {0,0}, {0,1} signature).
+
 **Fallbacks** (from the proposal's feasibility section): shorter lessons and written
 material, and briefer feedback on projects.
 
@@ -515,8 +532,8 @@ signatures; the progress store; the lesson step types and options.
   tamper-evident rather than tamper-proof.
 - A teacher "answer key" view.
 - **Beta testing:**
-  - **Recruit testers now.** Prefer adults (classmates, teachers). Testers who are minors need
-    parental consent and a check against course and IRB policy.
+  - **Testers:** the author and peers (adults), on their own desktop browsers. Follow the
+    course's policy for peer testing.
   - Have the **beta build, opt-in progress export and survey ready by about Nov 20**, because
     Thanksgiving (Nov 26) falls in the testing week.
 
@@ -532,8 +549,9 @@ serialized; lesson data includes reference solutions.
 - **Proposal deliverables:**
   - Write the **user instructions**.
   - Complete the **evaluation document**. It *designs* the high-school control-group study
-    (pre/post index built from AP/IB items, candidate ICER '08 / DLCI items, surveys, board
-    and parental approval). The study is not run this term.
+    (a pre/post index built from IB A1.2.3–A1.2.5 items, AP CSP Boolean-expression items
+    only, candidate ICER '08 / DLCI items, surveys, board and parental approval). The study
+    is not run this term.
   - Write the final report and record the walkthrough video.
 
 *Seams it relies on:* the event-driven engine; `state` in `evaluate`; oscillation handling.
@@ -549,24 +567,20 @@ Digital does; multi-bit buses; a custom domain; an optional backend, never requi
 
 ## 7. Open questions for the author
 
-1. **Milestone 1 due date**, and what the course expects the video to show. This decides the
-   P1.8 cut line.
-2. **Repo visibility vs GitHub Pro** for Pages (the §1 prerequisite), and the **license**.
-   MIT is suggested. CircuitVerse is MIT; Logisim and Digital are GPL, so no code or assets
-   are copied from them.
-3. **Gate symbols:** ANSI/IEEE distinctive shapes (default, and familiar from IB and US
-   materials), or IEC rectangular symbols, or a toggle between them later?
-4. **Name and branding** for the site (needed for the page title; it could also be a custom
-   domain).
-5. **Who writes the lesson prose?** The author writes it and Claude turns it into lesson data,
-   or Claude drafts it for the author to edit.
-6. **Curriculum:** do the §5 reorderings work for you (XOR in Lesson 3; NAND vs XOR in 5;
-   English → logic in 6)? Should "if-then" as a logical operator (implication) be taught,
-   included as an extension, or left out?
-7. **Evaluation instrument:** confirm whether AP CSP actually covers logic gates (§2), and
-   whether to ask the ICER '08 / DLCI authors about adapting their items.
-8. **Beta testers and devices:** who will test, and on which devices? Is there a partner
-   school whose Chromebook and iPad models we can target (§3.1 support matrix)?
+None of these block work. Claude proceeds with the **default** shown unless told otherwise.
+
+1. **Pages source:** is Settings → Pages → Source set to **GitHub Actions**? P1.0 deploys with
+   `actions/deploy-pages`, which needs it. If it is "Deploy from a branch", switch it.
+   *Default: Claude assumes it will be GitHub Actions by the time P1.0 lands.*
+2. **License:** the repo is now public. *Default: MIT.* CircuitVerse is MIT; Logisim and
+   Digital are GPL, so no code or assets are copied from them.
+3. **Gate symbols:** *Default: ANSI/IEEE distinctive shapes*, which IB and US materials use.
+   IEC rectangular symbols could be added later as a toggle.
+4. **Site name:** *Default: "LogicLearn"*, after the repo name.
+5. **Milestone 1 video:** are there rubric items or a length limit? This is optional; it
+   shapes the P1.8 demo script.
+6. **Evaluation items:** whether to contact the ICER '08 / DLCI authors about adapting
+   their items. *Phase 4; low priority.*
 
 ---
 
@@ -574,14 +588,12 @@ Digital does; multi-bit buses; a custom domain; an optional backend, never requi
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Pages can't deploy (the repo is private) | **Certain until fixed** | §1 prerequisite: the author makes the change today. |
 | Phase 1 is compressed (the Oct 19 prototype was not built) | High | Strict M1 cut line; the headless engine first so Claude Code can test it quickly; split the editor work into P1.5a and P1.5b; one demo lesson rather than many. |
 | Phase 2 is overloaded | High | §6 priority order; the proposal's fallbacks (shorter lessons and written material, briefer project feedback); test-outs and remediation may slip into Phase 3. |
-| Touch problems in iPad Safari | Medium | Tap-only Playwright tests in CI; a manual pass on a real iPad; tap-to-add and tap-to-connect fallbacks; the §3.8 gesture CSS. |
-| Progress lost (Safari's 7-day storage deletion, shared or guest Chromebooks) | Medium | `navigator.storage.persist()`; student progress export/import (Phase 2); later, a PWA added to the Home Screen. |
-| Older school devices (Chromebooks past their update expiration, iPadOS 15) | Medium | An explicit support matrix and `build.target` (§3.1); avoid newer APIs. |
+| Touch problems on real tablets (only emulation is tested) | Low–Medium | Tap-only Playwright tests in CI; tap-to-add and tap-to-connect fallbacks; the §3.8 gesture CSS; an optional manual iPad pass if a device is at hand. |
+| Progress lost (Safari's 7-day storage deletion, also on desktop; private windows; cleared browser data) | Medium | `navigator.storage.persist()`; student progress export/import (Phase 2); later, a PWA added to the Home Screen. |
 | Unsolvable or trivially solved lesson content written in a hurry | Medium | CI content test: solution passes, starter fails. |
-| Beta testing overlaps Thanksgiving week (Nov 26) | Medium | Recruit now; beta build ready by about Nov 20; prefer adult testers. |
+| Beta testing overlaps Thanksgiving week (Nov 26) | Medium | Line up peers now; beta build ready by about Nov 20. |
 | A district blocks the hosting domain | Medium | The app is static and can move hosts (`base: './'`); custom domain; PWA/offline build later. |
 | Accessibility and adoption | Medium | The DOJ's ADA Title II rule requires public entities' web content to meet **WCAG 2.1 AA**: by **Apr 26, 2027** for populations of 50,000 or more, and **Apr 26, 2028** for smaller ones (after a one-year extension in April 2026). Schools may need this from the tools they adopt. Meet AA where feasible (contrast, signals not shown by color alone, target size, keyboard-operable controls). Document that circuits cannot yet be built with the keyboard alone, as a post-course item. |
 | The editor turns out too hard to build openly (proposal's worst case) | Low | Fall back to a slot-based grid editor; the data model is unchanged. |
@@ -658,3 +670,24 @@ proposal, plus the ICER '08 paper:
   - ADA Title II risk.
   - Corrected the research attribution.
   - Softened the claim about districts blocking hosting sites.
+
+**v2 → v3** (2026-10-29). The author's answers:
+
+- **Repository:** renamed to `nat-160/LogicLearn`, made public, and Pages enabled. The §1
+  prerequisite is resolved; only the Pages source setting still needs confirming (§7).
+- **Milestone 1 is Tue Nov 3.** §4 is re-dated: P1.5b is now required for M1, and P1.9 and
+  P1.10 are planned before M1.
+- **Curriculum:**
+  - The order is confirmed.
+  - Implication is now core in Lesson 6.
+  - "By itself" and "without" moved to Lesson 7, alongside sum of products.
+- **Lesson text:** the author writes the final prose. Claude writes bullet-point placeholders
+  in separate Markdown files, tracked by `lessons:drafts`.
+- **Testing:** the testers are the author and peers, using modern desktop browsers. The
+  legacy support matrix and the old-device risk are removed. Touch stays in the design and
+  is tested by emulation only.
+- **Standards:**
+  - AP CSP does not cover logic gates, so the evaluation index uses IB, plus AP only for
+    Boolean expressions.
+  - IB codes are accepted as correct.
+- **Hosting:** the hedged wording about hosting-site blocking stays.
