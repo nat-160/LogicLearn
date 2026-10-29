@@ -1,0 +1,13 @@
+{
+  // Three TypeScript projects, checked together by `tsc -b`:
+  //  - tsconfig.sim.json  : the simulation core, compiled WITHOUT the DOM library so that
+  //                         browser APIs can never leak into it (see CLAUDE.md).
+  //  - tsconfig.app.json  : the React app (editor, lessons, storage).
+  //  - tsconfig.node.json : build/test tooling config files.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.sim.json" },
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

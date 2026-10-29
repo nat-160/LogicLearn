@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.sim.tsbuildinfo",
+    // No "DOM" here on purpose: the simulator must run anywhere (tests, a Web Worker,
+    // a headless grader). Using `window`, `document`, etc. in src/sim is a type error.
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/sim"],
+  "exclude": ["src/sim/**/*.test.ts"]
+}
