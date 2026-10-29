@@ -8,8 +8,20 @@
  * `schemaVersion` lets the format change later: `migrate()` upgrades older documents
  * step by step, so files saved today keep opening.
  */
-import { SCHEMA_VERSION, type CircuitDoc } from './circuit';
+import {
+  isSafeId,
+  SCHEMA_VERSION,
+  type CircuitDoc,
+  type ComponentInstance,
+  type Position,
+  type Wire,
+} from './circuit';
 import { findComponentDef, pinsOf } from './registry';
+
+/** Limits that keep a hostile or broken file from freezing the page. */
+export const MAX_PARTS = 2000;
+export const MAX_WIRES = 6000;
+const MAX_TEXT = 200;
 
 export type LoadResult = { ok: true; doc: CircuitDoc } | { ok: false; errors: string[] };
 
@@ -54,46 +66,66 @@ export function migrate(raw: unknown): { ok: true; value: unknown } | { ok: fals
   return { ok: true, value: raw };
 }
 
-/** Check every field of a document. Returns all problems found, not just the first. */
+/**
+ * Check every field of a document. Returns all problems found, not just the first.
+ * On success the document is REBUILT from the checked fields only, so unexpected extra
+ * data in a file can never reach the rest of the app.
+ */
 export function validateCircuit(raw: unknown): LoadResult {
   const errors: string[] = [];
   if (!isObject(raw)) return { ok: false, errors: ['This is not a circuit file.'] };
   if (raw.schemaVersion !== SCHEMA_VERSION) errors.push('Unsupported schemaVersion.');
-  if (typeof raw.id !== 'string') errors.push('Missing circuit id.');
-  if (typeof raw.name !== 'string') errors.push('Missing circuit name.');
+  if (!isShortText(raw.id)) errors.push('Missing circuit id.');
+  if (!isShortText(raw.name)) errors.push('Missing circuit name.');
   if (!Array.isArray(raw.components)) errors.push('Missing list of parts.');
   if (!Array.isArray(raw.wires)) errors.push('Missing list of wires.');
   if (errors.length) return { ok: false, errors };
 
-  const components = raw.components as unknown[];
-  const wires = raw.wires as unknown[];
-  const pinTable = new Map<string, { inputs: Set<string>; outputs: Set<string> }>();
+  const rawComponents = raw.components as unknown[];
+  const rawWires = raw.wires as unknown[];
+  if (rawComponents.length > MAX_PARTS || rawWires.length > MAX_WIRES) {
+    return { ok: false, errors: [`This circuit is too big (the limit is ${MAX_PARTS} parts).`] };
+  }
 
-  components.forEach((c, i) => {
+  const components: ComponentInstance[] = [];
+  const pinTable = new Map<string, { inputs: Set<string>; outputs: Set<string> }>();
+  rawComponents.forEach((c, i) => {
     const where = `Part ${i + 1}`;
     if (!isObject(c)) return errors.push(`${where} is not valid.`);
-    if (typeof c.id !== 'string' || !c.id) return errors.push(`${where} has no id.`);
+    if (!isSafeId(c.id)) return errors.push(`${where} has a missing or invalid id.`);
     if (pinTable.has(c.id)) return errors.push(`Two parts share the id "${c.id}".`);
     if (typeof c.type !== 'string' || !findComponentDef(c.type)) {
       return errors.push(`${where} has an unknown type "${String(c.type)}".`);
     }
-    if (!isObject(c.position) || !isFiniteNumber(c.position.x) || !isFiniteNumber(c.position.y)) {
-      return errors.push(`${where} has no valid position.`);
+    if (!isPosition(c.position)) return errors.push(`${where} has no valid position.`);
+    if (c.label !== undefined && !isShortText(c.label)) errors.push(`${where} has a bad label.`);
+    if (c.locked !== undefined && typeof c.locked !== 'boolean') errors.push(`${where} has a bad "locked" flag.`);
+    if (c.rotation !== undefined && ![0, 90, 180, 270].includes(c.rotation as number)) {
+      errors.push(`${where} has a bad rotation.`);
     }
-    if (c.label !== undefined && typeof c.label !== 'string') errors.push(`${where} has a bad label.`);
     if (!isObject(c.props)) return errors.push(`${where} has no props object.`);
     const pins = pinsOf(c.type, c.props);
     pinTable.set(c.id, {
       inputs: new Set(pins.inputs.map((p) => p.id)),
       outputs: new Set(pins.outputs.map((p) => p.id)),
     });
+    components.push({
+      id: c.id,
+      type: c.type,
+      position: { x: c.position.x, y: c.position.y },
+      props: { ...c.props },
+      ...(typeof c.label === 'string' && { label: c.label }),
+      ...(c.locked === true && { locked: true }),
+      ...(c.rotation !== undefined && { rotation: c.rotation as ComponentInstance['rotation'] }),
+    });
   });
 
+  const wires: Wire[] = [];
   const wireIds = new Set<string>();
   const drivenInputs = new Set<string>();
-  wires.forEach((w, i) => {
+  rawWires.forEach((w, i) => {
     const where = `Wire ${i + 1}`;
-    if (!isObject(w) || typeof w.id !== 'string') return errors.push(`${where} is not valid.`);
+    if (!isObject(w) || !isSafeId(w.id)) return errors.push(`${where} is not valid.`);
     if (wireIds.has(w.id)) return errors.push(`Two wires share the id "${w.id}".`);
     wireIds.add(w.id);
     if (!isPinRef(w.from) || !isPinRef(w.to)) return errors.push(`${where} has bad ends.`);
@@ -106,10 +138,32 @@ export function validateCircuit(raw: unknown): LoadResult {
     const key = `${w.to.component}.${w.to.pin}`;
     if (drivenInputs.has(key)) errors.push(`Input ${key} has more than one wire.`);
     drivenInputs.add(key);
+    if (w.waypoints !== undefined && !(Array.isArray(w.waypoints) && w.waypoints.every(isPosition))) {
+      errors.push(`${where} has bad waypoints.`);
+    }
+    wires.push({
+      id: w.id,
+      from: { component: w.from.component, pin: w.from.pin },
+      to: { component: w.to.component, pin: w.to.pin },
+      ...(Array.isArray(w.waypoints) && {
+        waypoints: (w.waypoints as Position[]).map((p) => ({ x: p.x, y: p.y })),
+      }),
+    });
   });
 
   if (errors.length) return { ok: false, errors };
-  return { ok: true, doc: raw as unknown as CircuitDoc };
+  return {
+    ok: true,
+    doc: { schemaVersion: SCHEMA_VERSION, id: raw.id as string, name: raw.name as string, components, wires },
+  };
+}
+
+function isShortText(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= MAX_TEXT;
+}
+
+function isPosition(value: unknown): value is Position {
+  return isObject(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y);
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

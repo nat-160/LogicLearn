@@ -28,7 +28,7 @@ export interface CircuitIO {
 }
 
 /** Natural label order: "A" < "B" < "In2" < "In10". */
-const labelOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+const labelOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'variant' });
 
 /** The circuit's inputs and outputs, each sorted by label. */
 export function findIO(doc: CircuitDoc): CircuitIO {
@@ -63,7 +63,7 @@ export function evaluateRow(
   outputs: readonly IOPart[],
   others: InputValues = {},
 ): RowResult {
-  const values: Record<string, Bit> = { ...others };
+  const values: Record<string, Bit> = Object.assign(Object.create(null), others);
   inputs.forEach((part, i) => (values[part.id] = bits[i]));
   const sim = new Simulator(circuit, values);
   return {

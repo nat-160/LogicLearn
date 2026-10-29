@@ -21,7 +21,7 @@
  * and spreads from there. A loop with nothing to pin it down (a NOT gate wired to itself)
  * simply stays X.
  */
-import { compile, UNCONNECTED, type CompiledCircuit } from './compile';
+import { compile, isCompiled, UNCONNECTED, type CompiledCircuit } from './compile';
 import type { CircuitDoc } from './circuit';
 import { X, type Bit, type Value } from './values';
 
@@ -53,9 +53,11 @@ export class Simulator {
   private values: Value[] = [];
   private states: unknown[] = [];
   private report: SettleReport = { settled: true, ticks: 0, unstable: [] };
+  /** Parts still waiting to be evaluated when the tick budget ran out. */
+  private pending = new Set<number>();
 
   constructor(circuit: CompiledCircuit | CircuitDoc, inputs: InputValues = {}) {
-    this.circuit = 'readers' in circuit ? circuit : compile(circuit);
+    this.circuit = isCompiled(circuit) ? circuit : compile(circuit);
     this.reset(inputs);
   }
 
@@ -64,9 +66,10 @@ export class Simulator {
     const { components, netCount } = this.circuit;
     this.values = new Array<Value>(netCount).fill(X);
     this.states = components.map((c) => {
-      if (c.def.io === 'input') return inputs[c.id] ?? 0;
+      if (c.def.io === 'input') return Object.hasOwn(inputs, c.id) ? inputs[c.id] : 0;
       return c.def.initialState?.(c.props);
     });
+    this.pending.clear();
     // Schedule every part once: this is how switches put their values onto the wires.
     return this.settle(components.map((_, i) => i));
   }
@@ -126,11 +129,15 @@ export class Simulator {
     // Parts whose outputs changed during the last quarter of the budget: if the circuit
     // never settles, these are the ones caught in the oscillation.
     const lateChanges = new Set<number>();
-    let scheduled = new Set(initial);
+    // Include anything left over from an earlier settle that never finished: a loop that
+    // was still oscillating is still oscillating.
+    let scheduled = new Set([...this.pending, ...initial]);
+    this.pending.clear();
     let ticks = 0;
 
     while (scheduled.size > 0) {
       if (ticks >= budget) {
+        this.pending = scheduled;
         this.report = {
           settled: false,
           ticks,

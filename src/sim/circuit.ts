@@ -88,7 +88,8 @@ const OUTPUT_LABELS = ['Y', 'Z', 'Q', 'R', 'S', 'T', 'U', 'V', 'W'];
 
 /** The next free label for a new input (A, B, C, …) or output (Y, Z, Q, …). */
 export function nextLabel(doc: CircuitDoc, role: 'input' | 'output'): string {
-  const used = new Set(doc.components.map((c) => c.label));
+  // An unlabeled input/output is known by its id in truth tables, so ids count as used too.
+  const used = new Set(doc.components.flatMap((c) => [c.label?.trim(), c.id]));
   const candidates = role === 'input' ? INPUT_LABELS : OUTPUT_LABELS;
   const free = candidates.find((label) => !used.has(label));
   if (free) return free;
@@ -115,6 +116,8 @@ export function addComponent(
   const def = findComponentDef(type);
   if (!def) throw new Error(`Unknown component type "${type}"`);
   const id = options.id ?? nextId(doc, type.toLowerCase());
+  if (!isSafeId(id)) throw new Error(`"${id}" can't be used as a part id`);
+  if (findComponent(doc, id)) throw new Error(`There is already a part with id "${id}"`);
   const label = options.label ?? (def.io ? nextLabel(doc, def.io) : undefined);
   const component: ComponentInstance = {
     id,
@@ -153,13 +156,39 @@ export function setLabel(doc: CircuitDoc, id: string, label: string): CircuitDoc
   };
 }
 
+/**
+ * Change a part's settings (e.g. a light's color, a gate's number of inputs). If the
+ * change removes pins, the wires attached to those pins are removed too, so the
+ * document never refers to pins that don't exist.
+ */
 export function setProps(doc: CircuitDoc, id: string, props: Props): CircuitDoc {
+  const target = findComponent(doc, id);
+  if (!target || target.locked) return doc;
+  const updated = { ...target, props: { ...target.props, ...props } };
+  const pins = pinsOf(updated.type, updated.props);
+  const inputs = new Set(pins.inputs.map((p) => p.id));
+  const outputs = new Set(pins.outputs.map((p) => p.id));
   return {
     ...doc,
-    components: doc.components.map((c) =>
-      c.id === id ? { ...c, props: { ...c.props, ...props } } : c,
+    components: doc.components.map((c) => (c.id === id ? updated : c)),
+    wires: doc.wires.filter(
+      (w) =>
+        (w.to.component !== id || inputs.has(w.to.pin)) &&
+        (w.from.component !== id || outputs.has(w.from.pin)),
     ),
   };
+}
+
+/**
+ * Ids are used as keys in plain objects (switch settings, pin values), so names that
+ * mean something special to JavaScript objects are not allowed.
+ */
+const RESERVED_IDS = new Set(['__proto__', 'constructor', 'prototype']);
+/** Letters, digits, "_" and "-" only: no "." because pins are written "part.pin". */
+const ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function isSafeId(id: unknown): id is string {
+  return typeof id === 'string' && ID_PATTERN.test(id) && !RESERVED_IDS.has(id);
 }
 
 export type PinDirection = 'input' | 'output';

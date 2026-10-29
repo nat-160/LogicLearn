@@ -116,6 +116,12 @@ export function diagnoseMisconception(input: MisconceptionInput): Misconception 
     if (match) return { id: match.id, summary: match.summary, hint: match.hint };
   }
 
-  if (wrong.length === 1 && wrong[0].inputs.every((bit) => bit === 0)) return MISSED_ALL_ZEROS;
+  // X outputs mean something is unconnected – a wiring problem, not this misconception.
+  const allZerosOnly =
+    input.inputCount > 0 &&
+    wrong.length === 1 &&
+    wrong[0].inputs.every((bit) => bit === 0) &&
+    !wrong[0].actual.includes('X');
+  if (allZerosOnly) return MISSED_ALL_ZEROS;
   return undefined;
 }

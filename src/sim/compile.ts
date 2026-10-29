@@ -38,6 +38,13 @@ export interface CompiledCircuit {
   readers: number[][];
 }
 
+/** Every circuit made by compile(), so it can't be confused with a plain document. */
+const compiledCircuits = new WeakSet<CompiledCircuit>();
+
+export function isCompiled(value: unknown): value is CompiledCircuit {
+  return typeof value === 'object' && value !== null && compiledCircuits.has(value as CompiledCircuit);
+}
+
 export function compile(doc: CircuitDoc): CompiledCircuit {
   const components: CompiledComponent[] = [];
   const indexById = new Map<string, number>();
@@ -78,7 +85,9 @@ export function compile(doc: CircuitDoc): CompiledCircuit {
     if (!readers[net].includes(index)) readers[net].push(index);
   }
 
-  return { components, indexById, netCount, readers };
+  const compiled = { components, indexById, netCount, readers };
+  compiledCircuits.add(compiled);
+  return compiled;
 }
 
 /**

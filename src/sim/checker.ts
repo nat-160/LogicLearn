@@ -140,8 +140,11 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
     });
   }
 
-  // --- Gate rules (switches and lights never count) ---
-  const gates = doc.components.filter((c) => findComponentDef(c.type)?.category === 'gate');
+  // --- Gate rules: every part except inputs and outputs counts ---
+  const gates = doc.components.filter((c) => {
+    const def = findComponentDef(c.type);
+    return def !== undefined && !def.io;
+  });
   const rules = spec.constraints ?? {};
   if (rules.allowedTypes) {
     const banned = gates.filter((g) => !rules.allowedTypes!.includes(g.type));
