@@ -2,15 +2,20 @@
  * A complete editor: parts palette | toolbar + canvas | side panel.
  * The sandbox and each lesson step put one of these on screen with their own store and
  * their own side panel (truth table, check, lesson instructions…).
+ *
+ * Every editor also gets the text version of the circuit and (unless read-only) the
+ * Connections panel, so it can be used with a screen reader or keyboard alone.
  */
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, type ReactNode } from 'react';
+import { CircuitDescription, ConnectionsPanel } from './AccessPanels';
 import { Canvas } from './Canvas';
 import { BlindContext, EditorContext } from './editorContext';
 import { Palette } from './Palette';
 import { ALL_PARTS } from './parts';
 import type { EditorStore } from './store';
 import { Toolbar } from './Toolbar';
+import { useEditorAnnouncements } from './useEditorAnnouncements';
 
 export interface EditorProps {
   store: EditorStore;
@@ -61,16 +66,31 @@ export function Editor({
       <ReactFlowProvider>
         <BlindContext.Provider value={blind}>
           <div className={`editor ${blind ? 'is-blind' : ''}`}>
-            {lead && <aside className="editor-lead">{lead}</aside>}
+            <EditorAnnouncements />
+            {lead && (
+              <aside className="editor-lead" aria-label="Lesson instructions">
+                {lead}
+              </aside>
+            )}
             {!readOnly && <Palette types={palette} />}
             <div className="editor-main">
               {!readOnly && <Toolbar>{toolbarExtras}</Toolbar>}
               <Canvas readOnly={readOnly} />
             </div>
-            {side && <aside className="editor-side">{side}</aside>}
+            <aside className="editor-side" aria-label="Circuit tools">
+              {side}
+              <CircuitDescription />
+              {!readOnly && <ConnectionsPanel />}
+            </aside>
           </div>
         </BlindContext.Provider>
       </ReactFlowProvider>
     </EditorContext.Provider>
   );
+}
+
+/** Screen reader announcements for this editor (lights changing, refused connections…). */
+function EditorAnnouncements() {
+  useEditorAnnouncements();
+  return null;
 }

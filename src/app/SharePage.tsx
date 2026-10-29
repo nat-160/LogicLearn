@@ -37,6 +37,7 @@ export function SharePage({ data }: { data: string }) {
 
   return (
     <div className="share-page">
+      <h1 className="sr-only">Shared circuit</h1>
       <div className="share-banner" role="status">
         You're looking at a shared circuit. Changes here are not saved.
         <button type="button" className="primary" onClick={keepCopy} data-testid="keep-copy">

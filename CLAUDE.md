@@ -35,12 +35,25 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 - **Every action needs a tap alternative** (tablets have no keyboard, no hover, no right
   click). Pins are 36px touch targets; keep `minZoom` so they stay ≥ 24px.
 - **Nothing leaves the device** unless the student downloads a file or copies a link.
-  No accounts, no analytics, no network calls.
+  No accounts, no analytics, no network calls (fonts are self-hosted).
+
+## Accessibility (see docs/accessibility.md)
+
+- **Colors only from theme tokens** in `src/styles/themes.css` (four themes: light, dark,
+  and their high-contrast versions). Never hard-code a color in `app.css` or a component.
+- Never use color as the only cue. Announce changes with `announce()` (`src/a11y/`), not
+  new `aria-live` regions or `role="alert"`. Control names must include their visible text.
+- The theme is applied twice: early by the inline script in `index.html`, then by
+  `src/settings/display.ts`. Keep the two in step (same storage key).
+- Every pointer action needs a keyboard path (wiring: the Connections panel).
+- `e2e/accessibility.spec.ts` runs axe-core in every theme; keep it passing.
 
 ## Lessons
 
-- A lesson is `src/lessons/content/<lesson>/index.ts` (circuits, checks, hints) plus one
-  Markdown file per step (the text). Register it in `src/lessons/catalog.ts`.
+- A lesson is `src/lessons/content/<lesson>/index.ts` (circuits, checks, parts lists –
+  no words) plus a folder per language, `<lesson>/en-US/`, with `lesson.md` (title +
+  summary) and one `<step-id>.md` per step (title, text, `<!-- hints -->` list). Register
+  the lesson in `src/lessons/catalog.ts`. Translations: `docs/translating.md`.
 - The course author writes the final lesson text. Placeholder text is short bullet points
   and starts with `<!-- draft -->`; remove that line when the real text is in.
 - Every guided/challenge step needs a reference `solution`. `src/lessons/lessons.test.ts`

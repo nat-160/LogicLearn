@@ -47,7 +47,8 @@ test('build a half adder from scratch', async ({ page }, testInfo) => {
   // Columns: tried, A, B, Y, Z
   await expect(rows.nth(0).locator('td')).toHaveText(['✓', '0', '0', '0', '0']);
   await expect(rows.nth(2).locator('td')).toHaveText(['✓', '1', '0', '1', '0']);
-  await expect(rows.nth(3).locator('td')).toHaveText(['✓', '1', '1', '0', '1']);
+  // Row 3 is the current row, so its first cell also says so (for screen readers).
+  await expect(rows.nth(3).locator('td')).toHaveText(['✓current row', '1', '1', '0', '1']);
 });
 
 test('checking OR against the XOR target marks only the 1,1 row', async ({ page }, testInfo) => {
@@ -88,9 +89,10 @@ test('a circuit that never settles is reported', async ({ page }, testInfo) => {
   await addPart(page, testInfo, 'NAND'); // nand-1
   await connect(page, testInfo, ['A', 'out'], ['nand-1', 'in0']);
   await connect(page, testInfo, ['nand-1', 'out'], ['nand-1', 'in1']);
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  const banner = page.locator('.banner-error');
+  await expect(banner).toHaveCount(0);
   await press(switchButton(page, 'A'), testInfo);
-  await expect(page.getByRole('alert')).toContainText('never settles');
+  await expect(banner).toContainText('never settles');
 });
 
 test('a share link opens a copy without touching the sandbox', async ({ page }, testInfo) => {

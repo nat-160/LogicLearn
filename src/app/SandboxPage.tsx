@@ -34,16 +34,19 @@ export function SandboxPage() {
 
   const target = TARGETS.find((t) => t.id === targetId);
   return (
-    <Editor
-      store={store}
-      toolbarExtras={<FileActions store={store} />}
-      side={
-        <>
-          <Inspector />
-          <TargetCheckPanel targetId={targetId} onTargetChange={setTargetId} />
-          <TruthTablePanel spec={target?.spec} />
-        </>
-      }
-    />
+    <>
+      <h1 className="sr-only">Sandbox</h1>
+      <Editor
+        store={store}
+        toolbarExtras={<FileActions store={store} />}
+        side={
+          <>
+            <Inspector />
+            <TargetCheckPanel targetId={targetId} onTargetChange={setTargetId} />
+            <TruthTablePanel spec={target?.spec} />
+          </>
+        }
+      />
+    </>
   );
 }

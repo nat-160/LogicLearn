@@ -50,6 +50,18 @@
   the light shows "?" and the truth table is hidden until Check.
 - Progress is saved in the browser; no account, no data leaves the device.
 
+### 5b. Accessibility (45 s) – _⚙ Accessibility, top right_
+
+- From beta testing: open **⚙ Accessibility**.
+  - Turn on **High contrast** (the canvas and wires stay readable: thick = 1, thin = 0).
+  - Then **Dark mode** (four themes in all).
+  - Then the **Dyslexia-friendly font** (OpenDyslexic plus wider spacing).
+  - Reload to show the settings are remembered.
+- On a lesson step press **Read this step aloud**: built-in narration, no server needed.
+- Show **Connections (keyboard)** and **Circuit as text**: a whole circuit can be built
+  and read without a mouse or touch screen.
+- Mention that automated WCAG checks (axe-core) run in every theme on every change.
+
 ### 6. Under the hood (30 s) – _code editor_
 
 - `src/sim/simulator.ts` header comment: event-driven, unit-delay simulation; handles
@@ -63,6 +75,7 @@
 - Phase 2: Lessons 1–8, hints from misconception signatures, progress gating, test-outs,
   seven-segment display, open projects with an automatic grader.
 - Phase 3: teacher materials, bypass/completion codes, beta testing with peers.
+- Lesson text is already organized by language, ready for an `es-US` translation.
 
 ---
 

@@ -1,0 +1,350 @@
+/* Themes.
+ *
+ * Every color the app uses is a token (a CSS custom property) defined here; app.css only
+ * ever uses the tokens. There are four themes, set by attributes on <html> (see
+ * src/settings/display.ts):
+ *
+ *                      data-contrast="standard"   data-contrast="high"
+ *   data-theme="light"   light (default)            high-contrast light
+ *   data-theme="dark"    dark                       high-contrast dark
+ *
+ * High contrast: text at 7:1 or more (WCAG AAA), lines and parts at 4.5:1 or more,
+ * thicker outlines and focus rings, no tints or shadows that carry meaning. In every theme
+ * a wire's value is also shown by its shape – 1 thick, 0 thin, X dashed – never by color
+ * alone. Windows "contrast themes" (forced colors) use the system's own colors.
+ */
+
+:root {
+  /* Surfaces and text */
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #94a3b8;
+  --text: #0f172a;
+  --text-muted: #556274;
+  --accent: #2563eb;
+  --on-accent: #ffffff;
+  --accent-soft: #dbeafe;
+  --accent-text: #1e3a8a;
+  --focus: #2563eb;
+  --focus-width: 3px;
+  --line-width: 1px;
+  --shadow: 0 10px 30px rgb(15 23 42 / 0.15);
+  --header-bg: #0f172a;
+  --header-text: #ffffff;
+  --header-text-muted: #cbd5e1;
+  --header-hover-bg: #1e293b;
+
+  /* Signals: wires and pins */
+  --signal-on: #16a34a;
+  --signal-off: #334155;
+  --signal-unknown: #64748b;
+  --signal-blind: #475569;
+  --wire-on-width: 4.5;
+  --wire-off-width: 2;
+  --wire-unknown-width: 2;
+  --wire-unknown-dash: 7 5;
+  --pin-ring: #ffffff;
+
+  /* Parts */
+  --part-fill: #ffffff;
+  --part-stroke: #1e293b;
+  --part-stroke-width: 2.5;
+  --switch-off-bg: #e2e8f0;
+  --switch-off-text: #0f172a;
+  --switch-on-bg: #4ade80;
+  --switch-on-text: #052e16;
+  --knob: #ffffff;
+  --light-off-bg: #1f2937;
+  --light-off-text: #ffffff;
+  --light-on-text: #422006;
+  --light-yellow: #fde047;
+  --light-red: #f87171;
+  --light-green: #4ade80;
+  --light-blue: #60a5fa;
+  --light-glow: 0 0 14px 4px;
+  --light-unknown-a: #e2e8f0;
+  --light-unknown-b: #cbd5e1;
+  --light-unknown-text: #334155;
+  --canvas-bg: #f8fafc;
+  --grid-dot: #cbd5e1;
+
+  /* Status colors */
+  --error: #dc2626;
+  --error-bg: #fee2e2;
+  --error-text: #7f1d1d;
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --warning-text: #78350f;
+  --ok: #15803d;
+  --ok-bg: #dcfce7;
+  --ok-text: #14532d;
+  --draft-bg: #ede9fe;
+  --draft-text: #5b21b6;
+
+  /* Truth table */
+  --row-current-bg: #dbeafe;
+  --row-current-text: inherit;
+  /* The current row's left bar, and the focus ring drawn inside it: they must stand out
+   * against --row-current-bg, not just against the page. */
+  --row-current-bar: var(--accent);
+  --row-current-focus: var(--focus);
+  --row-hover-bg: #f1f5f9;
+  --row-wrong-bg: #fee2e2;
+  --row-wrong-text: #7f1d1d;
+  --output-col-bg: #f8fafc;
+
+  /* Type (the dyslexia-friendly setting changes these) */
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --leading: 1.55;
+  --tracking: normal;
+  --word-spacing: normal;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0b1120;
+  --surface: #111827;
+  --surface-alt: #1a2333;
+  --border: #2b3648;
+  --border-strong: #64748b;
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --accent: #60a5fa;
+  --on-accent: #0b1120;
+  --accent-soft: #1e3a5f;
+  --accent-text: #bfdbfe;
+  --focus: #93c5fd;
+  --shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+  --header-bg: #020617;
+  --header-text: #f8fafc;
+  --header-text-muted: #94a3b8;
+  --header-hover-bg: #1e293b;
+
+  --signal-on: #4ade80;
+  --signal-off: #cbd5e1;
+  --signal-unknown: #7b8799;
+  --signal-blind: #94a3b8;
+  --pin-ring: #0f172a;
+
+  --part-fill: #1e293b;
+  --part-stroke: #e2e8f0;
+  --switch-off-bg: #334155;
+  --switch-off-text: #f8fafc;
+  --switch-on-bg: #22c55e;
+  --switch-on-text: #052e16;
+  --knob: #f8fafc;
+  --light-off-bg: #0b1120;
+  --light-off-text: #e5e7eb;
+  --light-on-text: #1c1917;
+  --light-unknown-a: #334155;
+  --light-unknown-b: #1e293b;
+  --light-unknown-text: #e5e7eb;
+  --canvas-bg: #0f172a;
+  --grid-dot: #334155;
+
+  --error: #f87171;
+  --error-bg: #3f1d1d;
+  --error-text: #fecaca;
+  --warning: #fbbf24;
+  --warning-bg: #3a2a0a;
+  --warning-text: #fde68a;
+  --ok: #4ade80;
+  --ok-bg: #0f2e1d;
+  --ok-text: #bbf7d0;
+  --draft-bg: #2e1065;
+  --draft-text: #ddd6fe;
+
+  --row-current-bg: #1e3a5f;
+  --row-hover-bg: #1a2333;
+  --row-wrong-bg: #3f1d1d;
+  --row-wrong-text: #fecaca;
+  --output-col-bg: #151e2e;
+
+  color-scheme: dark;
+}
+
+:root[data-contrast='high'] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #ffffff;
+  --border: #000000;
+  --border-strong: #000000;
+  --text: #000000;
+  --text-muted: #1a1a1a;
+  --accent: #0000c0;
+  --on-accent: #ffffff;
+  --accent-soft: #ffffff;
+  --accent-text: #000000;
+  --focus: #0000c0;
+  --focus-width: 4px;
+  --line-width: 2px;
+  --shadow: none;
+  --header-bg: #000000;
+  --header-text: #ffffff;
+  --header-text-muted: #ffffff;
+  --header-hover-bg: #333333;
+
+  --signal-on: #006400;
+  --signal-off: #000000;
+  --signal-unknown: #000000;
+  --signal-blind: #000000;
+  --wire-on-width: 6;
+  --wire-off-width: 2.5;
+  --wire-unknown-width: 2.5;
+  --wire-unknown-dash: 4 4;
+  --pin-ring: #ffffff;
+
+  --part-fill: #ffffff;
+  --part-stroke: #000000;
+  --part-stroke-width: 3;
+  --switch-off-bg: #ffffff;
+  --switch-off-text: #000000;
+  --switch-on-bg: #006400;
+  --switch-on-text: #ffffff;
+  --knob: #ffffff;
+  --light-off-bg: #000000;
+  --light-off-text: #ffffff;
+  --light-on-text: #000000;
+  --light-yellow: #ffd700;
+  --light-red: #ff5c5c;
+  --light-green: #00e676;
+  --light-blue: #5ca8ff;
+  --light-glow: 0 0 0 0;
+  --light-unknown-a: #ffffff;
+  --light-unknown-b: #ffffff;
+  --light-unknown-text: #000000;
+  --canvas-bg: #ffffff;
+  --grid-dot: #8a8a8a;
+
+  --error: #b00000;
+  --error-bg: #ffffff;
+  --error-text: #000000;
+  --warning: #7a4000;
+  --warning-bg: #ffffff;
+  --warning-text: #000000;
+  --ok: #006400;
+  --ok-bg: #ffffff;
+  --ok-text: #000000;
+  --draft-bg: #ffffff;
+  --draft-text: #000000;
+
+  --row-current-bg: #ffff00;
+  --row-current-text: #000000;
+  --row-hover-bg: #eeeeee;
+  --row-wrong-bg: #ffffff;
+  --row-wrong-text: #b00000;
+  --output-col-bg: #ffffff;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'][data-contrast='high'] {
+  --bg: #000000;
+  --surface: #000000;
+  --surface-alt: #000000;
+  --border: #ffffff;
+  --border-strong: #ffffff;
+  --text: #ffffff;
+  --text-muted: #f0f0f0;
+  --accent: #ffdd00;
+  --on-accent: #000000;
+  --accent-soft: #000000;
+  --accent-text: #ffffff;
+  --focus: #ffdd00;
+  --header-bg: #000000;
+  --header-text: #ffffff;
+  --header-text-muted: #ffffff;
+  --header-hover-bg: #333333;
+
+  --signal-on: #00ff66;
+  --signal-off: #ffffff;
+  --signal-unknown: #ffffff;
+  --signal-blind: #ffffff;
+  --pin-ring: #000000;
+
+  --part-fill: #000000;
+  --part-stroke: #ffffff;
+  --switch-off-bg: #000000;
+  --switch-off-text: #ffffff;
+  --switch-on-bg: #00ff66;
+  --switch-on-text: #000000;
+  --knob: #ffffff;
+  --light-off-bg: #000000;
+  --light-off-text: #ffffff;
+  --light-on-text: #000000;
+  --light-yellow: #ffdd00;
+  --light-red: #ff6b6b;
+  --light-green: #00ff66;
+  --light-blue: #66b3ff;
+  --light-unknown-a: #000000;
+  --light-unknown-b: #000000;
+  --light-unknown-text: #ffffff;
+  --canvas-bg: #000000;
+  --grid-dot: #6b6b6b;
+
+  --error: #ff6b6b;
+  --error-bg: #000000;
+  --error-text: #ffffff;
+  --warning: #ffdd00;
+  --warning-bg: #000000;
+  --warning-text: #ffffff;
+  --ok: #00ff66;
+  --ok-bg: #000000;
+  --ok-text: #ffffff;
+  --draft-bg: #000000;
+  --draft-text: #ffffff;
+
+  --row-current-bg: #ffdd00;
+  --row-current-text: #000000;
+  --row-current-bar: #000000; /* the accent and focus colors are this same yellow */
+  --row-current-focus: #000000;
+  --row-hover-bg: #222222;
+  --row-wrong-bg: #000000;
+  --row-wrong-text: #ff6b6b;
+  --output-col-bg: #000000;
+
+  color-scheme: dark;
+}
+
+/* Windows contrast themes: use the system's colors for everything that carries meaning.
+ * (The browser keeps colors given as system color names, and replaces all others.) The
+ * second selector outranks the four theme blocks above, which still apply – Windows dark
+ * contrast themes report dark mode, for example. */
+@media (forced-colors: active) {
+  :root,
+  :root[data-theme][data-contrast] {
+    --signal-on: Highlight;
+    --signal-off: CanvasText;
+    --signal-unknown: GrayText;
+    --signal-blind: CanvasText;
+    --wire-on-width: 6;
+    --part-fill: Canvas;
+    --part-stroke: CanvasText;
+    --pin-ring: Canvas;
+    --switch-on-bg: Highlight;
+    --switch-on-text: HighlightText;
+    --light-off-bg: Canvas;
+    --light-off-text: CanvasText;
+    --light-on-text: HighlightText;
+    --light-yellow: Highlight;
+    --light-red: Highlight;
+    --light-green: Highlight;
+    --light-blue: Highlight;
+    --row-current-bg: Highlight;
+    --row-current-text: HighlightText;
+    --row-current-bar: HighlightText;
+    --row-current-focus: HighlightText;
+  }
+}
+
+/* Dyslexia-friendly reading: OpenDyslexic plus the spacing from the British Dyslexia
+ * Association's style guide (spacing is what the research supports most). */
+:root[data-font='dyslexic'] {
+  --font-body: 'OpenDyslexic', 'Comic Sans MS', system-ui, sans-serif;
+  --leading: 1.75;
+  --tracking: 0.035em;
+  --word-spacing: 0.16em;
+}

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
@@ -9,6 +9,35 @@
       content="LogicLearn: learn logic gates and circuits by building them in your browser."
     />
     <title>LogicLearn</title>
+    <script>
+      // Set the theme before the first paint, so a student who chose dark mode or high
+      // contrast never sees a flash of the light theme while the app downloads. The app
+      // applies the same settings again when it starts (src/settings/display.ts), and the
+      // storage key must match PREFERENCES_KEY in src/settings/preferences.ts.
+      (function () {
+        var prefs = {};
+        try {
+          prefs = JSON.parse(localStorage.getItem('logiclearn:prefs:v1') || '{}') || {};
+        } catch (e) {
+          // no saved settings, or storage is blocked: follow the device
+        }
+        function device(query) {
+          return !!(window.matchMedia && window.matchMedia(query).matches);
+        }
+        var root = document.documentElement;
+        var theme = prefs.colorScheme;
+        if (theme !== 'dark' && theme !== 'light') {
+          theme = device('(prefers-color-scheme: dark)') ? 'dark' : 'light';
+        }
+        var contrast = prefs.contrast;
+        if (contrast !== 'high' && contrast !== 'standard') {
+          contrast = device('(prefers-contrast: more)') ? 'high' : 'standard';
+        }
+        root.dataset.theme = theme;
+        root.dataset.contrast = contrast;
+        root.dataset.font = prefs.dyslexiaFont === true ? 'dyslexic' : 'default';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

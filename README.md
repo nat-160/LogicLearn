@@ -21,6 +21,12 @@ It runs on Chromebooks, tablets and laptops with no install and no account.
   demo lesson: _NOT and AND_.
 - **Saving and sharing** – the sandbox saves itself in the browser; save/open circuit
   files; share links that open a copy. Nothing is sent to a server.
+- **Accessibility** – high-contrast and dark themes (four in all), a dyslexia-friendly
+  font, built-in narration, screen reader support, and building circuits with the
+  keyboard alone. Preferences are saved on the device. See
+  [docs/accessibility.md](docs/accessibility.md).
+- **Ready for translation** – lesson text is organized by language (`en-US` now). See
+  [docs/translating.md](docs/translating.md).
 
 ## Quick start
 

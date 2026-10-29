@@ -50,10 +50,13 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
         type="button"
         className={`switch-body ${on ? 'on' : 'off'}`}
         aria-pressed={on}
-        aria-label={`Switch ${data.label ?? ''}: ${on ? 'on' : 'off'}`}
         onClick={() => toggleSwitch(id)}
       >
-        <span className="switch-knob" />
+        {/* Its name is "Switch A: off 0" – it includes the visible 0/1 (WCAG 2.5.3). */}
+        <span className="sr-only">
+          Switch {data.label ?? ''}: {on ? 'on' : 'off'}{' '}
+        </span>
+        <span className="switch-knob" aria-hidden />
         <span className="switch-value">{on ? '1' : '0'}</span>
       </button>
     );
@@ -92,7 +95,8 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
             position={side === 'left' ? Position.Left : Position.Right}
             className={`pin ${valueClass(valueOf(pin))}`}
             style={{ top: y }}
-            aria-label={`${data.label ?? def.name} ${side === 'left' ? 'input' : 'output'} ${pin}`}
+            // Pins are for pointers; keyboard and screen reader users wire in the
+            // Connections panel, so the pins themselves carry no label.
             data-testid={`pin-${id}-${pin}`}
           />
         );

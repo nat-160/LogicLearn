@@ -1,8 +1,9 @@
-import { LESSONS } from '../lessons/catalog';
+import { getLessons } from '../lessons/catalog';
+import { useLocale } from '../settings/display';
 import { lessonHref } from './routes';
 
 export function HomePage() {
-  const first = LESSONS[0];
+  const first = getLessons(useLocale())[0];
   return (
     <div className="page home">
       <section className="hero">

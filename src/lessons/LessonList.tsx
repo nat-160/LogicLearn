@@ -1,13 +1,15 @@
 import { lessonHref } from '../app/routes';
-import { LESSONS, PLANNED_LESSONS } from './catalog';
+import { useLocale } from '../settings/display';
+import { getLessons, PLANNED_LESSONS } from './catalog';
 import { lessonProgress, useProgress } from './progress';
 import type { Lesson } from './types';
 
 export function LessonList() {
   const steps = useProgress((s) => s.steps);
+  const lessons = getLessons(useLocale());
   type Entry = { number: number; lesson?: Lesson; title: string };
   const entries: Entry[] = [
-    ...LESSONS.map((lesson) => ({ number: lesson.number, lesson, title: lesson.title })),
+    ...lessons.map((lesson) => ({ number: lesson.number, lesson, title: lesson.title })),
     ...PLANNED_LESSONS.map((planned) => ({ number: planned.number, title: planned.title })),
   ].sort((a, b) => a.number - b.number);
 

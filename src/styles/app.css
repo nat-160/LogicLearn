@@ -1,33 +1,13 @@
-/* LogicLearn styles.
- * Signal colors are never the only cue: 1 = bright + thick, 0 = dark + thin,
- * X (unknown) = gray + dashed. Buttons are at least 40px tall (44px on touch screens). */
+/* LogicLearn styles. Colors come from the theme tokens in themes.css – never write a
+ * color here directly. Signal colors are never the only cue: 1 = bright + thick,
+ * 0 = dark + thin, X (unknown) = gray + dashed. Buttons are at least 40px tall (44px on
+ * touch screens). */
 
 :root {
-  --bg: #f1f5f9;
-  --panel: #ffffff;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
-  --on: #16a34a;
-  --on-glow: #4ade80;
-  --off: #334155;
-  --unknown: #94a3b8;
-  --error: #dc2626;
-  --error-soft: #fee2e2;
-  --warning: #d97706;
-  --warning-soft: #fef3c7;
-  --ok-soft: #dcfce7;
-  --part-fill: #ffffff;
-  --part-stroke: #1e293b;
   --radius: 8px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: var(--font-body);
+  letter-spacing: var(--tracking);
+  word-spacing: var(--word-spacing);
   color: var(--text);
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
@@ -61,9 +41,9 @@ button,
   gap: 6px;
   min-height: 40px;
   padding: 0 14px;
-  border: 1px solid var(--border);
+  border: var(--line-width) solid var(--border-strong);
   border-radius: var(--radius);
-  background: var(--panel);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
   font-size: 14px;
@@ -74,7 +54,7 @@ button,
 
 button:hover:not(:disabled),
 .button:hover {
-  border-color: #94a3b8;
+  border-color: var(--text);
 }
 
 button:disabled {
@@ -86,7 +66,7 @@ button.primary,
 .button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -94,8 +74,10 @@ button:focus-visible,
 .button:focus-visible,
 a:focus-visible,
 select:focus-visible,
-input:focus-visible {
-  outline: 3px solid var(--accent);
+input:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -110,14 +92,15 @@ input,
 select {
   min-height: 36px;
   padding: 4px 8px;
-  border: 1px solid var(--border);
+  border: var(--line-width) solid var(--border-strong);
   border-radius: 6px;
   font: inherit;
-  background: white;
+  color: var(--text);
+  background: var(--surface);
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .small {
@@ -138,8 +121,9 @@ select {
   gap: 24px;
   height: 52px;
   padding: 0 16px;
-  background: #0f172a;
-  color: white;
+  background: var(--header-bg);
+  color: var(--header-text);
+  border-bottom: var(--line-width) solid var(--header-bg);
   flex-shrink: 0;
 }
 
@@ -147,7 +131,7 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: var(--header-text);
   font-weight: 700;
   font-size: 18px;
   text-decoration: none;
@@ -161,14 +145,14 @@ select {
 .app-nav a {
   padding: 8px 12px;
   border-radius: 6px;
-  color: #cbd5e1;
+  color: var(--header-text-muted);
   text-decoration: none;
 }
 
 .app-nav a[aria-current='page'],
 .app-nav a:hover {
-  background: #1e293b;
-  color: white;
+  background: var(--header-hover-bg);
+  color: var(--header-text);
 }
 
 .app-main {
@@ -200,7 +184,7 @@ select {
 
 .lead {
   font-size: 18px;
-  line-height: 1.5;
+  line-height: var(--leading);
   max-width: 640px;
 }
 
@@ -226,7 +210,7 @@ select {
   align-items: center;
   gap: 16px;
   padding: 14px 16px;
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: inherit;
@@ -237,8 +221,10 @@ select {
   border-color: var(--accent);
 }
 
+/* Planned lessons: a dashed outline instead of faded text (faded text is hard to read). */
 .lesson-card.is-planned {
-  opacity: 0.6;
+  border-style: dashed;
+  background: transparent;
 }
 
 .lesson-number {
@@ -262,7 +248,7 @@ select {
 
 .lesson-progress {
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* ---------- Editor layout ---------- */
@@ -278,7 +264,7 @@ select {
   width: 320px;
   flex-shrink: 0;
   overflow-y: auto;
-  background: var(--panel);
+  background: var(--surface);
   border-right: 1px solid var(--border);
 }
 
@@ -293,7 +279,7 @@ select {
   width: 290px;
   flex-shrink: 0;
   overflow-y: auto;
-  background: var(--panel);
+  background: var(--surface);
   border-left: 1px solid var(--border);
 }
 
@@ -328,7 +314,7 @@ select {
   gap: 4px;
   margin-bottom: 10px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* Keep long-press and text selection from getting in the way on tablets. */
@@ -376,7 +362,7 @@ select {
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  background: var(--panel);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
@@ -394,10 +380,10 @@ select {
   gap: 8px;
   width: min(420px, 90vw);
   padding: 12px;
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 30px rgb(15 23 42 / 0.15);
+  box-shadow: var(--shadow);
 }
 
 .share-popover p {
@@ -411,7 +397,7 @@ select {
   flex-shrink: 0;
   overflow-y: auto;
   padding: 10px 8px;
-  background: var(--panel);
+  background: var(--surface);
   border-right: 1px solid var(--border);
 }
 
@@ -422,7 +408,7 @@ select {
 .palette-tip {
   margin: 0 4px 8px;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .palette ul {
@@ -461,19 +447,19 @@ select {
 }
 
 .icon-switch {
-  fill: #e2e8f0;
+  fill: var(--switch-off-bg);
   stroke: var(--part-stroke);
   stroke-width: 2;
 }
 
 .icon-knob {
-  fill: white;
+  fill: var(--knob);
   stroke: var(--part-stroke);
   stroke-width: 2;
 }
 
 .icon-light {
-  fill: #fde047;
+  fill: var(--light-yellow);
   stroke: var(--part-stroke);
   stroke-width: 2;
 }
@@ -494,7 +480,7 @@ select {
 .gate-line {
   fill: var(--part-fill);
   stroke: var(--part-stroke);
-  stroke-width: 2.5;
+  stroke-width: var(--part-stroke-width);
   stroke-linejoin: round;
 }
 
@@ -505,13 +491,13 @@ select {
 .pin-stub,
 .pin-stubs line {
   stroke: var(--part-stroke);
-  stroke-width: 2.5;
+  stroke-width: var(--part-stroke-width);
 }
 
 .bubble {
   fill: var(--part-fill);
   stroke: var(--part-stroke);
-  stroke-width: 2.5;
+  stroke-width: var(--part-stroke-width);
 }
 
 .part-label {
@@ -543,13 +529,19 @@ select {
   outline-offset: 5px;
 }
 
+/* A selected part that is also outlined for a problem keeps the dashes of a selection. */
+.part.is-selected.is-highlighted,
+.part.is-selected.is-in-loop {
+  outline-style: dashed;
+}
+
 .part.is-unstable {
   animation: unstable 0.6s ease-in-out infinite alternate;
 }
 
 @keyframes unstable {
   from {
-    box-shadow: 0 0 0 3px var(--error-soft);
+    box-shadow: 0 0 0 3px var(--error-bg);
   }
   to {
     box-shadow: 0 0 0 6px var(--error);
@@ -572,12 +564,14 @@ select {
   padding: 0;
   border: 2.5px solid var(--part-stroke);
   border-radius: 20px;
-  background: #e2e8f0;
+  background: var(--switch-off-bg);
+  color: var(--switch-off-text);
   transition: background 0.15s;
 }
 
 .switch-body.on {
-  background: var(--on-glow);
+  background: var(--switch-on-bg);
+  color: var(--switch-on-text);
 }
 
 .switch-knob {
@@ -587,7 +581,7 @@ select {
   width: 27px;
   height: 27px;
   border-radius: 50%;
-  background: white;
+  background: var(--knob);
   border: 2px solid var(--part-stroke);
   transition: left 0.15s;
 }
@@ -619,38 +613,40 @@ select {
   height: 40px;
   border-radius: 50%;
   border: 2.5px solid var(--part-stroke);
-  background: #1f2937;
-  color: white;
+  background: var(--light-off-bg);
+  color: var(--light-off-text);
   font-weight: 700;
 }
 
 .light-body.v1 {
-  color: #422006;
-  box-shadow: 0 0 14px 4px rgb(250 204 21 / 0.7);
-}
-
-.light-body.v1.color-yellow {
-  background: #fde047;
+  --lamp: var(--light-yellow);
+  background: var(--lamp);
+  color: var(--light-on-text);
+  box-shadow: var(--light-glow) color-mix(in srgb, var(--lamp) 70%, transparent);
 }
 
 .light-body.v1.color-red {
-  background: #f87171;
-  box-shadow: 0 0 14px 4px rgb(248 113 113 / 0.7);
+  --lamp: var(--light-red);
 }
 
 .light-body.v1.color-green {
-  background: #4ade80;
-  box-shadow: 0 0 14px 4px rgb(74 222 128 / 0.7);
+  --lamp: var(--light-green);
 }
 
 .light-body.v1.color-blue {
-  background: #60a5fa;
-  box-shadow: 0 0 14px 4px rgb(96 165 250 / 0.7);
+  --lamp: var(--light-blue);
 }
 
 .light-body.vx {
-  background: repeating-linear-gradient(45deg, #e2e8f0, #e2e8f0 4px, #cbd5e1 4px, #cbd5e1 8px);
-  color: var(--off);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--light-unknown-a),
+    var(--light-unknown-a) 4px,
+    var(--light-unknown-b) 4px,
+    var(--light-unknown-b) 8px
+  );
+  color: var(--light-unknown-text);
+  border-style: dashed;
 }
 
 /* Pins: a small dot with a big invisible touch target (36px). */
@@ -673,17 +669,17 @@ select {
   height: 11px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 2px solid white;
-  background: var(--unknown);
+  border: 2px solid var(--pin-ring);
+  background: var(--signal-unknown);
   box-shadow: 0 0 0 1px var(--part-stroke);
 }
 
 .react-flow__handle.pin.v1::after {
-  background: var(--on);
+  background: var(--signal-on);
 }
 
 .react-flow__handle.pin.v0::after {
-  background: var(--off);
+  background: var(--signal-off);
 }
 
 .react-flow__handle.pin:hover::after,
@@ -700,23 +696,23 @@ select {
 }
 
 .react-flow__edge-path.wire.v1 {
-  stroke: var(--on);
-  stroke-width: 4.5;
+  stroke: var(--signal-on);
+  stroke-width: var(--wire-on-width);
 }
 
 .react-flow__edge-path.wire.v0 {
-  stroke: var(--off);
-  stroke-width: 2;
+  stroke: var(--signal-off);
+  stroke-width: var(--wire-off-width);
 }
 
 .react-flow__edge-path.wire.vx {
-  stroke: var(--unknown);
-  stroke-width: 2;
-  stroke-dasharray: 7 5;
+  stroke: var(--signal-unknown);
+  stroke-width: var(--wire-unknown-width);
+  stroke-dasharray: var(--wire-unknown-dash);
 }
 
 .react-flow__edge-path.wire.is-selected {
-  filter: drop-shadow(0 0 3px var(--accent));
+  filter: drop-shadow(0 0 3px var(--focus)) drop-shadow(0 0 1px var(--focus));
 }
 
 .react-flow__connectionline path {
@@ -726,19 +722,20 @@ select {
 
 /* Predict-first mode: hide every signal value except the switches. */
 .editor.is-blind .react-flow__edge-path.wire {
-  stroke: #475569;
+  stroke: var(--signal-blind);
   stroke-width: 2.5;
   stroke-dasharray: none;
 }
 
 .editor.is-blind .react-flow__handle.pin::after {
-  background: white;
+  background: var(--part-fill);
 }
 
 .editor.is-blind .light-body {
-  background: #e2e8f0;
+  background: var(--part-fill);
   box-shadow: none;
-  color: var(--off);
+  color: var(--text);
+  border-style: solid;
 }
 
 .editor.is-blind .light-value {
@@ -759,25 +756,25 @@ select {
   padding: 8px 12px;
   border-radius: var(--radius);
   font-size: 14px;
-  box-shadow: 0 4px 14px rgb(15 23 42 / 0.12);
+  box-shadow: var(--shadow);
 }
 
 .banner-error {
-  background: var(--error-soft);
-  color: #7f1d1d;
-  border: 1px solid var(--error);
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 2px solid var(--error);
 }
 
 .banner-warning {
-  background: var(--warning-soft);
-  color: #78350f;
-  border: 1px solid var(--warning);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: 2px solid var(--warning);
 }
 
 .banner-info {
   background: var(--accent-soft);
-  color: #1e3a8a;
-  border: 1px solid var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--accent);
 }
 
 .banner-close {
@@ -790,7 +787,7 @@ select {
 .tried-count {
   font-size: 12px;
   font-weight: 500;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .table-scroll {
@@ -818,11 +815,11 @@ select {
 
 .truth-table th.col-output:first-of-type,
 .truth-table td.col-output {
-  background: #f8fafc;
+  background: var(--output-col-bg);
 }
 
 .truth-table .col-expected {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -831,21 +828,39 @@ select {
 }
 
 .truth-table tbody tr:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: calc(-1 * var(--focus-width));
 }
 
-.truth-table tbody tr:hover {
-  background: #f1f5f9;
+/* The ring is drawn inside the row, so on the highlighted row it needs its own color. */
+.truth-table tbody tr.is-current:not(.is-wrong):focus-visible {
+  outline-color: var(--row-current-focus);
+}
+
+.truth-table tbody tr:hover td {
+  background: var(--row-hover-bg);
 }
 
 .truth-table tr.is-current td {
-  background: var(--accent-soft);
+  background: var(--row-current-bg);
+  color: var(--row-current-text);
+}
+
+/* The current row also gets a bar on the left, so it doesn't rely on color. */
+.truth-table tr.is-current td:first-child {
+  box-shadow: inset 4px 0 0 var(--row-current-bar);
 }
 
 .truth-table tr.is-wrong td {
-  background: var(--error-soft);
-  color: #7f1d1d;
+  background: var(--row-wrong-bg);
+  color: var(--row-wrong-text);
+  font-weight: 700;
+}
+
+.wrong-mark {
+  color: var(--row-wrong-text);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .truth-table tr.is-current.is-wrong td {
@@ -855,12 +870,12 @@ select {
 }
 
 .truth-table td.value-\? {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .tried-mark {
   width: 18px;
-  color: var(--on);
+  color: var(--ok);
   font-weight: 700;
 }
 
@@ -879,13 +894,15 @@ select {
 }
 
 .check-result.pass {
-  background: var(--ok-soft);
-  border: 1px solid var(--on);
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border: 2px solid var(--ok);
 }
 
 .check-result.fail {
-  background: var(--error-soft);
-  border: 1px solid var(--error);
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 2px solid var(--error);
 }
 
 .check-headline {
@@ -896,7 +913,9 @@ select {
 .misconception {
   margin-top: 8px;
   padding: 8px 10px;
-  background: white;
+  background: var(--surface);
+  color: var(--text);
+  border: var(--line-width) solid var(--border);
   border-radius: 6px;
 }
 
@@ -910,7 +929,7 @@ select {
 }
 
 .diag-warning {
-  color: #78350f;
+  color: var(--warning-text);
 }
 
 /* ---------- Lessons ---------- */
@@ -922,7 +941,7 @@ select {
 .lesson-text-only {
   max-width: 720px;
   margin: 0 auto;
-  background: var(--panel);
+  background: var(--surface);
   min-height: 100%;
 }
 
@@ -934,7 +953,7 @@ select {
   margin: 0 0 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .step-dots {
@@ -952,8 +971,8 @@ select {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--border);
-  background: white;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
@@ -961,18 +980,19 @@ select {
 }
 
 .step-dot.done {
-  background: var(--on);
-  border-color: var(--on);
-  color: white;
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--on-accent);
 }
 
 .step-dot.current {
   border-color: var(--accent);
+  border-width: 3px;
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .step-dot.locked {
-  color: var(--muted);
+  color: var(--text-muted);
   background: var(--bg);
 }
 
@@ -991,17 +1011,14 @@ select {
   letter-spacing: 0.04em;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--warning-soft);
-  color: #78350f;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: var(--line-width) solid var(--warning);
 }
 
 .prose {
   font-size: 15px;
-  line-height: 1.55;
-}
-
-.prose h2 {
-  display: none; /* the step title already says this */
+  line-height: var(--leading);
 }
 
 .prose table {
@@ -1027,8 +1044,9 @@ select {
   margin: 0 0 6px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: #ede9fe;
-  color: #5b21b6;
+  background: var(--draft-bg);
+  color: var(--draft-text);
+  border: var(--line-width) solid var(--draft-text);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1044,8 +1062,11 @@ select {
 .hint {
   margin: 0;
   padding: 8px 10px;
-  background: var(--warning-soft);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: var(--line-width) solid var(--warning);
   border-radius: 6px;
+  line-height: var(--leading);
 }
 
 .lesson-actions {
@@ -1080,7 +1101,8 @@ button.next {
   gap: 12px;
   padding: 8px;
   background: var(--accent-soft);
-  color: #1e3a8a;
+  color: var(--accent-text);
+  border-bottom: var(--line-width) solid var(--accent);
   flex-shrink: 0;
 }
 
@@ -1090,4 +1112,272 @@ button.next {
   height: 32px;
   min-height: 0;
   padding: 6px;
+}
+
+/* React Flow follows the theme */
+.react-flow {
+  --xy-background-color: var(--canvas-bg);
+  --xy-background-pattern-color: var(--grid-dot);
+  --xy-controls-button-background-color: var(--surface);
+  --xy-controls-button-background-color-hover: var(--surface-alt);
+  --xy-controls-button-color: var(--text);
+  --xy-controls-button-color-hover: var(--text);
+  --xy-controls-button-border-color: var(--border-strong);
+  --xy-controls-box-shadow: var(--shadow);
+  --xy-attribution-background-color: transparent;
+  --xy-connectionline-stroke: var(--focus);
+}
+
+.react-flow__attribution a {
+  color: var(--text-muted);
+}
+
+/* ---------- High contrast extras ---------- */
+
+:root[data-contrast='high'] .app-nav a[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+:root[data-contrast='high'] .panel,
+:root[data-contrast='high'] .editor-lead,
+:root[data-contrast='high'] .editor-side,
+:root[data-contrast='high'] .palette,
+:root[data-contrast='high'] .toolbar {
+  border-color: var(--border);
+  border-width: var(--line-width);
+}
+
+:root[data-contrast='high'] button:disabled {
+  opacity: 1;
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+:root[data-contrast='high'] .part.is-selected {
+  outline-width: 3px;
+}
+
+/* ---------- Dyslexia-friendly reading ---------- */
+
+/* Emphasis in bold rather than italics, which are harder to read. */
+:root[data-font='dyslexic'] em,
+:root[data-font='dyslexic'] i {
+  font-style: normal;
+  font-weight: 700;
+}
+
+:root[data-font='dyslexic'] .prose,
+:root[data-font='dyslexic'] .hint {
+  font-size: 16px;
+}
+
+/* ---------- Accessibility helpers ---------- */
+
+/* Text for screen readers only. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* "Skip to main content": hidden until it gets keyboard focus. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.app-main:focus {
+  outline: none;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.header-button {
+  min-height: 36px;
+  background: transparent;
+  color: var(--header-text);
+  border-color: var(--header-text-muted);
+}
+
+.header-button:hover:not(:disabled) {
+  background: var(--header-hover-bg);
+  border-color: var(--header-text);
+}
+
+/* ---------- Settings dialog ---------- */
+
+.settings-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: var(--line-width) solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.settings-dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.settings-dialog form,
+.settings-body {
+  display: grid;
+  gap: 4px;
+  padding: 16px 20px 20px;
+}
+
+.settings-dialog h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.settings-dialog h3 {
+  margin: 14px 0 4px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.setting-row label,
+.setting-label {
+  flex: 1;
+}
+
+.setting-hint {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* An on/off switch (role="switch"). The state is shown by position AND by text. */
+.toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 76px;
+  min-height: 34px;
+  padding: 0 8px 0 34px;
+  border-radius: 999px;
+  justify-content: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.toggle::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 2px solid var(--text);
+  background: var(--surface);
+  transition: left 0.15s;
+}
+
+.toggle[aria-checked='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  padding: 0 34px 0 10px;
+}
+
+.toggle[aria-checked='true']::before {
+  left: calc(100% - 28px);
+  border-color: var(--on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle::before {
+    transition: none;
+  }
+}
+
+/* ---------- Narration ---------- */
+
+.read-aloud {
+  margin: 4px 0 8px;
+}
+
+.read-aloud.is-reading {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+/* ---------- Circuit description and connections ---------- */
+
+.panel details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.description-list,
+.wire-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: var(--leading);
+}
+
+.wire-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.wire-list button {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.connect-form {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.connect-form select {
+  width: 100%;
 }

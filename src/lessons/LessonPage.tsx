@@ -11,26 +11,38 @@
  *    Check, so the student has to reason instead of flipping switches until it works.
  *
  * Work on a build step is saved in this browser, so a reload doesn't lose it.
+ *
+ * Accessibility: every step has a "Read aloud" button (and can be read automatically,
+ * see Settings); check results and revealed hints are announced to screen readers; and
+ * the page heading receives focus when the step changes (App.tsx).
  */
 import { useEffect, useMemo, useState } from 'react';
+import { announce } from '../a11y/announcer';
 import { debounce } from '../app/debounce';
 import { lessonHref, navigate } from '../app/routes';
 import { CheckResultView } from '../editor/CheckPanel';
+import { summarizeCheck } from '../editor/checkSummary';
 import { useCheck } from '../editor/useCheck';
 import { Editor } from '../editor/Editor';
 import { useEditor } from '../editor/editorContext';
 import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
-import { loadCircuit, type CircuitDoc } from '../sim';
+import { inlineMarkdownToSpeech, markdownToSpeech } from '../narration/plainText';
+import { ReadAloudButton } from '../narration/ReadAloud';
+import { useSpeaker, useStopSpeakingOnUnmount } from '../narration/useSpeaker';
+import { loadCircuit, type CheckResult, type CircuitDoc } from '../sim';
+import { usePreferences } from '../settings/preferences';
 import { readLocal, writeLocal } from '../storage/storage';
+import { INTERFACE_LOCALE } from '../i18n/locales';
+import { useLocale } from '../settings/display';
 import { findLesson } from './catalog';
-import { Markdown } from './Markdown';
+import { Markdown, MarkdownInline } from './Markdown';
 import { isStepDone, isStepUnlocked, stepKey, useProgress } from './progress';
-import { isBuildStep, type BuildStep, type ExplainStep, type Lesson } from './types';
+import { isBuildStep, type BuildStep, type ExplainStep, type Lesson, type Step } from './types';
 
 export function LessonPage({ lessonId, step }: { lessonId: string; step: number }) {
-  const lesson = findLesson(lessonId);
+  const lesson = findLesson(lessonId, useLocale());
   const steps = useProgress((s) => s.steps);
   if (!lesson) {
     return (
@@ -87,8 +99,10 @@ function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
                   {done ? '✓' : i + 1}
                 </a>
               ) : (
-                <span className="step-dot locked" aria-label={label} title={label}>
-                  {i + 1}
+                // A plain <span> can't have an aria-label, so the full text is hidden text.
+                <span className="step-dot locked" title={label}>
+                  <span aria-hidden>{i + 1}</span>
+                  <span className="sr-only">{label}</span>
                 </span>
               )}
             </li>
@@ -96,6 +110,63 @@ function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
         })}
       </ol>
     </header>
+  );
+}
+
+/** Everything a step's text should sound like when read aloud. */
+function stepSpeech(step: Step, hintsShown: number, result: CheckResult | null): string {
+  // A pause after the title, unless it already ends in one ("What is a logic gate?").
+  const title = /[.!?:]$/.test(step.title) ? step.title : `${step.title}.`;
+  const parts = [title, markdownToSpeech(step.prose)];
+  step.hints.slice(0, hintsShown).forEach((hint, i) => {
+    parts.push(`Hint ${i + 1}: ${inlineMarkdownToSpeech(hint)}`);
+  });
+  if (result) parts.push(summarizeCheck(result));
+  return parts.join(' ');
+}
+
+/**
+ * The `lang` to put on a step's own text: only needed when it differs from the interface
+ * language (which is the page's lang).
+ */
+function textLang(step: Step): string | undefined {
+  return step.locale !== INTERFACE_LOCALE ? step.locale : undefined;
+}
+
+/**
+ * A step's heading, Read aloud button and text. With "Read each lesson step aloud" on in
+ * Settings, the text is read as soon as the step opens.
+ */
+function StepText({
+  step,
+  tag,
+  speech,
+}: {
+  step: Step;
+  tag?: string;
+  /** The full text to read aloud (title, text, hints, result). */
+  speech: () => string;
+}) {
+  const autoRead = usePreferences((s) => s.autoRead);
+  const { supported, speak } = useSpeaker();
+  const lang = textLang(step);
+  useStopSpeakingOnUnmount();
+
+  useEffect(() => {
+    if (autoRead && supported) speak('step', speech(), step.locale);
+    // Only when the step opens, not on every change to its hints or result.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step.id]);
+
+  return (
+    <>
+      <h1 className="step-title">
+        <span lang={lang}>{step.title}</span>
+        {tag && <span className="tag">{tag}</span>}
+      </h1>
+      <ReadAloudButton id="step" getText={speech} label="Read this step aloud" lang={step.locale} />
+      <Markdown source={step.prose} draft={step.draft} lang={lang} />
+    </>
   );
 }
 
@@ -121,8 +192,7 @@ function ExplainStepView({
   const panel = (
     <div className="lesson-panel">
       <StepNav lesson={lesson} index={index} />
-      <h1 className="step-title">{step.title}</h1>
-      <Markdown source={step.prose} />
+      <StepText step={step} speech={() => stepSpeech(step, 0, null)} />
       <button
         type="button"
         className="primary"
@@ -263,38 +333,49 @@ function BuildPanel({
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
   const [hintsShown, setHintsShown] = useState(0);
   const isLast = index === lesson.steps.length - 1;
+  const autoRead = usePreferences((s) => s.autoRead);
+  const { speak } = useSpeaker();
+
+  /** Tell the student – on screen, to screen readers and (if chosen) out loud. */
+  const tell = (id: string, text: string, lang: string) => {
+    announce(text);
+    if (autoRead) speak(id, text, lang);
+  };
 
   const onCheck = () => {
     const r = run(step.spec);
     recordAttempt(lesson.id, step.id, r.pass, triedRows);
     onChecked();
+    tell('result', summarizeCheck(r), INTERFACE_LOCALE);
+  };
+
+  const showHint = () => {
+    const next = hintsShown + 1;
+    setHintsShown(next);
+    recordHint(lesson.id, step.id);
+    tell('hint', `Hint ${next}: ${inlineMarkdownToSpeech(step.hints[next - 1])}`, step.locale);
   };
 
   return (
     <div className="lesson-panel">
       <StepNav lesson={lesson} index={index} />
-      <h1 className="step-title">
-        {step.title}
-        {step.kind === 'challenge' && <span className="tag">Challenge</span>}
-      </h1>
-      <Markdown source={step.prose} />
+      <StepText
+        step={step}
+        tag={step.kind === 'challenge' ? 'Challenge' : undefined}
+        speech={() => stepSpeech(step, hintsShown, result)}
+      />
 
       {step.hints.length > 0 && (
         <div className="hints">
           {step.hints.slice(0, hintsShown).map((hint, i) => (
             <p key={i} className="hint">
-              💡 {hint}
+              <span aria-hidden>💡 </span>
+              <span className="sr-only">Hint {i + 1}: </span>
+              <MarkdownInline source={hint} lang={textLang(step)} />
             </p>
           ))}
           {hintsShown < step.hints.length && (
-            <button
-              type="button"
-              onClick={() => {
-                setHintsShown(hintsShown + 1);
-                recordHint(lesson.id, step.id);
-              }}
-              data-testid="hint-button"
-            >
+            <button type="button" onClick={showHint} data-testid="hint-button">
               Show a hint ({hintsShown + 1} of {step.hints.length})
             </button>
           )}

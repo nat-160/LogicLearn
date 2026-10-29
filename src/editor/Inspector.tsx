@@ -3,8 +3,10 @@
  * Editing a label here is the touch-friendly alternative to keyboard shortcuts.
  */
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { findComponent, getComponentDef, type ComponentInstance } from '../sim';
 import { useEditor } from './editorContext';
+import { focusCanvas } from './focus';
 
 const LIGHT_COLORS = ['yellow', 'red', 'green', 'blue'];
 
@@ -71,7 +73,14 @@ function PartForm({ part }: { part: ComponentInstance }) {
               </select>
             </label>
           )}
-          <button type="button" onClick={() => removeItems([part.id], [])}>
+          <button
+            type="button"
+            onClick={(e) => {
+              const editor = e.currentTarget.closest('.editor');
+              flushSync(() => removeItems([part.id], []));
+              focusCanvas(editor);
+            }}
+          >
             Delete this part
           </button>
         </>
