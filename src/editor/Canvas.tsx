@@ -74,6 +74,7 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
         snapToGrid
         snapGrid={[GRID_CELL, GRID_CELL]}
         nodeDragThreshold={4}
+        nodeClickDistance={4}
         deleteKeyCode={readOnly ? null : ['Delete', 'Backspace']}
         nodesDraggable={!readOnly}
         nodesConnectable={!readOnly}

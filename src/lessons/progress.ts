@@ -52,9 +52,14 @@ interface ProgressState {
 }
 
 export const useProgress = create<ProgressState>()((set, get) => {
+  /**
+   * Change one step's record. Progress is re-read from storage first, so another open tab's
+   * progress is merged in rather than overwritten. A step that is done stays done.
+   */
   const update = (key: string, change: (old: StepProgress) => Partial<StepProgress>) => {
     const now = new Date().toISOString();
-    const old: StepProgress = get().steps[key] ?? {
+    const saved = { ...get().steps, ...load() };
+    const old: StepProgress = saved[key] ?? {
       done: false,
       attempts: 0,
       hintsUsed: 0,
@@ -62,10 +67,19 @@ export const useProgress = create<ProgressState>()((set, get) => {
       firstSeen: now,
       lastSeen: now,
     };
-    const steps = { ...get().steps, [key]: { ...old, ...change(old), lastSeen: now } };
+    const next = { ...old, ...change(old), lastSeen: now };
+    next.done = old.done || next.done;
+    const steps = { ...saved, [key]: next };
     set({ steps });
     writeLocal(KEY, JSON.stringify(steps));
   };
+
+  // Follow progress made in other tabs.
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+      if (e.key === KEY) set({ steps: load() });
+    });
+  }
 
   return {
     steps: load(),
@@ -80,7 +94,7 @@ export const useProgress = create<ProgressState>()((set, get) => {
       update(stepKey(lessonId, stepId), (old) => ({ hintsUsed: old.hintsUsed + 1 })),
     complete: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({ done: true })),
     resetLesson: (lesson) => {
-      const steps = { ...get().steps };
+      const steps = { ...get().steps, ...load() };
       for (const step of lesson.steps) delete steps[stepKey(lesson.id, step.id)];
       set({ steps });
       writeLocal(KEY, JSON.stringify(steps));

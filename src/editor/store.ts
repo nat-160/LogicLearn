@@ -70,8 +70,14 @@ export interface EditorState {
   edges: WireEdge[];
   past: CircuitDoc[];
   future: CircuitDoc[];
-  /** Truth-table rows (by row number) the student has actually tried with the switches. */
+  /**
+   * Truth-table rows (by row number) the student has tried with the switches since the
+   * circuit last changed. Changing the circuit starts the count again: the old tests no
+   * longer say anything about the new circuit.
+   */
   triedRows: ReadonlySet<number>;
+  /** Goes up by one on every design change (not on moves); check results are tied to it. */
+  designVersion: number;
   highlight: Highlight;
   /** A short message for the student, e.g. why a connection was refused. */
   notice: string | null;
@@ -119,30 +125,25 @@ export function createEditorStore(
   const currentRow = (doc: CircuitDoc, inputs: Record<string, Bit>) =>
     rowNumber(findIO(doc).inputs.map((p) => inputs[p.id] ?? 0));
 
-  /** A key that changes whenever the set of inputs changes (then tried rows restart). */
-  const inputKey = (doc: CircuitDoc) =>
-    findIO(doc)
-      .inputs.map((p) => `${p.id}:${p.label}`)
-      .join('|');
-
   return createStore<EditorState>()((set, get) => {
-    let lastInputKey = inputKey(initialDoc);
-
     /** Re-simulate and rebuild the view after the design changed. */
     const rebuild = (doc: CircuitDoc) => {
-      const { inputs, nodes, edges, triedRows } = get();
+      const { nodes, edges, designVersion } = get();
+      // Forget settings of switches that no longer exist (ids can be reused later).
+      const inputIds = new Set(findIO(doc).inputs.map((p) => p.id));
+      const inputs = Object.fromEntries(
+        Object.entries(get().inputs).filter(([id]) => inputIds.has(id)),
+      );
       sim = new Simulator(doc, inputs);
-      const key = inputKey(doc);
-      const tried = key === lastInputKey ? new Set(triedRows) : new Set<number>();
-      lastInputKey = key;
-      tried.add(currentRow(doc, inputs));
       return {
         doc,
+        inputs,
         ...simulated(),
         loops: findLoops(sim.circuit),
         nodes: buildNodes(doc, nodes),
         edges: buildEdges(doc, edges),
-        triedRows: tried,
+        triedRows: new Set([currentRow(doc, inputs)]),
+        designVersion: designVersion + 1,
         highlight: NO_HIGHLIGHT,
       };
     };
@@ -172,6 +173,7 @@ export function createEditorStore(
       past: [],
       future: [],
       triedRows: new Set([0]),
+      designVersion: 0,
       highlight: NO_HIGHLIGHT,
       notice: null,
 

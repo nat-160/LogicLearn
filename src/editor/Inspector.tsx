@@ -15,8 +15,10 @@ export function Inspector() {
   });
   const part = useEditor((s) => (selectedId ? findComponent(s.doc, selectedId) : undefined));
   if (!part) return null;
-  // A new key per part/label resets the form when the selection changes.
-  return <PartForm key={`${part.id}:${part.label ?? ''}`} part={part} />;
+  // A new key per part resets the form when a different part is selected. (Keying on the
+  // label too would remount the form after Enter and drop keyboard focus to the page,
+  // where the next Backspace would delete the part.)
+  return <PartForm key={part.id} part={part} />;
 }
 
 function PartForm({ part }: { part: ComponentInstance }) {
@@ -24,6 +26,12 @@ function PartForm({ part }: { part: ComponentInstance }) {
   const setProps = useEditor((s) => s.setProps);
   const removeItems = useEditor((s) => s.removeItems);
   const [draft, setDraft] = useState(part.label ?? '');
+  // If the label changes elsewhere (undo, redo), show the new one.
+  const [shownLabel, setShownLabel] = useState(part.label);
+  if (part.label !== shownLabel) {
+    setShownLabel(part.label);
+    setDraft(part.label ?? '');
+  }
   const def = getComponentDef(part.type);
   const commitLabel = () => {
     if (draft.trim() !== (part.label ?? '')) setLabel(part.id, draft);

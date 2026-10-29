@@ -1,30 +1,58 @@
 /**
  * Run the checker on the editor's current circuit and highlight what went wrong: wrong
- * rows in the truth table and problem parts on the canvas. The result is dropped as
- * soon as the circuit changes, because it no longer describes what is on screen.
+ * rows in the truth table and problem parts on the canvas.
+ *
+ * A result belongs to one version of the design. Any change to the circuit (not just
+ * moving parts around) hides it, and the store clears the highlights at the same time,
+ * so the screen never shows marks that describe an older circuit.
  */
 import { useState } from 'react';
-import { check, rowNumber, type CheckResult, type CheckSpec, type CircuitDoc } from '../sim';
+import {
+  check,
+  findIO,
+  rowNumber,
+  type Bit,
+  type CheckResult,
+  type CheckSpec,
+  type CircuitDoc,
+} from '../sim';
 import { useEditor, useEditorStore } from './editorContext';
 
 export function useCheck() {
   const store = useEditorStore();
-  const doc = useEditor((s) => s.doc);
-  const [last, setLast] = useState<{ doc: CircuitDoc; result: CheckResult } | null>(null);
+  const designVersion = useEditor((s) => s.designVersion);
+  const [last, setLast] = useState<{ version: number; result: CheckResult } | null>(null);
 
   const run = (spec: CheckSpec): CheckResult => {
-    const current = store.getState().doc;
-    const result = check(current, spec);
-    setLast({ doc: current, result });
-    store.getState().setHighlight({
+    const { doc, designVersion: version, setHighlight } = store.getState();
+    const result = check(doc, spec);
+    setLast({ version, result });
+    setHighlight({
       componentIds: result.diagnostics
         .filter((d) => d.severity === 'error')
         .flatMap((d) => d.componentIds ?? []),
-      rows: result.mismatches.map((m) => rowNumber(m.inputs)),
+      rows: result.mismatches.map((m) => circuitRow(doc, spec, m.inputs)),
     });
     return result;
   };
 
-  const result = last && last.doc === doc ? last.result : null;
-  return { result, run, clear: () => setLast(null) };
+  const clear = () => {
+    setLast(null);
+    store.getState().setHighlight({});
+  };
+
+  const result = last && last.version === designVersion ? last.result : null;
+  return { result, run, clear };
+}
+
+/**
+ * The truth-table row (in the circuit's own input order) for a row of a spec. The circuit
+ * may have extra inputs the spec doesn't mention; the checker holds those at 0.
+ */
+function circuitRow(doc: CircuitDoc, spec: CheckSpec, specBits: Bit[]): number {
+  const bits = findIO(doc).inputs.map((part) => {
+    const i = spec.inputs.indexOf(part.label);
+    return i >= 0 ? specBits[i] : 0;
+  });
+  return rowNumber(bits);
 }

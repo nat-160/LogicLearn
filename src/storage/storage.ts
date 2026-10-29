@@ -7,7 +7,13 @@
  * the app still works without it. Students can always export a file as a backup.
  */
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import { parseCircuit, serializeCircuit, type CircuitDoc, type LoadResult } from '../sim';
+import {
+  parseCircuit,
+  serializeCircuit,
+  unlockAll,
+  type CircuitDoc,
+  type LoadResult,
+} from '../sim';
 
 export function readLocal(key: string): string | null {
   try {
@@ -38,12 +44,20 @@ export function requestPersistentStorage(): void {
 // --- The sandbox's autosave -------------------------------------------------
 
 const SANDBOX_KEY = 'logiclearn:sandbox:v1';
+const UNREADABLE_KEY = 'logiclearn:sandbox:unreadable';
 
+/**
+ * The saved sandbox circuit, or null. A save that can't be read (e.g. made by a newer
+ * version of the app) is copied aside first, so the next autosave can't destroy it.
+ * Sandbox parts are never locked, even if the saved circuit came from a shared link.
+ */
 export function loadSandbox(): CircuitDoc | null {
   const text = readLocal(SANDBOX_KEY);
   if (!text) return null;
   const result = parseCircuit(text);
-  return result.ok ? result.doc : null;
+  if (result.ok) return unlockAll(result.doc);
+  writeLocal(UNREADABLE_KEY, text);
+  return null;
 }
 
 export function saveSandbox(doc: CircuitDoc): void {
@@ -97,7 +111,9 @@ export function encodeShareData(doc: CircuitDoc): string {
 export function decodeShareData(data: string): LoadResult {
   let text: string | null;
   try {
-    text = decompressFromEncodedURIComponent(data);
+    // Some apps percent-encode characters in links they pass on (e.g. "$" → "%24").
+    const raw = data.includes('%') ? decodeURIComponent(data) : data;
+    text = decompressFromEncodedURIComponent(raw);
   } catch {
     text = null;
   }

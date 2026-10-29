@@ -1,11 +1,30 @@
-/** Call `fn` only after `ms` milliseconds without another call (e.g. autosave). */
-export function debounce<A extends unknown[]>(
-  fn: (...args: A) => void,
-  ms: number,
-): (...args: A) => void {
+export interface Debounced<A extends unknown[]> {
+  (...args: A): void;
+  /** Run the waiting call now, if there is one (e.g. when the page is closing). */
+  flush(): void;
+}
+
+/**
+ * Call `fn` only after `ms` milliseconds without another call (e.g. autosave).
+ * `flush()` saves immediately, but ONLY if a change is waiting – so a tab that was just
+ * left open never overwrites newer work saved by another tab.
+ */
+export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number): Debounced<A> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  return (...args: A) => {
+  let pending: A | null = null;
+  const run = () => {
     clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), ms);
+    if (pending) {
+      const args = pending;
+      pending = null;
+      fn(...args);
+    }
   };
+  const debounced = (...args: A) => {
+    pending = args;
+    clearTimeout(timer);
+    timer = setTimeout(run, ms);
+  };
+  debounced.flush = run;
+  return debounced;
 }

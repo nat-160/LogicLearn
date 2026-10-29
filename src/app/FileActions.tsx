@@ -2,7 +2,7 @@
  * Toolbar buttons for keeping and sharing work: new, save file, open file, share link.
  */
 import { useRef, useState } from 'react';
-import { emptyCircuit } from '../sim';
+import { emptyCircuit, unlockAll } from '../sim';
 import type { EditorStore } from '../editor/store';
 import { downloadCircuit, FILE_EXTENSION, readCircuitFile, shareUrl } from '../storage/storage';
 
@@ -14,7 +14,7 @@ export function FileActions({ store }: { store: EditorStore }) {
   const onOpen = async (file: File | undefined) => {
     if (!file) return;
     const result = await readCircuitFile(file);
-    if (result.ok) store.getState().loadDoc(result.doc, { keepHistory: true });
+    if (result.ok) store.getState().loadDoc(unlockAll(result.doc), { keepHistory: true });
     else store.getState().setNotice(`Couldn't open that file: ${result.errors[0]}`);
   };
 
@@ -81,6 +81,7 @@ export function FileActions({ store }: { store: EditorStore }) {
           </p>
           <input
             readOnly
+            autoFocus
             value={link}
             onFocus={(e) => e.target.select()}
             data-testid="share-link"

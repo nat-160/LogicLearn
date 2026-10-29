@@ -44,6 +44,11 @@ body,
   margin: 0;
 }
 
+body {
+  /* No double-tap-to-zoom delays on buttons and switches. */
+  touch-action: manipulation;
+}
+
 a {
   color: var(--accent);
 }
@@ -823,6 +828,11 @@ select {
 
 .truth-table tbody tr {
   cursor: pointer;
+}
+
+.truth-table tbody tr:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
 }
 
 .truth-table tbody tr:hover {

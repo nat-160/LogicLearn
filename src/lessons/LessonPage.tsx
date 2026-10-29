@@ -22,7 +22,7 @@ import { useEditor } from '../editor/editorContext';
 import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
-import { parseCircuit, serializeCircuit, type CircuitDoc } from '../sim';
+import { loadCircuit, type CircuitDoc } from '../sim';
 import { readLocal, writeLocal } from '../storage/storage';
 import { findLesson } from './catalog';
 import { Markdown } from './Markdown';
@@ -152,32 +152,45 @@ function BuildStepView({
 }) {
   const workKey = `logiclearn:work:${stepKey(lesson.id, step.id)}`;
   const visit = useProgress((s) => s.visit);
-  const [revealed, setRevealed] = useState(step.liveOutputs !== false);
+  const [checked, setChecked] = useState(false);
+  // Predict-first: values stay hidden until the first Check.
+  const blind = step.liveOutputs === false && !checked;
+  const showTable = !blind && (step.truthTable !== 'hidden' || checked);
 
-  const store = useMemo(
-    () =>
-      createEditorStore(loadWork(workKey) ?? step.starter, {
-        onDocChange: debounce((doc: CircuitDoc) => writeLocal(workKey, serializeCircuit(doc)), 300),
-      }),
+  const autosave = useMemo(
+    () => debounce((doc: CircuitDoc) => saveWork(workKey, step.starter, doc), 300),
     [workKey, step.starter],
   );
+  const store = useMemo(
+    () =>
+      createEditorStore(loadWork(workKey, step.starter) ?? step.starter, {
+        onDocChange: autosave,
+      }),
+    [workKey, step.starter, autosave],
+  );
   useEffect(() => visit(lesson.id, step.id), [visit, lesson.id, step.id]);
+  useEffect(() => {
+    window.addEventListener('pagehide', autosave.flush);
+    return () => {
+      autosave.flush();
+      window.removeEventListener('pagehide', autosave.flush);
+    };
+  }, [autosave]);
 
-  const showTable = step.truthTable !== 'hidden' || revealed;
   return (
     <Editor
       store={store}
       palette={step.palette}
-      blind={!revealed}
+      blind={blind}
       lead={
         <BuildPanel
           lesson={lesson}
           step={step}
           index={index}
-          onChecked={() => setRevealed(true)}
+          onChecked={() => setChecked(true)}
           onStartOver={() => {
             store.getState().loadDoc(step.starter, { keepHistory: true });
-            setRevealed(step.liveOutputs !== false);
+            setChecked(false);
           }}
         />
       }
@@ -200,11 +213,33 @@ function BuildStepView({
   );
 }
 
-function loadWork(key: string): CircuitDoc | null {
-  const text = readLocal(key);
-  if (!text) return null;
-  const result = parseCircuit(text);
-  return result.ok ? result.doc : null;
+/**
+ * Saved work is stored with a fingerprint of the step's starter parts. If the lesson is
+ * updated later (its locked parts change), old work no longer fits the task and is
+ * ignored, so the student starts from the new starter instead of getting stuck.
+ */
+function starterFingerprint(starter: CircuitDoc): string {
+  return starter.components
+    .filter((c) => c.locked)
+    .map((c) => `${c.id}:${c.type}:${c.label ?? ''}`)
+    .join('|');
+}
+
+function saveWork(key: string, starter: CircuitDoc, doc: CircuitDoc): void {
+  writeLocal(key, JSON.stringify({ starter: starterFingerprint(starter), doc }));
+}
+
+function loadWork(key: string, starter: CircuitDoc): CircuitDoc | null {
+  try {
+    const saved: unknown = JSON.parse(readLocal(key) ?? 'null');
+    if (!saved || typeof saved !== 'object') return null;
+    const { starter: fingerprint, doc } = saved as { starter?: unknown; doc?: unknown };
+    if (fingerprint !== starterFingerprint(starter)) return null;
+    const result = loadCircuit(doc);
+    return result.ok ? result.doc : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Instructions, hints and the Check button for a build step. Lives inside the editor. */

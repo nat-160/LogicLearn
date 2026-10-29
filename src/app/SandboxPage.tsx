@@ -15,25 +15,22 @@ import { FileActions } from './FileActions';
 
 export function SandboxPage() {
   const [targetId, setTargetId] = useState('');
+  // Save shortly after each change (not on every drag frame).
+  const autosave = useMemo(() => debounce(saveSandbox, 300), []);
   const store = useMemo(
-    () =>
-      createEditorStore(loadSandbox() ?? exampleCircuit(), {
-        // Save shortly after each change (not on every drag frame).
-        onDocChange: debounce(saveSandbox, 300),
-      }),
-    [],
+    () => createEditorStore(loadSandbox() ?? exampleCircuit(), { onDocChange: autosave }),
+    [autosave],
   );
 
   useEffect(() => {
     requestPersistentStorage();
-    // Save immediately if the student closes or leaves the page.
-    const flush = () => saveSandbox(store.getState().doc);
-    window.addEventListener('pagehide', flush);
+    // If the student leaves or closes the page right after a change, save it now.
+    window.addEventListener('pagehide', autosave.flush);
     return () => {
-      flush();
-      window.removeEventListener('pagehide', flush);
+      autosave.flush();
+      window.removeEventListener('pagehide', autosave.flush);
     };
-  }, [store]);
+  }, [autosave]);
 
   const target = TARGETS.find((t) => t.id === targetId);
   return (

@@ -107,14 +107,21 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
               ]
                 .filter(Boolean)
                 .join(' ');
+              const tryRow = () =>
+                setInputs(Object.fromEntries(table.inputs.map((p, k) => [p.id, row.inputs[k]])));
               return (
                 <tr
                   key={i}
                   className={classes}
                   aria-current={i === current ? 'true' : undefined}
-                  onClick={() =>
-                    setInputs(Object.fromEntries(table.inputs.map((p, k) => [p.id, row.inputs[k]])))
-                  }
+                  tabIndex={0}
+                  onClick={tryRow}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      tryRow();
+                    }
+                  }}
                   title="Tap to set the switches to this row"
                   data-testid={`tt-row-${i}`}
                 >

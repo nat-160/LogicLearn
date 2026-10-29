@@ -4,7 +4,7 @@
  * their own side panel (truth table, check, lesson instructions…).
  */
 import { ReactFlowProvider } from '@xyflow/react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Canvas } from './Canvas';
 import { BlindContext, EditorContext } from './editorContext';
 import { Palette } from './Palette';
@@ -36,28 +36,31 @@ export function Editor({
   toolbarExtras,
   readOnly = false,
 }: EditorProps) {
-  // Undo/redo shortcuts. Typing in a text field keeps its own undo.
-  const onKeyDown = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('input, textarea, select') || !(e.ctrlKey || e.metaKey)) return;
-    const key = e.key.toLowerCase();
-    if (key === 'z' && !e.shiftKey) {
-      e.preventDefault();
-      store.getState().undo();
-    } else if ((key === 'z' && e.shiftKey) || key === 'y') {
-      e.preventDefault();
-      store.getState().redo();
-    }
-  };
+  // Undo/redo shortcuts. They listen on the whole page, because focus often lands on
+  // <body> (e.g. after a deleted part disappears). Typing in a text field keeps its own undo.
+  useEffect(() => {
+    if (readOnly) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('input, textarea, select') || !(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        store.getState().undo();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        store.getState().redo();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [store, readOnly]);
 
   return (
     <EditorContext.Provider value={store}>
       <ReactFlowProvider>
         <BlindContext.Provider value={blind}>
-          <div
-            className={`editor ${blind ? 'is-blind' : ''}`}
-            onKeyDown={readOnly ? undefined : onKeyDown}
-          >
+          <div className={`editor ${blind ? 'is-blind' : ''}`}>
             {lead && <aside className="editor-lead">{lead}</aside>}
             {!readOnly && <Palette types={palette} />}
             <div className="editor-main">

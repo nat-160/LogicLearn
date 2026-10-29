@@ -1,6 +1,7 @@
 /**
  * The app shell: a header with navigation, and the page for the current route.
  */
+import { useEffect } from 'react';
 import { LessonList } from '../lessons/LessonList';
 import { LessonPage } from '../lessons/LessonPage';
 import { HomePage } from './HomePage';
@@ -10,6 +11,7 @@ import { SharePage } from './SharePage';
 
 export function App() {
   const route = useRoute();
+  useNoPagePinchZoom();
   return (
     <div className="app">
       <header className="app-header">
@@ -34,6 +36,21 @@ export function App() {
       </main>
     </div>
   );
+}
+
+/**
+ * On iPad, pinching anywhere zooms the whole page, which breaks the layout mid-lesson.
+ * Pinching on the canvas zooms the circuit instead (React Flow handles that); elsewhere
+ * the page-level pinch is blocked. iOS ignores `user-scalable=no`, hence the event.
+ */
+function useNoPagePinchZoom() {
+  useEffect(() => {
+    const block = (e: Event) => {
+      if (!(e.target instanceof Element && e.target.closest('.react-flow'))) e.preventDefault();
+    };
+    document.addEventListener('gesturestart', block, { passive: false });
+    return () => document.removeEventListener('gesturestart', block);
+  }, []);
 }
 
 /** A new key per page (and per lesson step) gives each one a fresh editor. */

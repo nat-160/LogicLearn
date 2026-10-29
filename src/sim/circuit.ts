@@ -264,6 +264,19 @@ export function removeItems(
   };
 }
 
+/** The same circuit with every part unlocked (for the sandbox, where nothing is "the task"). */
+export function unlockAll(doc: CircuitDoc): CircuitDoc {
+  if (!doc.components.some((c) => c.locked)) return doc;
+  return {
+    ...doc,
+    components: doc.components.map((c) => {
+      const copy = { ...c };
+      delete copy.locked;
+      return copy;
+    }),
+  };
+}
+
 export function samePin(a: PinRef, b: PinRef): boolean {
   return a.component === b.component && a.pin === b.pin;
 }

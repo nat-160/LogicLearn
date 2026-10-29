@@ -3,6 +3,7 @@
  * the student's own sandbox is untouched unless they choose to replace it.
  */
 import { useMemo } from 'react';
+import { unlockAll } from '../sim';
 import { Editor } from '../editor/Editor';
 import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
@@ -30,7 +31,7 @@ export function SharePage({ data }: { data: string }) {
     const replace =
       !loadSandbox() || window.confirm('Replace the circuit in your sandbox with this one?');
     if (!replace) return;
-    saveSandbox(store.getState().doc);
+    saveSandbox(unlockAll(store.getState().doc));
     navigate('#/sandbox');
   };
 
