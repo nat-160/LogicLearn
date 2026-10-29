@@ -28,7 +28,12 @@ describe('editing a circuit', () => {
   });
 
   it('connects pins given in either order', () => {
-    const doc = buildCircuit({ parts: [{ id: 'A', type: 'SWITCH' }, { id: 'Y', type: 'LIGHT' }] });
+    const doc = buildCircuit({
+      parts: [
+        { id: 'A', type: 'SWITCH' },
+        { id: 'Y', type: 'LIGHT' },
+      ],
+    });
     const result = connect(doc, { component: 'Y', pin: 'in' }, { component: 'A', pin: 'out' });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.doc.wires[0].from).toEqual({ component: 'A', pin: 'out' });
@@ -81,7 +86,10 @@ describe('editing a circuit', () => {
   it('never moves, relabels or deletes locked (lesson-provided) parts', () => {
     const doc = buildCircuit({ parts: [{ id: 'A', type: 'SWITCH', locked: true }] });
     expect(removeItems(doc, ['A']).components).toHaveLength(1);
-    expect(moveComponent(doc, 'A', { x: 99, y: 99 }).components[0].position).toEqual({ x: 0, y: 0 });
+    expect(moveComponent(doc, 'A', { x: 99, y: 99 }).components[0].position).toEqual({
+      x: 0,
+      y: 0,
+    });
     expect(setLabel(doc, 'A', 'Q').components[0].label).toBe('A');
   });
 });
@@ -121,8 +129,14 @@ describe('saving and loading', () => {
   it('rejects unknown part types and wires to missing pins', () => {
     const bad = {
       ...doc,
-      components: [...doc.components, { id: 'z', type: 'TELEPORTER', position: { x: 0, y: 0 }, props: {} }],
-      wires: [...doc.wires, { id: 'w9', from: { component: 'A', pin: 'out' }, to: { component: 'g', pin: 'in7' } }],
+      components: [
+        ...doc.components,
+        { id: 'z', type: 'TELEPORTER', position: { x: 0, y: 0 }, props: {} },
+      ],
+      wires: [
+        ...doc.wires,
+        { id: 'w9', from: { component: 'A', pin: 'out' }, to: { component: 'g', pin: 'in7' } },
+      ],
     };
     const result = validateCircuit(bad);
     expect(result.ok).toBe(false);
@@ -135,7 +149,10 @@ describe('saving and loading', () => {
   it('rejects two wires into the same input', () => {
     const bad = {
       ...doc,
-      wires: [...doc.wires, { id: 'w9', from: { component: 'B', pin: 'out' }, to: { component: 'Y', pin: 'in' } }],
+      wires: [
+        ...doc.wires,
+        { id: 'w9', from: { component: 'B', pin: 'out' }, to: { component: 'Y', pin: 'in' } },
+      ],
     };
     const result = validateCircuit(bad);
     expect(result.ok).toBe(false);

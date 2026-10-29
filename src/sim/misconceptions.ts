@@ -73,7 +73,8 @@ const SIGNATURES: Signature[] = [
     id: 'xor-as-or',
     target: 'XOR',
     built: 'OR',
-    summary: 'Your circuit acts like OR ("at least one"), but the rule is "one or the other, not both".',
+    summary:
+      'Your circuit acts like OR ("at least one"), but the rule is "one or the other, not both".',
     hint: 'What should happen when both inputs are 1?',
   },
   {

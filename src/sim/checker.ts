@@ -96,7 +96,8 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
 
   // --- Inputs and outputs: are the right ones there, with unique labels? ---
   const labelCounts = new Map<string, IOPart[]>();
-  for (const part of all) labelCounts.set(part.label, [...(labelCounts.get(part.label) ?? []), part]);
+  for (const part of all)
+    labelCounts.set(part.label, [...(labelCounts.get(part.label) ?? []), part]);
   for (const [label, parts] of labelCounts) {
     if (parts.length > 1) {
       diagnostics.push({
@@ -183,7 +184,7 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
       code: 'HAS_CYCLE',
       severity: 'error',
       message:
-        "Part of your circuit loops back into itself. Loops are how computers remember things – that comes in a later lesson. For now, make sure signals only flow forward.",
+        'Part of your circuit loops back into itself. Loops are how computers remember things – that comes in a later lesson. For now, make sure signals only flow forward.',
       componentIds: [...loops],
     });
   }

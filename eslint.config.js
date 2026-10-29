@@ -27,7 +27,15 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['react', 'react/*', 'react-dom', 'react-dom/*', '@xyflow/*', 'zustand', 'zustand/*'],
+              group: [
+                'react',
+                'react/*',
+                'react-dom',
+                'react-dom/*',
+                '@xyflow/*',
+                'zustand',
+                'zustand/*',
+              ],
               message: 'src/sim must stay framework-free (see CLAUDE.md).',
             },
             {

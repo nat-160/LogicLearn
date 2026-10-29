@@ -42,7 +42,9 @@ export interface CompiledCircuit {
 const compiledCircuits = new WeakSet<CompiledCircuit>();
 
 export function isCompiled(value: unknown): value is CompiledCircuit {
-  return typeof value === 'object' && value !== null && compiledCircuits.has(value as CompiledCircuit);
+  return (
+    typeof value === 'object' && value !== null && compiledCircuits.has(value as CompiledCircuit)
+  );
 }
 
 export function compile(doc: CircuitDoc): CompiledCircuit {

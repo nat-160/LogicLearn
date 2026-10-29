@@ -10,7 +10,10 @@ import { and, isBit, not, or, xor, type Bit, type Value } from './values';
 
 /** Number of inputs for a gate (props.inputs), clamped to 2–4. Defaults to 2. */
 function gateInputCount(props: Props): number {
-  const n = typeof props.inputs === 'number' && Number.isFinite(props.inputs) ? Math.round(props.inputs) : 2;
+  const n =
+    typeof props.inputs === 'number' && Number.isFinite(props.inputs)
+      ? Math.round(props.inputs)
+      : 2;
   return Math.min(4, Math.max(2, n));
 }
 

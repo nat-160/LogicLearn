@@ -54,9 +54,11 @@ describe('gate truth tables', () => {
 
 describe('registry', () => {
   it('registers the nine Phase 1 parts', () => {
-    expect(allComponentDefs().map((d) => d.type).sort()).toEqual(
-      ['AND', 'LIGHT', 'NAND', 'NOR', 'NOT', 'OR', 'SWITCH', 'XNOR', 'XOR'].sort(),
-    );
+    expect(
+      allComponentDefs()
+        .map((d) => d.type)
+        .sort(),
+    ).toEqual(['AND', 'LIGHT', 'NAND', 'NOR', 'NOT', 'OR', 'SWITCH', 'XNOR', 'XOR'].sort());
   });
 
   it('marks switches as inputs and lights as outputs', () => {

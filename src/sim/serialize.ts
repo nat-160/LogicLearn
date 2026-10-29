@@ -51,7 +51,9 @@ export function loadCircuit(raw: unknown): LoadResult {
  * Upgrade an older document to the current schema. There is only version 1 so far;
  * when version 2 arrives, add a `if (version === 1) { …convert…; version = 2 }` step.
  */
-export function migrate(raw: unknown): { ok: true; value: unknown } | { ok: false; errors: string[] } {
+export function migrate(
+  raw: unknown,
+): { ok: true; value: unknown } | { ok: false; errors: string[] } {
   if (!isObject(raw)) return { ok: false, errors: ['This is not a circuit file.'] };
   const version = raw.schemaVersion;
   if (typeof version !== 'number') {
@@ -60,7 +62,9 @@ export function migrate(raw: unknown): { ok: true; value: unknown } | { ok: fals
   if (version > SCHEMA_VERSION) {
     return {
       ok: false,
-      errors: ['This circuit was made with a newer version of LogicLearn. Refresh the page and try again.'],
+      errors: [
+        'This circuit was made with a newer version of LogicLearn. Refresh the page and try again.',
+      ],
     };
   }
   return { ok: true, value: raw };
@@ -99,7 +103,8 @@ export function validateCircuit(raw: unknown): LoadResult {
     }
     if (!isPosition(c.position)) return errors.push(`${where} has no valid position.`);
     if (c.label !== undefined && !isShortText(c.label)) errors.push(`${where} has a bad label.`);
-    if (c.locked !== undefined && typeof c.locked !== 'boolean') errors.push(`${where} has a bad "locked" flag.`);
+    if (c.locked !== undefined && typeof c.locked !== 'boolean')
+      errors.push(`${where} has a bad "locked" flag.`);
     if (c.rotation !== undefined && ![0, 90, 180, 270].includes(c.rotation as number)) {
       errors.push(`${where} has a bad rotation.`);
     }
@@ -138,7 +143,10 @@ export function validateCircuit(raw: unknown): LoadResult {
     const key = `${w.to.component}.${w.to.pin}`;
     if (drivenInputs.has(key)) errors.push(`Input ${key} has more than one wire.`);
     drivenInputs.add(key);
-    if (w.waypoints !== undefined && !(Array.isArray(w.waypoints) && w.waypoints.every(isPosition))) {
+    if (
+      w.waypoints !== undefined &&
+      !(Array.isArray(w.waypoints) && w.waypoints.every(isPosition))
+    ) {
       errors.push(`${where} has bad waypoints.`);
     }
     wires.push({
@@ -154,7 +162,13 @@ export function validateCircuit(raw: unknown): LoadResult {
   if (errors.length) return { ok: false, errors };
   return {
     ok: true,
-    doc: { schemaVersion: SCHEMA_VERSION, id: raw.id as string, name: raw.name as string, components, wires },
+    doc: {
+      schemaVersion: SCHEMA_VERSION,
+      id: raw.id as string,
+      name: raw.name as string,
+      components,
+      wires,
+    },
   };
 }
 

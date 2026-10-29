@@ -29,11 +29,15 @@ describe('review regressions', () => {
   it('rejects part ids that are special to JavaScript objects, like "__proto__"', () => {
     const text = JSON.stringify({
       ...base,
-      components: [{ id: '__proto__', type: 'SWITCH', position: { x: 0, y: 0 }, props: {}, label: 'A' }],
+      components: [
+        { id: '__proto__', type: 'SWITCH', position: { x: 0, y: 0 }, props: {}, label: 'A' },
+      ],
       wires: [],
     });
     expect(parseCircuit(text).ok).toBe(false);
-    expect(() => addComponent(buildCircuit({ parts: [] }), 'SWITCH', { x: 0, y: 0 }, { id: '__proto__' })).toThrow();
+    expect(() =>
+      addComponent(buildCircuit({ parts: [] }), 'SWITCH', { x: 0, y: 0 }, { id: '__proto__' }),
+    ).toThrow();
   });
 
   it('keeps reporting a loop that is still oscillating after an unrelated switch flips', () => {
@@ -72,7 +76,9 @@ describe('review regressions', () => {
   });
 
   it('treats a nonsense input count as the default of 2', () => {
-    const doc = buildCircuit({ parts: [{ id: 'g', type: 'AND', props: { inputs: Number('abc') } }] });
+    const doc = buildCircuit({
+      parts: [{ id: 'g', type: 'AND', props: { inputs: Number('abc') } }],
+    });
     const sim = new Simulator(doc);
     expect(sim.circuit.components[0].inputPins).toEqual(['in0', 'in1']);
   });
@@ -94,7 +100,9 @@ describe('review regressions', () => {
     ];
     expect(diagnoseMisconception({ inputCount: 2, outputCount: 1, rows })).toBeUndefined();
     const noInputs = [{ inputs: [] as Bit[], expected: [1] as Bit[], actual: [0] as Bit[] }];
-    expect(diagnoseMisconception({ inputCount: 0, outputCount: 1, rows: noInputs })).toBeUndefined();
+    expect(
+      diagnoseMisconception({ inputCount: 0, outputCount: 1, rows: noInputs }),
+    ).toBeUndefined();
   });
 
   it('refuses to add a part with an id that is already used', () => {
@@ -121,7 +129,11 @@ describe('review regressions', () => {
         ['n', 'Y'],
       ],
     });
-    const spec = { inputs: ['A'], outputs: ['Y'], expected: rowsFrom(1, (a) => (a ? 0 : 1) as Bit) };
+    const spec = {
+      inputs: ['A'],
+      outputs: ['Y'],
+      expected: rowsFrom(1, (a) => (a ? 0 : 1) as Bit),
+    };
     expect(check(doc, { ...spec, constraints: { allowedTypes: ['NAND'] } }).pass).toBe(false);
     expect(check(doc, { ...spec, constraints: { maxGates: 1 } }).pass).toBe(true);
     expect(computeTruthTable(doc).ok).toBe(true);

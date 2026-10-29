@@ -28,17 +28,33 @@ describe('truth tables', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.table.rows.map((r) => [r.inputs, r.outputs])).toEqual([
-      [[0, 0], [0, 0]], // C, S
-      [[0, 1], [0, 1]],
-      [[1, 0], [0, 1]],
-      [[1, 1], [1, 0]],
+      [
+        [0, 0],
+        [0, 0],
+      ], // C, S
+      [
+        [0, 1],
+        [0, 1],
+      ],
+      [
+        [1, 0],
+        [0, 1],
+      ],
+      [
+        [1, 1],
+        [1, 0],
+      ],
     ]);
   });
 
   it('refuses tables that would be too big', () => {
     let doc = buildCircuit({ parts: [] });
     for (let i = 0; i < 4; i++) doc = addComponent(doc, 'SWITCH', { x: 0, y: i * 40 }).doc;
-    expect(computeTruthTable(doc, 3)).toEqual({ ok: false, reason: 'too-many-inputs', inputCount: 4 });
+    expect(computeTruthTable(doc, 3)).toEqual({
+      ok: false,
+      reason: 'too-many-inputs',
+      inputCount: 4,
+    });
   });
 });
 
@@ -73,7 +89,10 @@ describe('check()', () => {
   });
 
   it('recognizes AND-for-XNOR ("if and only if")', () => {
-    const result = check(oneGate('AND'), spec((a, b) => (a === b ? 1 : 0) as Bit));
+    const result = check(
+      oneGate('AND'),
+      spec((a, b) => (a === b ? 1 : 0) as Bit),
+    );
     expect(result.misconception?.id).toBe('iff-as-and');
   });
 
@@ -88,21 +107,35 @@ describe('check()', () => {
     const doc = setLabel(oneGate('XOR'), 'B', 'A');
     const result = check(doc, XOR);
     expect(result.pass).toBe(false);
-    expect(result.diagnostics.find((d) => d.code === 'DUPLICATE_LABEL')?.componentIds).toEqual(['A', 'B']);
+    expect(result.diagnostics.find((d) => d.code === 'DUPLICATE_LABEL')?.componentIds).toEqual([
+      'A',
+      'B',
+    ]);
   });
 
   it('enforces "only NAND" without counting switches and lights', () => {
     const onlyNand = { constraints: { allowedTypes: ['NAND'] } };
-    const withAnd = check(oneGate('AND'), spec((a, b) => (a & b) as Bit, onlyNand));
-    expect(withAnd.diagnostics.find((d) => d.code === 'DISALLOWED_TYPE')?.componentIds).toEqual(['g']);
+    const withAnd = check(
+      oneGate('AND'),
+      spec((a, b) => (a & b) as Bit, onlyNand),
+    );
+    expect(withAnd.diagnostics.find((d) => d.code === 'DISALLOWED_TYPE')?.componentIds).toEqual([
+      'g',
+    ]);
     expect(withAnd.pass).toBe(false);
 
-    const withNand = check(oneGate('NAND'), spec((a, b) => (a & b ? 0 : 1) as Bit, onlyNand));
+    const withNand = check(
+      oneGate('NAND'),
+      spec((a, b) => (a & b ? 0 : 1) as Bit, onlyNand),
+    );
     expect(withNand.pass).toBe(true);
   });
 
   it('enforces a gate budget and required gate types', () => {
-    const result = check(oneGate('XOR'), { ...XOR, constraints: { maxGates: 0, requiredTypes: ['AND'] } });
+    const result = check(oneGate('XOR'), {
+      ...XOR,
+      constraints: { maxGates: 0, requiredTypes: ['AND'] },
+    });
     const codes = result.diagnostics.map((d) => d.code);
     expect(codes).toContain('TOO_MANY_GATES');
     expect(codes).toContain('MISSING_REQUIRED_TYPE');
@@ -164,7 +197,9 @@ describe('check()', () => {
   });
 
   it('throws on a malformed spec (an authoring bug, not a student mistake)', () => {
-    expect(() => check(oneGate('XOR'), { ...XOR, expected: [{ inputs: [0], outputs: [0] }] })).toThrow();
+    expect(() =>
+      check(oneGate('XOR'), { ...XOR, expected: [{ inputs: [0], outputs: [0] }] }),
+    ).toThrow();
   });
 });
 
@@ -180,7 +215,9 @@ describe('misconception signatures', () => {
       { inputs: [0, 0, 0] as Bit[], expected: [1] as Bit[], actual: [0] as Bit[] },
       { inputs: [0, 0, 1] as Bit[], expected: [0] as Bit[], actual: [0] as Bit[] },
     ];
-    expect(diagnoseMisconception({ inputCount: 3, outputCount: 1, rows })?.id).toBe('missed-all-zeros');
+    expect(diagnoseMisconception({ inputCount: 3, outputCount: 1, rows })?.id).toBe(
+      'missed-all-zeros',
+    );
   });
 
   it('returns nothing when every row is right', () => {

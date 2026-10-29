@@ -203,7 +203,8 @@ export function pinDirection(doc: CircuitDoc, ref: PinRef): PinDirection | undef
   return undefined;
 }
 
-export type ConnectResult = { ok: true; doc: CircuitDoc; id: string } | { ok: false; reason: string };
+export type ConnectResult =
+  { ok: true; doc: CircuitDoc; id: string } | { ok: false; reason: string };
 
 /**
  * Connect two pins with a wire. The pins may be given in either order, as long as one is
@@ -322,7 +323,11 @@ export function buildCircuit(spec: {
     ).doc;
   });
   for (const [fromSpec, toSpec] of spec.wires ?? []) {
-    const result = connect(doc, resolvePin(doc, fromSpec, 'output'), resolvePin(doc, toSpec, 'input'));
+    const result = connect(
+      doc,
+      resolvePin(doc, fromSpec, 'output'),
+      resolvePin(doc, toSpec, 'input'),
+    );
     if (!result.ok) throw new Error(`Cannot wire ${fromSpec} → ${toSpec}: ${result.reason}`);
     doc = result.doc;
   }

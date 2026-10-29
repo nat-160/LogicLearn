@@ -96,8 +96,7 @@ export interface TruthTable {
 export const MAX_TRUTH_TABLE_INPUTS = 10;
 
 export type TruthTableResult =
-  | { ok: true; table: TruthTable }
-  | { ok: false; reason: 'too-many-inputs'; inputCount: number };
+  { ok: true; table: TruthTable } | { ok: false; reason: 'too-many-inputs'; inputCount: number };
 
 export function computeTruthTable(
   doc: CircuitDoc,
