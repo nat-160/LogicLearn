@@ -1282,6 +1282,18 @@ button.next {
   min-width: 0;
 }
 
+/* Label and hint on top, the control full width below (for long voice names). */
+.setting-row.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.setting-row.stacked select {
+  flex: none;
+  width: 100%;
+}
+
 .setting-hint {
   display: block;
   font-size: 13px;

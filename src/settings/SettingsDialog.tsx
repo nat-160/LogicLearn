@@ -150,7 +150,7 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
               onChange={(e) => prefs.update({ speechRate: Number(e.target.value) })}
             />
           </div>
-          <div className="setting-row">
+          <div className="setting-row stacked">
             <span className="setting-label">
               <label htmlFor="voice">Voice</label>
               <span className="setting-hint" id="voice-hint">
