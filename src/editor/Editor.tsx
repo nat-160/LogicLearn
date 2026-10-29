@@ -6,7 +6,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { Canvas } from './Canvas';
-import { EditorContext } from './editorContext';
+import { BlindContext, EditorContext } from './editorContext';
 import { Palette } from './Palette';
 import { ALL_PARTS } from './parts';
 import type { EditorStore } from './store';
@@ -20,8 +20,8 @@ export interface EditorProps {
   side?: ReactNode;
   /** Panel shown to the left of the palette (lesson instructions). */
   lead?: ReactNode;
-  /** Extra CSS classes, e.g. "is-blind" for predict-first steps. */
-  className?: string;
+  /** Predict-first mode: hide wire and light values (switches still show theirs). */
+  blind?: boolean;
   /** Extra toolbar buttons (save, share…). */
   toolbarExtras?: ReactNode;
   readOnly?: boolean;
@@ -32,7 +32,7 @@ export function Editor({
   palette = ALL_PARTS,
   side,
   lead,
-  className = '',
+  blind = false,
   toolbarExtras,
   readOnly = false,
 }: EditorProps) {
@@ -53,15 +53,20 @@ export function Editor({
   return (
     <EditorContext.Provider value={store}>
       <ReactFlowProvider>
-        <div className={`editor ${className}`} onKeyDown={readOnly ? undefined : onKeyDown}>
-          {lead && <aside className="editor-lead">{lead}</aside>}
-          {!readOnly && <Palette types={palette} />}
-          <div className="editor-main">
-            {!readOnly && <Toolbar>{toolbarExtras}</Toolbar>}
-            <Canvas readOnly={readOnly} />
+        <BlindContext.Provider value={blind}>
+          <div
+            className={`editor ${blind ? 'is-blind' : ''}`}
+            onKeyDown={readOnly ? undefined : onKeyDown}
+          >
+            {lead && <aside className="editor-lead">{lead}</aside>}
+            {!readOnly && <Palette types={palette} />}
+            <div className="editor-main">
+              {!readOnly && <Toolbar>{toolbarExtras}</Toolbar>}
+              <Canvas readOnly={readOnly} />
+            </div>
+            {side && <aside className="editor-side">{side}</aside>}
           </div>
-          {side && <aside className="editor-side">{side}</aside>}
-        </div>
+        </BlindContext.Provider>
       </ReactFlowProvider>
     </EditorContext.Provider>
   );

@@ -7,10 +7,10 @@
  * so flipping a switch re-draws just the parts whose values changed.
  */
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { memo } from 'react';
+import { memo, useContext } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { getComponentDef, type Value } from '../../sim';
-import { useEditor } from '../editorContext';
+import { BlindContext, useEditor } from '../editorContext';
 import { partGeometry } from '../geometry';
 import type { PartNode } from '../store';
 import { GateShape } from './shapes';
@@ -27,6 +27,7 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
   const inLoop = useEditor((s) => s.loops.has(id));
   const unstable = useEditor((s) => s.report.unstable.includes(id));
   const toggleSwitch = useEditor((s) => s.toggleSwitch);
+  const blind = useContext(BlindContext);
   const valueOf = (pin: string) => values[pinIds.indexOf(pin)];
 
   const classes = [
@@ -62,7 +63,7 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
       <div
         className={`light-body ${valueClass(v)} color-${String(data.props.color ?? 'yellow')}`}
         role="img"
-        aria-label={`Light ${data.label ?? ''}: ${v === 1 ? 'on' : v === 0 ? 'off' : 'unknown'}`}
+        aria-label={`Light ${data.label ?? ''}: ${blind ? 'hidden until you check' : v === 1 ? 'on' : v === 0 ? 'off' : 'unknown'}`}
       >
         <span className="light-value">{valueText(v)}</span>
       </div>

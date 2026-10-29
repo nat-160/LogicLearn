@@ -9,6 +9,12 @@ import type { EditorState, EditorStore } from './store';
 
 export const EditorContext = createContext<EditorStore | null>(null);
 
+/**
+ * True in predict-first mode: parts must not reveal output values (visually or to screen
+ * readers) until the student presses Check.
+ */
+export const BlindContext = createContext(false);
+
 export function useEditorStore(): EditorStore {
   const store = useContext(EditorContext);
   if (!store) throw new Error('useEditor must be used inside an <Editor>');

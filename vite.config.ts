@@ -7,6 +7,10 @@ export default defineConfig({
   // (https://nat-160.github.io/LogicLearn/), a custom domain, or any static host.
   base: './',
   plugins: [react()],
+  build: {
+    // React + React Flow are most of the bundle (~160 kB gzipped); one file is fine for now.
+    chunkSizeWarningLimit: 700,
+  },
   test: {
     // Simulation tests run in plain Node; UI tests opt into jsdom with a
     // `// @vitest-environment jsdom` comment at the top of the file.

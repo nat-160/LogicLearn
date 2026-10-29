@@ -168,7 +168,7 @@ function BuildStepView({
     <Editor
       store={store}
       palette={step.palette}
-      className={revealed ? '' : 'is-blind'}
+      blind={!revealed}
       lead={
         <BuildPanel
           lesson={lesson}
