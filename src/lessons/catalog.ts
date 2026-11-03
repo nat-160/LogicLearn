@@ -51,3 +51,11 @@ export function getLessons(locale: string): Lesson[] {
 export function findLesson(id: string, locale: string): Lesson | undefined {
   return getLessons(locale).find((l) => l.id === id);
 }
+
+/**
+ * The gates taught so far: every gate `introduces`d by the lessons up to and including
+ * `lessons[index]`, in the order they were taught (for the gate reminder card).
+ */
+export function introducedGates(lessons: readonly Lesson[], index: number): string[] {
+  return [...new Set(lessons.slice(0, index + 1).flatMap((l) => l.introduces ?? []))];
+}

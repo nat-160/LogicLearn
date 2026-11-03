@@ -8,6 +8,8 @@ import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
 import { TARGETS } from '../editor/targets';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
+import { GateReference } from '../lessons/GateReference';
+import { GATE_TYPES } from '../sim';
 import { loadSandbox, requestPersistentStorage, saveSandbox } from '../storage/storage';
 import { debounce } from './debounce';
 import { exampleCircuit } from './exampleCircuit';
@@ -44,6 +46,9 @@ export function SandboxPage() {
             <Inspector />
             <TargetCheckPanel targetId={targetId} onTargetChange={setTargetId} />
             <TruthTablePanel spec={target?.spec} />
+            <section className="panel" aria-label="Gate reminder">
+              <GateReference gates={GATE_TYPES} />
+            </section>
           </>
         }
       />

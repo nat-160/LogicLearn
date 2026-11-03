@@ -17,6 +17,7 @@ export interface StepProgress {
   done: boolean;
   /** How many times Check was pressed. */
   attempts: number;
+  /** The highest hint revealed (1 = the first hint), so hints stay shown after a reload. */
   hintsUsed: number;
   /** Truth-table row numbers tried with the switches. */
   triedRows: number[];
@@ -146,7 +147,8 @@ interface ProgressState {
     passed: boolean,
     triedRows: Iterable<number>,
   ): void;
-  recordHint(lessonId: string, stepId: string): void;
+  /** Note that hint number `level` (1, 2, …) was revealed. */
+  revealHint(lessonId: string, stepId: string, level: number): void;
   complete(lessonId: string, stepId: string): void;
   resetLesson(lesson: Lesson): void;
   /** Add progress from elsewhere (an imported file), never undoing any progress. */
@@ -192,8 +194,10 @@ export const useProgress = create<ProgressState>()((set, get) => {
         done: old.done || passed,
         triedRows: [...new Set([...old.triedRows, ...triedRows])].sort((a, b) => a - b),
       })),
-    recordHint: (lessonId, stepId) =>
-      update(stepKey(lessonId, stepId), (old) => ({ hintsUsed: old.hintsUsed + 1 })),
+    revealHint: (lessonId, stepId, level) =>
+      update(stepKey(lessonId, stepId), (old) => ({
+        hintsUsed: Math.max(old.hintsUsed, level),
+      })),
     complete: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({ done: true })),
     mergeIn: (incoming) => {
       const steps = mergeProgress(mergeProgress(get().steps, load()), incoming);

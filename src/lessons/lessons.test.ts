@@ -8,7 +8,7 @@
  * a student does.
  */
 import { DEFAULT_LOCALE, LOCALES } from '../i18n/locales';
-import { check, findComponentDef, findIO } from '../sim';
+import { check, findComponentDef, findIO, GATE_TYPES } from '../sim';
 import { LESSON_DEFS, UNITS } from './catalog';
 import {
   findLessonFile,
@@ -112,7 +112,10 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 });
 
 /** Names a file in content/_shared/<locale>/ may have (see lessonText.ts). */
-const SHARED_NAMES = [/^unit-\d+$/];
+const SHARED_NAMES = [/^unit-\d+$/, /^gate-[A-Z]+$/, /^nudge-stuck$/];
+
+/** Shared files every build needs in en-US. */
+const REQUIRED_SHARED = [...GATE_TYPES.map((t) => `gate-${t}`), 'nudge-stuck'];
 
 describe('lessons and units', () => {
   it('lessons have unique ids, and each belongs to a unit', () => {
@@ -127,6 +130,20 @@ describe('lessons and units', () => {
       expect(text?.locale, `unit-${unit}.md`).toBe(DEFAULT_LOCALE);
       expect(text?.title).toMatch(/\S/);
       expect(text?.prose).toMatch(/\S/);
+    }
+  });
+
+  it(`has every required shared text in ${DEFAULT_LOCALE} (gate reminder, messages)`, () => {
+    for (const name of REQUIRED_SHARED) {
+      const text = findSharedText(name, DEFAULT_LOCALE);
+      expect(text?.locale, `${name}.md`).toBe(DEFAULT_LOCALE);
+      expect(text?.title, `${name}.md`).toMatch(/\S/);
+    }
+  });
+
+  it('lessons only introduce real gates', () => {
+    for (const def of LESSON_DEFS) {
+      for (const type of def.introduces ?? []) expect(GATE_TYPES, def.id).toContain(type);
     }
   });
 

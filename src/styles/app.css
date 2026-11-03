@@ -1467,3 +1467,78 @@ button.next {
 .connect-form select {
   width: 100%;
 }
+
+/* ---------- Gate reminder card and hints ---------- */
+
+.gate-reference {
+  margin: 12px 0;
+  border: var(--line-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 4px 10px;
+}
+
+.panel .gate-reference {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.gate-reference > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.gate-card {
+  padding: 10px 0;
+  border-top: var(--line-width) solid var(--border);
+}
+
+.gate-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gate-card-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* The canvas drawings are 80px; half size is plenty for a reminder. */
+.gate-card-symbol .gate-svg {
+  width: 48px;
+  height: 48px;
+}
+
+.gate-card .prose {
+  font-size: 14px;
+}
+
+.gate-table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.gate-table th,
+.gate-table td {
+  padding: 2px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.gate-table-out {
+  font-weight: 700;
+  background: var(--output-col-bg);
+}
+
+.stuck-note {
+  margin: 0;
+  font-weight: 600;
+  color: var(--accent-text);
+}

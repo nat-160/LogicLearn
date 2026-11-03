@@ -8,7 +8,7 @@
  *
  * Work is saved in this browser (stepWork.ts), so a reload doesn't lose it.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { debounce } from '../app/debounce';
 import { CheckResultView } from '../editor/CheckPanel';
 import { summarizeCheck } from '../editor/checkSummary';
@@ -21,10 +21,12 @@ import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { INTERFACE_LOCALE } from '../i18n/locales';
 import { inlineMarkdownToSpeech } from '../narration/plainText';
 import type { CircuitDoc } from '../sim';
-import { MarkdownInline } from './Markdown';
+import { HintLadder } from './HintLadder';
+import { LessonGateReference } from './LessonGateReference';
 import { goNext } from './navigation';
-import { isStepDone, useProgress } from './progress';
-import { stepSpeech, textLang } from './stepSpeech';
+import { isStepDone, stepKey, useProgress } from './progress';
+import { stuckText } from './sharedMessages';
+import { stepSpeech } from './stepSpeech';
 import { StepNav } from './StepNav';
 import { StepText } from './StepText';
 import { loadWork, saveWork, workKey } from './stepWork';
@@ -42,9 +44,11 @@ export function BuildStepView({
 }) {
   const key = workKey(lesson.id, step.id);
   const visit = useProgress((s) => s.visit);
+  const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
   const [checked, setChecked] = useState(false);
-  // Predict-first: values stay hidden until the first Check.
-  const blind = step.liveOutputs === false && !checked;
+  // Predict-first: values stay hidden until the first Check (or for good once the step
+  // is done, e.g. when coming back to it after a reload).
+  const blind = step.liveOutputs === false && !checked && !done;
   const showTable = !blind && (step.truthTable !== 'hidden' || checked);
 
   const autosave = useMemo(
@@ -120,11 +124,26 @@ function BuildPanel({
   const { result, run } = useCheck();
   const triedRows = useEditor((s) => s.triedRows);
   const recordAttempt = useProgress((s) => s.recordAttempt);
-  const recordHint = useProgress((s) => s.recordHint);
+  const revealHint = useProgress((s) => s.revealHint);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
-  const [hintsShown, setHintsShown] = useState(0);
+  const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
+  // Hints revealed before (saved with the step's progress) stay revealed.
+  const [hintsShown, setHintsShown] = useState(() =>
+    Math.min(
+      useProgress.getState().steps[stepKey(lesson.id, step.id)]?.hintsUsed ?? 0,
+      step.hints.length,
+    ),
+  );
   const isLast = index === lesson.steps.length - 1;
   const tell = useTell();
+
+  // After two failed checks without a hint, point to the hints (announced once).
+  const stuck = !done && attempts >= 2 && hintsShown === 0 && step.hints.length > 0;
+  const wasStuck = useRef(stuck);
+  useEffect(() => {
+    if (stuck && !wasStuck.current) tell('stuck', stuckText(step.locale), step.locale);
+    wasStuck.current = stuck;
+  }, [stuck, step.locale, tell]);
 
   const onCheck = () => {
     const r = run(step.spec);
@@ -136,7 +155,7 @@ function BuildPanel({
   const showHint = () => {
     const next = hintsShown + 1;
     setHintsShown(next);
-    recordHint(lesson.id, step.id);
+    revealHint(lesson.id, step.id, next);
     tell('hint', `Hint ${next}: ${inlineMarkdownToSpeech(step.hints[next - 1])}`, step.locale);
   };
 
@@ -149,22 +168,8 @@ function BuildPanel({
         speech={() => stepSpeech(step, hintsShown, result)}
       />
 
-      {step.hints.length > 0 && (
-        <div className="hints">
-          {step.hints.slice(0, hintsShown).map((hint, i) => (
-            <p key={i} className="hint">
-              <span aria-hidden>💡 </span>
-              <span className="sr-only">Hint {i + 1}: </span>
-              <MarkdownInline source={hint} lang={textLang(step)} />
-            </p>
-          ))}
-          {hintsShown < step.hints.length && (
-            <button type="button" onClick={showHint} data-testid="hint-button">
-              Show a hint ({hintsShown + 1} of {step.hints.length})
-            </button>
-          )}
-        </div>
-      )}
+      <HintLadder step={step} shown={hintsShown} onShow={showHint} stuck={stuck} />
+      <LessonGateReference lessonId={lesson.id} />
 
       <div className="lesson-actions">
         <button type="button" className="primary" onClick={onCheck} data-testid="check-button">

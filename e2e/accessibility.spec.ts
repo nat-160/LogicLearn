@@ -168,10 +168,15 @@ const THEMES = [
   { name: 'high-contrast light', prefs: { contrast: 'high', colorScheme: 'light' } },
   { name: 'high-contrast dark', prefs: { contrast: 'high', colorScheme: 'dark' } },
 ];
-const PAGES = [
+const PAGES: { name: string; hash: string; open?: string }[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
+  {
+    name: 'lesson step with the gate reminder open',
+    hash: '#/lesson/not-and/1',
+    open: 'Gate reminder',
+  },
   { name: 'sandbox', hash: '#/sandbox' },
 ];
 
@@ -211,6 +216,7 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
           theme.prefs,
         );
         await page.goto(target.hash);
+        if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
         await page.waitForTimeout(300);
         const results = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -11,7 +11,7 @@
  */
 import { compile, type CompiledCircuit } from './compile';
 import type { CircuitDoc } from './circuit';
-import { findComponentDef } from './registry';
+import { findComponentDef, getComponentDef, pinsOf } from './registry';
 import { Simulator, type InputValues } from './simulator';
 import { allInputRows, type Bit, type Value } from './values';
 
@@ -112,4 +112,21 @@ export function computeTruthTable(
     ...evaluateRow(circuit, inputs, bits, outputs),
   }));
   return { ok: true, table: { inputs, outputs, rows } };
+}
+
+/**
+ * A gate's own truth table, computed from its definition in the registry (so the gate
+ * reminder card can never disagree with the simulator). Rows are in counting order.
+ */
+export function gateTruthTable(type: string): {
+  inputs: number;
+  rows: { inputs: Bit[]; output: Value }[];
+} {
+  const def = getComponentDef(type);
+  const inputs = pinsOf(type, def.defaultProps).inputs.length;
+  const rows = allInputRows(inputs).map((row) => ({
+    inputs: row,
+    output: def.evaluate(row, def.defaultProps, def.initialState?.(def.defaultProps)).outputs[0],
+  }));
+  return { inputs, rows };
 }
