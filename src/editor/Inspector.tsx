@@ -4,11 +4,9 @@
  */
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
-import { findComponent, getComponentDef, type ComponentInstance } from '../sim';
+import { findComponent, getComponentDef, LIGHT_COLORS, type ComponentInstance } from '../sim';
 import { useEditor } from './editorContext';
 import { focusCanvas } from './focus';
-
-const LIGHT_COLORS = ['yellow', 'red', 'green', 'blue'];
 
 export function Inspector() {
   const selectedId = useEditor((s) => {
@@ -67,7 +65,7 @@ function PartForm({ part }: { part: ComponentInstance }) {
               >
                 {LIGHT_COLORS.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {c[0].toUpperCase() + c.slice(1)}
                   </option>
                 ))}
               </select>

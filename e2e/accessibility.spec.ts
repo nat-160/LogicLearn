@@ -168,7 +168,7 @@ const THEMES = [
   { name: 'high-contrast light', prefs: { contrast: 'high', colorScheme: 'light' } },
   { name: 'high-contrast dark', prefs: { contrast: 'high', colorScheme: 'dark' } },
 ];
-const PAGES: { name: string; hash: string; open?: string; seed?: string[] }[] = [
+const PAGES: { name: string; hash: string; open?: string; seed?: string[]; add?: string[] }[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
@@ -178,6 +178,11 @@ const PAGES: { name: string; hash: string; open?: string; seed?: string[] }[] = 
     open: 'Gate reminder',
   },
   { name: 'sandbox', hash: '#/sandbox' },
+  {
+    name: 'sandbox with a push button and a display',
+    hash: '#/sandbox',
+    add: ['PUSH_BUTTON', 'SEVEN_SEG'],
+  },
   {
     name: 'prediction step',
     hash: '#/lesson/circuit-to-table/2',
@@ -223,6 +228,7 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
         if (target.seed) await seedProgress(page, target.seed);
         await page.goto(target.hash);
         if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
+        for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
         await page.waitForTimeout(300);
         const results = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

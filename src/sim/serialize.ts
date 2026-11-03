@@ -16,7 +16,7 @@ import {
   type Position,
   type Wire,
 } from './circuit';
-import { findComponentDef, pinsOf } from './registry';
+import { findComponentDef, normalizeProps, pinsOf } from './registry';
 
 /** Limits that keep a hostile or broken file from freezing the page. */
 export const MAX_PARTS = 2000;
@@ -118,7 +118,7 @@ export function validateCircuit(raw: unknown): LoadResult {
       id: c.id,
       type: c.type,
       position: { x: c.position.x, y: c.position.y },
-      props: { ...c.props },
+      props: normalizeProps(c.type, { ...c.props }),
       ...(typeof c.label === 'string' && { label: c.label }),
       ...(c.locked === true && { locked: true }),
       ...(c.rotation !== undefined && { rotation: c.rotation as ComponentInstance['rotation'] }),

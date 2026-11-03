@@ -81,6 +81,34 @@ export function PartIcon({ type }: { type: string }) {
       </svg>
     );
   }
+  if (type === 'PUSH_BUTTON') {
+    return (
+      <svg viewBox="0 0 60 40" width={42} height={28} aria-hidden>
+        <rect className="icon-switch" x={8} y={6} width={30} height={28} rx={6} />
+        <circle className="icon-knob" cx={23} cy={20} r={8} />
+        <line className="pin-stub" x1={38} y1={20} x2={60} y2={20} />
+      </svg>
+    );
+  }
+  if (type === 'SEVEN_SEG') {
+    // A small "8": the seven segments.
+    return (
+      <svg viewBox="0 0 40 40" width={28} height={28} aria-hidden>
+        <rect className="icon-switch" x={6} y={2} width={28} height={36} rx={4} />
+        {[
+          [13, 6, 14, 3],
+          [27, 9, 3, 10],
+          [27, 21, 3, 10],
+          [13, 31, 14, 3],
+          [10, 21, 3, 10],
+          [10, 9, 3, 10],
+          [13, 18.5, 14, 3],
+        ].map(([x, y, w, h], i) => (
+          <rect key={i} className="icon-segment" x={x} y={y} width={w} height={h} rx={1} />
+        ))}
+      </svg>
+    );
+  }
   if (type === 'LIGHT') {
     return (
       <svg viewBox="0 0 40 40" width={28} height={28} aria-hidden>

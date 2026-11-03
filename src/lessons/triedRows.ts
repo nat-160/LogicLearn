@@ -24,11 +24,8 @@ export function rowsToTry(
   const io = findIO(doc);
   if (io.inputs.map((p) => p.label).join('|') !== spec.inputs.join('|')) return [];
   const outputs = spec.outputs.map((label) => io.outputs.find((p) => p.label === label));
-  if (
-    outputs.some((p) => !p || values[`${p.id}.in`] === 'X' || values[`${p.id}.in`] === undefined)
-  ) {
-    return [];
-  }
+  const valueOf = (p: { id: string; pin?: string }) => values[`${p.id}.${p.pin ?? 'in'}`];
+  if (outputs.some((p) => !p || valueOf(p) === 'X' || valueOf(p) === undefined)) return [];
   // With the spec's labels in the circuit's (sorted) order, row numbers match.
   return spec.expected.filter((row) => !tried.has(rowNumber(row.inputs))).map((row) => row.inputs);
 }

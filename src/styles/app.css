@@ -1660,3 +1660,119 @@ button.next {
 .nudge .button-row {
   margin: 8px 0 0;
 }
+
+/* ---------- Push button and seven-segment display ---------- */
+
+/* A push button: a square body with a round cap that sinks while held. */
+.button-body {
+  position: relative;
+  width: 60px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  border: 2.5px solid var(--part-stroke);
+  border-radius: 8px;
+  background: var(--switch-off-bg);
+  color: var(--switch-off-text);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.button-body.down {
+  background: var(--switch-on-bg);
+  color: var(--switch-on-text);
+}
+
+.button-cap {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--part-stroke);
+  background: var(--button-cap);
+  box-shadow: 0 3px 0 var(--part-stroke);
+}
+
+/* Held down: the cap sinks (no shadow, lower) – shape changes, not just color. */
+.button-body.down .button-cap {
+  top: 8px;
+  box-shadow: none;
+  background: var(--button-cap-down);
+}
+
+.button-body .switch-value {
+  right: 9px;
+}
+
+.seven-seg-body {
+  position: relative;
+  width: 120px;
+  height: 280px;
+}
+
+.seven-seg-body svg {
+  display: block;
+  overflow: visible;
+}
+
+.seg-face {
+  fill: var(--display-face);
+  stroke: var(--part-stroke);
+  stroke-width: var(--part-stroke-width);
+}
+
+/* Lit: filled. Unlit: outline only. Unknown (not connected): dashed outline. */
+.seg {
+  stroke-width: 1.5;
+}
+
+.seg.v1 {
+  fill: var(--segment-on);
+  stroke: var(--segment-on);
+}
+
+.seg.v0 {
+  fill: none;
+  stroke: var(--segment-off);
+}
+
+.seg.vx {
+  fill: none;
+  stroke: var(--segment-off);
+  stroke-dasharray: 4 3;
+}
+
+.seg-pin-label {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  dominant-baseline: middle;
+}
+
+/* Predict-first mode: segments show nothing, and the display shows "?". */
+.editor.is-blind .seg {
+  fill: none;
+  stroke: var(--segment-off);
+  stroke-dasharray: none;
+}
+
+.seg-hidden {
+  position: absolute;
+  left: 28px;
+  top: 40px;
+  width: 88px;
+  height: 200px;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--display-text);
+}
+
+.icon-segment {
+  fill: var(--segment-on);
+}
