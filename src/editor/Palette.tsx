@@ -119,9 +119,7 @@ function PaletteItem({ type }: { type: string }) {
         onClick={onClick}
       >
         <PartIcon type={type} />
-        <span className="palette-name">
-          {type === 'SWITCH' || type === 'LIGHT' ? def.name : type}
-        </span>
+        <span className="palette-name">{def.category === 'gate' ? type : def.name}</span>
       </button>
       {ghost && (
         <div className="palette-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden>

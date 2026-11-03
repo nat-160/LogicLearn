@@ -26,7 +26,7 @@ test('progress and saved circuits survive being erased, via a progress file', as
   // The browser forgets everything.
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.getByRole('link', { name: /NOT and AND.*0 of 5 steps/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /NOT and AND/ })).toHaveCount(0); // locked again
 
   // Load the file.
   await page.getByTestId('progress-file-input').setInputFiles({
