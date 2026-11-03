@@ -702,6 +702,12 @@ The author's beta testing (2026-10-29) added §3.9 and §3.10:
 
 ### Phase 2: Lessons and guidance (Nov 2 – Nov 13, M2)
 
+> **Detailed plan:** [phase-2-plan.md](phase-2-plan.md) (approved Nov 3): research, schemas,
+> 13 work packages, lesson-by-lesson content and the schedule. The author decided: strict
+> lesson gating with escapes; no hint pacing; Unit 1 project briefs where the student fills
+> in the open rows; practice steps only if ahead, test-outs in Phase 3. Prediction mode
+> moved up, because Lesson 4 needs it.
+
 This is the heaviest phase. Work in this **priority order**:
 
 1. **Lessons 1–4**, progress gating, the hint ladder (progressive hints, plus a gate-reference
