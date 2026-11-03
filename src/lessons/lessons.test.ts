@@ -9,8 +9,14 @@
  */
 import { DEFAULT_LOCALE, LOCALES } from '../i18n/locales';
 import { check, findComponentDef, findIO } from '../sim';
-import { LESSON_DEFS } from './catalog';
-import { findLessonFile, listLessonFiles, localizeLesson } from './lessonText';
+import { LESSON_DEFS, UNITS } from './catalog';
+import {
+  findLessonFile,
+  findSharedText,
+  listLessonFiles,
+  localizeLesson,
+  SHARED_FOLDER,
+} from './lessonText';
 import { isBuildStep } from './types';
 
 describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def) => {
@@ -103,4 +109,34 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
       });
     });
   }
+});
+
+/** Names a file in content/_shared/<locale>/ may have (see lessonText.ts). */
+const SHARED_NAMES = [/^unit-\d+$/];
+
+describe('lessons and units', () => {
+  it('lessons have unique ids, and each belongs to a unit', () => {
+    const ids = LESSON_DEFS.map((l) => l.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const def of LESSON_DEFS) expect(UNITS, def.id).toContain(def.unit);
+  });
+
+  it(`every unit has a title and summary in ${DEFAULT_LOCALE}`, () => {
+    for (const unit of UNITS) {
+      const text = findSharedText(`unit-${unit}`, DEFAULT_LOCALE);
+      expect(text?.locale, `unit-${unit}.md`).toBe(DEFAULT_LOCALE);
+      expect(text?.title).toMatch(/\S/);
+      expect(text?.prose).toMatch(/\S/);
+    }
+  });
+
+  it('every shared text file has a known name and language', () => {
+    for (const file of listLessonFiles().filter((f) => f.lesson === SHARED_FOLDER)) {
+      expect(
+        SHARED_NAMES.some((name) => name.test(file.name)),
+        `${file.locale}/${file.name}.md`,
+      ).toBe(true);
+      expect(LOCALES.some((l) => l.code === file.locale)).toBe(true);
+    }
+  });
 });

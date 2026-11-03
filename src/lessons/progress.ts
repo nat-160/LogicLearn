@@ -203,8 +203,14 @@ export function isStepDone(steps: ProgressMap, lessonId: string, stepId: string)
   return steps[stepKey(lessonId, stepId)]?.done ?? false;
 }
 
-/** Steps unlock in order: a step is open once every step before it is done. */
+/**
+ * Steps unlock in order: a step is open once every step before it is done. Once the
+ * lesson's last step is done, every step stays open – so a step added to a lesson later
+ * never locks a student out of a lesson they already finished.
+ */
 export function isStepUnlocked(steps: ProgressMap, lesson: Lesson, index: number): boolean {
+  const last = lesson.steps[lesson.steps.length - 1];
+  if (last && isStepDone(steps, lesson.id, last.id)) return true;
   return lesson.steps.slice(0, index).every((s) => isStepDone(steps, lesson.id, s.id));
 }
 

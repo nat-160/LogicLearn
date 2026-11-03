@@ -49,6 +49,17 @@ export type StepDef = ExplainStepDef | BuildStepDef;
 export interface LessonDef {
   id: string;
   number: number;
+  /** The unit the lesson belongs to (docs/curriculum-outline.md). */
+  unit: number;
+  /**
+   * 'lesson' (the default) or 'project' (a unit's open project). Projects open when their
+   * unit's lessons are done, and never block the next unit.
+   */
+  kind?: 'lesson' | 'project';
+  /** An optional lesson (the editor tour): always open, and never required. */
+  optional?: boolean;
+  /** Gate types this lesson teaches, for the gate reminder card. */
+  introduces?: string[];
   /** Curriculum standards covered, e.g. "IB A1.2.3". */
   standards: string[];
   steps: StepDef[];

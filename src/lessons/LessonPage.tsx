@@ -13,19 +13,43 @@
 import { lessonHref } from '../app/routes';
 import { useLocale } from '../settings/display';
 import { BuildStepView } from './BuildStepView';
-import { findLesson } from './catalog';
+import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
+import { isLessonUnlocked, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import { isBuildStep } from './types';
 
 export function LessonPage({ lessonId, step }: { lessonId: string; step: number }) {
-  const lesson = findLesson(lessonId, useLocale());
+  const lessons = getLessons(useLocale());
+  const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
+  const lesson = lessons[lessonIndex];
   const steps = useProgress((s) => s.steps);
+  const unlockAll = useUnlockAll((s) => s.unlockAll);
   if (!lesson) {
     return (
       <div className="page narrow">
         <h1>Lesson not found</h1>
         <a href="#/lessons">See all lessons</a>
+      </div>
+    );
+  }
+  if (!isLessonUnlocked(steps, lessons, lessonIndex, unlockAll)) {
+    // Lessons open in order (gating.ts). Point to the lesson to do first.
+    const before = prerequisite(lessons, lessonIndex);
+    const next = nextStepFor(steps, lessons, unlockAll);
+    return (
+      <div className="page narrow">
+        <h1>Not unlocked yet</h1>
+        <p>
+          {before
+            ? `Lesson ${lesson.number} opens when you finish Lesson ${before.number}: ${before.title}.`
+            : 'This lesson opens when you finish the lessons before it.'}
+        </p>
+        {next && (
+          <a className="button primary" href={lessonHref(next.lesson.id, next.index + 1)}>
+            Go to Lesson {next.lesson.number}
+          </a>
+        )}
       </div>
     );
   }

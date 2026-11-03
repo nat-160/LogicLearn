@@ -223,7 +223,8 @@ select {
 }
 
 .lesson-card > a,
-.lesson-card.is-planned {
+.lesson-card.is-planned,
+.lesson-card.is-locked {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -267,6 +268,30 @@ select {
 .lesson-progress {
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* A locked lesson isn't a link: a muted background, and its text says what to finish. */
+.lesson-card.is-locked {
+  background: var(--surface-alt);
+}
+
+.unit + .unit {
+  margin-top: 28px;
+}
+
+.unit h2 {
+  margin-bottom: 4px;
+}
+
+.unlock-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: var(--line-width) solid var(--warning);
+  border-radius: var(--radius);
+  background: var(--warning-bg);
+  color: var(--warning-text);
 }
 
 /* ---------- Editor layout ---------- */

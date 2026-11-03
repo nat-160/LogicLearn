@@ -13,6 +13,8 @@ import { b, io } from '../helpers';
 export const notAndLesson: LessonDef = {
   id: 'not-and',
   number: 2,
+  unit: 1,
+  introduces: ['NOT', 'AND'],
   standards: ['IB A1.2.3', 'IB A1.2.4'],
   steps: [
     {

@@ -73,6 +73,7 @@ describe('languages', () => {
   const def: LessonDef = {
     id: 'demo',
     number: 1,
+    unit: 1,
     standards: [],
     steps: [
       { id: 'one', kind: 'explain' },
