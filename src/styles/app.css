@@ -1637,6 +1637,102 @@ button.next {
   margin-top: 10px;
 }
 
+/* ---------- Projects (ProjectStepView.tsx) ---------- */
+
+.lesson-kind {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.brief-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 8px 10px 10px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+}
+
+.brief-choice legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+/* Each choice is a large target; the chosen one shows a filled radio and a stronger border. */
+.brief-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: var(--line-width) solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.brief-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.brief-option:has(input:checked) {
+  border-color: var(--accent);
+  border-width: 2px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.brief-option:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.brief {
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-alt);
+}
+
+.brief h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+/* The checklist: each line starts with a mark and the words "Done:" or "Not yet:". */
+.criteria {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.criteria li {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+}
+
+.criterion-done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+.criterion-todo {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.project-result {
+  margin-top: 10px;
+}
+
 /* ---------- Tried-rows nudge ---------- */
 
 .nudge {

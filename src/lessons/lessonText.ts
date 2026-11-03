@@ -153,7 +153,23 @@ export function localizeLesson(def: LessonDef, locale: string, files: LessonFile
       draft: false,
       locale,
     };
-    return { ...stepDef, ...text, title: text.title || stepDef.id };
+    const step = { ...stepDef, ...text, title: text.title || stepDef.id };
+    if (stepDef.kind !== 'project') return step as Step;
+    // A project's briefs each have their own text file, named by the brief's id.
+    return {
+      ...step,
+      kind: 'project',
+      briefs: stepDef.briefs.map((brief) => {
+        const briefText = findStepText(def.id, locale, brief.id, files) ?? {
+          title: '',
+          prose: '',
+          hints: [],
+          draft: false,
+          locale,
+        };
+        return { ...brief, ...briefText, title: briefText.title || brief.id };
+      }),
+    };
   });
   return { ...def, title: title || def.id, summary, locale: info?.locale ?? locale, steps };
 }

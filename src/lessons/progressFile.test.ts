@@ -51,6 +51,17 @@ describe('progress files', () => {
     });
   });
 
+  it("keeps a project's rule with its circuit, and drops a damaged rule's work", () => {
+    const project: SavedWork = { ...work, rule: [[0], [1], [null], [1]] };
+    const file = buildProgressFile({}, { 'unit-1-project/build--voting': project }, 'live');
+    const parsed = parseProgressFile(JSON.stringify(file));
+    expect(parsed.ok && parsed.work).toEqual({ 'unit-1-project/build--voting': project });
+    const raw = JSON.parse(JSON.stringify(file));
+    raw.work['unit-1-project/build--voting'].rule = [[2]];
+    const damaged = parseProgressFile(JSON.stringify(raw));
+    expect(damaged.ok && damaged.work).toEqual({});
+  });
+
   it('skips damaged steps and circuits but keeps the rest', () => {
     const file = {
       ...buildProgressFile({ 'not-and/a': step({ done: true }) }, { 'not-and/a': work }, 'dev'),

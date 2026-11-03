@@ -157,10 +157,7 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
   }
 
   // --- Gate rules: every part except inputs and outputs counts ---
-  const gates = doc.components.filter((c) => {
-    const def = findComponentDef(c.type);
-    return def !== undefined && !def.io;
-  });
+  const gates = gateParts(doc);
   const rules = spec.constraints ?? {};
   if (rules.allowedTypes) {
     const banned = gates.filter((g) => !rules.allowedTypes!.includes(g.type));
@@ -265,6 +262,15 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
   });
   const pass = mismatches.length === 0 && !diagnostics.some((d) => d.severity === 'error');
   return { pass, rows, mismatches, diagnostics, ...(misconception && { misconception }) };
+}
+
+/** The gates in a circuit: every part that isn't an input or output (switches, lights,
+ * displays never count towards gate limits). */
+export function gateParts(doc: CircuitDoc): CircuitDoc['components'] {
+  return doc.components.filter((c) => {
+    const def = findComponentDef(c.type);
+    return def !== undefined && !def.io;
+  });
 }
 
 /** Catch mistakes in a spec itself (a lesson-authoring bug, not a student mistake). */

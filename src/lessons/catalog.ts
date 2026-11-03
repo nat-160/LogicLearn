@@ -7,6 +7,7 @@ import { editorTourLesson } from './content/editor-tour';
 import { notAndLesson } from './content/not-and';
 import { orXorLesson } from './content/or-xor';
 import { signalsLesson } from './content/signals';
+import { unit1ProjectLesson } from './content/unit-1-project';
 import { findSharedText, localizeLesson } from './lessonText';
 import type { Lesson, LessonDef } from './types';
 
@@ -17,6 +18,7 @@ export const LESSON_DEFS: LessonDef[] = [
   notAndLesson,
   orXorLesson,
   circuitToTableLesson,
+  unit1ProjectLesson,
 ];
 
 /** The units, each with a title and summary in content/_shared/<locale>/unit-N.md. */

@@ -168,7 +168,15 @@ const THEMES = [
   { name: 'high-contrast light', prefs: { contrast: 'high', colorScheme: 'light' } },
   { name: 'high-contrast dark', prefs: { contrast: 'high', colorScheme: 'dark' } },
 ];
-const PAGES: { name: string; hash: string; open?: string; seed?: string[]; add?: string[] }[] = [
+const PAGES: {
+  name: string;
+  hash: string;
+  open?: string;
+  seed?: string[];
+  add?: string[];
+  /** Test ids to click once the page is open (in order). */
+  click?: string[];
+}[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
@@ -187,6 +195,12 @@ const PAGES: { name: string; hash: string; open?: string; seed?: string[]; add?:
     name: 'prediction step',
     hash: '#/lesson/circuit-to-table/2',
     seed: ['not-and/challenge', 'or-xor/exactly-one', 'circuit-to-table/count-the-rows'],
+  },
+  {
+    name: 'project with its checklist',
+    hash: '#/lesson/unit-1-project/2',
+    seed: ['circuit-to-table/challenge', 'unit-1-project/brief'],
+    click: ['rule-door-alarm-r2-o0-1', 'rule-door-alarm-r6-o0-0', 'check-project'],
   },
 ];
 
@@ -229,6 +243,7 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
         await page.goto(target.hash);
         if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
         for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
+        for (const id of target.click ?? []) await page.getByTestId(id).click();
         await page.waitForTimeout(300);
         const results = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

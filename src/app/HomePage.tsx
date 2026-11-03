@@ -3,7 +3,7 @@
  * left off (gating.ts nextStepFor).
  */
 import { getLessons } from '../lessons/catalog';
-import { isLessonComplete, nextStepFor, useUnlockAll } from '../lessons/gating';
+import { isLessonComplete, lessonName, nextStepFor, useUnlockAll } from '../lessons/gating';
 import { useProgress } from '../lessons/progress';
 import { useLocale } from '../settings/display';
 import { lessonHref } from './routes';
@@ -32,8 +32,8 @@ export function HomePage() {
               data-testid="continue-lesson"
             >
               {started
-                ? `Continue: Lesson ${next.lesson.number} – ${next.lesson.steps[next.index].title}`
-                : `Start Lesson ${next.lesson.number}: ${next.lesson.title}`}
+                ? `Continue: ${lessonName(next.lesson)} – ${next.lesson.steps[next.index].title}`
+                : `Start ${lessonName(next.lesson)}: ${next.lesson.title}`}
             </a>
           ) : (
             <a className="button primary" href="#/lessons" data-testid="continue-lesson">

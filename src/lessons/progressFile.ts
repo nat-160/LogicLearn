@@ -13,7 +13,7 @@
  * The site's storage prefix is never written, so files from the live site and the test
  * version can be loaded into either.
  */
-import { loadCircuit, type CircuitDoc } from '../sim';
+import { loadCircuit, type CircuitDoc, type Prediction } from '../sim';
 import { isStepKey, mergeProgress, parseProgress, type ProgressMap } from './progress';
 
 export const PROGRESS_FORMAT = 'logiclearn-progress';
@@ -24,6 +24,22 @@ export interface SavedWork {
   /** Fingerprint of the step's starter parts (stepWork.ts starterFingerprint). */
   starter: string;
   doc: CircuitDoc;
+  /** A project's rule as the student wrote it, [row][output] (0, 1 or not yet chosen). */
+  rule?: Prediction[][];
+}
+
+/** A saved project rule, checked: rows of 0, 1 or null, of sensible size. */
+function parseRule(raw: unknown): Prediction[][] | undefined {
+  const ok =
+    Array.isArray(raw) &&
+    raw.length <= 1024 &&
+    raw.every(
+      (row) =>
+        Array.isArray(row) &&
+        row.length <= 16 &&
+        row.every((c) => c === 0 || c === 1 || c === null),
+    );
+  return ok ? (raw as Prediction[][]) : undefined;
 }
 
 export interface ProgressFile {
@@ -67,7 +83,10 @@ export function parseSavedWork(raw: unknown): SavedWork | undefined {
     return undefined;
   }
   const result = loadCircuit(raw.doc);
-  return result.ok ? { starter: raw.starter, doc: result.doc } : undefined;
+  if (!result.ok) return undefined;
+  if (raw.rule === undefined) return { starter: raw.starter, doc: result.doc };
+  const rule = parseRule(raw.rule);
+  return rule ? { starter: raw.starter, doc: result.doc, rule } : undefined;
 }
 
 export type ParsedProgressFile =

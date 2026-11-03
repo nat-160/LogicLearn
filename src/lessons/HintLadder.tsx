@@ -9,7 +9,12 @@
 import { MarkdownInline } from './Markdown';
 import { stuckText } from './sharedMessages';
 import { textLang } from './stepSpeech';
-import type { Step } from './types';
+/** What the ladder needs from a step (or a project brief). */
+interface HintSource {
+  hints: string[];
+  locale: string;
+  kind?: string;
+}
 
 export function HintLadder({
   step,
@@ -17,7 +22,7 @@ export function HintLadder({
   onShow,
   stuck,
 }: {
-  step: Step;
+  step: HintSource;
   /** How many hints are revealed. */
   shown: number;
   onShow: () => void;

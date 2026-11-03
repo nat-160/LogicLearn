@@ -28,6 +28,11 @@ function isLessonStarted(steps: ProgressMap, lesson: Lesson): boolean {
   return lesson.steps.some((s) => isStepDone(steps, lesson.id, s.id));
 }
 
+/** How a lesson is named on screen: "Lesson 3", or "Unit 1 project". */
+export function lessonName(lesson: Pick<Lesson, 'kind' | 'number' | 'unit'>): string {
+  return lesson.kind === 'project' ? `Unit ${lesson.unit} project` : `Lesson ${lesson.number}`;
+}
+
 const isRequiredLesson = (l: Lesson) => (l.kind ?? 'lesson') === 'lesson' && !l.optional;
 
 /**

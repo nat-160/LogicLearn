@@ -6,6 +6,7 @@
  *  - ExplainStepView: text and an example circuit to explore, then Continue.
  *  - BuildStepView:   build a circuit, Check it, hints one at a time.
  *  - PredictStepView: fill in a circuit's truth table before it shows its values.
+ *  - ProjectStepView: an open project, checked against a checklist.
  *
  * Accessibility: every step has a "Read aloud" button (and can be read automatically,
  * see Settings); check results and revealed hints are announced to screen readers; and
@@ -16,10 +17,11 @@ import { useLocale } from '../settings/display';
 import { BuildStepView } from './BuildStepView';
 import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
-import { isLessonUnlocked, nextStepFor, prerequisite, useUnlockAll } from './gating';
+import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import { PredictStepView } from './PredictStepView';
-import { isBuildStep, isPredictStep } from './types';
+import { ProjectStepView } from './ProjectStepView';
+import { isBuildStep, isPredictStep, isProjectStep } from './types';
 
 export function LessonPage({ lessonId, step }: { lessonId: string; step: number }) {
   const lessons = getLessons(useLocale());
@@ -44,12 +46,12 @@ export function LessonPage({ lessonId, step }: { lessonId: string; step: number 
         <h1>Not unlocked yet</h1>
         <p>
           {before
-            ? `Lesson ${lesson.number} opens when you finish Lesson ${before.number}: ${before.title}.`
+            ? `${lessonName(lesson)} opens when you finish ${lessonName(before)}: ${before.title}.`
             : 'This lesson opens when you finish the lessons before it.'}
         </p>
         {next && (
           <a className="button primary" href={lessonHref(next.lesson.id, next.index + 1)}>
-            Go to Lesson {next.lesson.number}
+            Go to {lessonName(next.lesson)}
           </a>
         )}
       </div>
@@ -72,6 +74,9 @@ export function LessonPage({ lessonId, step }: { lessonId: string; step: number 
   if (isBuildStep(current)) return <BuildStepView lesson={lesson} step={current} index={index} />;
   if (isPredictStep(current)) {
     return <PredictStepView lesson={lesson} step={current} index={index} />;
+  }
+  if (isProjectStep(current)) {
+    return <ProjectStepView lesson={lesson} step={current} index={index} />;
   }
   return <ExplainStepView lesson={lesson} step={current} index={index} />;
 }

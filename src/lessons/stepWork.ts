@@ -53,6 +53,26 @@ export function saveWork(key: string, starter: CircuitDoc, doc: CircuitDoc): voi
   writeLocal(key, JSON.stringify({ starter: starterFingerprint(starter), doc }));
 }
 
+/** A project's saved circuit and rule (the rule is saved with the circuit). */
+export function loadProjectWork(key: string, starter: CircuitDoc): SavedWork | null {
+  try {
+    const saved = parseSavedWork(JSON.parse(readLocal(key) ?? 'null'));
+    return saved && saved.starter === starterFingerprint(starter) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveProjectWork(
+  key: string,
+  starter: CircuitDoc,
+  doc: CircuitDoc,
+  rule: SavedWork['rule'],
+): void {
+  const saved: SavedWork = { starter: starterFingerprint(starter), doc, ...(rule && { rule }) };
+  writeLocal(key, JSON.stringify(saved));
+}
+
 export function loadWork(key: string, starter: CircuitDoc): CircuitDoc | null {
   try {
     const saved: unknown = JSON.parse(readLocal(key) ?? 'null');

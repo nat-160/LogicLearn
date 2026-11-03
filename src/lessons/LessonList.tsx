@@ -6,7 +6,7 @@ import { lessonHref } from '../app/routes';
 import { IS_TEST_VERSION } from '../app/site';
 import { useLocale } from '../settings/display';
 import { getLessons, PLANNED_LESSONS, UNITS, unitText } from './catalog';
-import { isLessonUnlocked, prerequisite, useUnlockAll } from './gating';
+import { isLessonUnlocked, lessonName, prerequisite, useUnlockAll } from './gating';
 import { lessonProgress, useProgress } from './progress';
 import { ProgressActions } from './ProgressActions';
 import type { Lesson } from './types';
@@ -65,14 +65,15 @@ export function LessonList() {
                   const before = prerequisite(lessons, index);
                   return (
                     <li key={lesson.id} className="lesson-card is-locked">
-                      <span className="lesson-number">{lesson.number}</span>
+                      <LessonNumber lesson={lesson} />
                       <span className="lesson-text">
+                        <LessonKind lesson={lesson} />
                         <strong>{lesson.title}</strong>
                         <span className="muted">{lesson.summary}</span>
                       </span>
                       <span className="lesson-progress">
                         <span aria-hidden>🔒 </span>
-                        {before ? `Finish Lesson ${before.number} first` : 'Locked'}
+                        {before ? `Finish ${lessonName(before)} first` : 'Locked'}
                       </span>
                     </li>
                   );
@@ -81,8 +82,9 @@ export function LessonList() {
                 return (
                   <li key={lesson.id} className="lesson-card">
                     <a href={lessonHref(lesson.id)}>
-                      <span className="lesson-number">{lesson.number}</span>
+                      <LessonNumber lesson={lesson} />
                       <span className="lesson-text">
+                        <LessonKind lesson={lesson} />
                         <strong>{lesson.title}</strong>
                         <span className="muted">{lesson.summary}</span>
                       </span>
@@ -122,4 +124,22 @@ function UnlockAllSwitch() {
       Unlock all lessons (test version only)
     </label>
   );
+}
+
+/** A lesson's number badge; a unit project gets a star instead. */
+function LessonNumber({ lesson }: { lesson: Lesson }) {
+  if (lesson.kind === 'project') {
+    return (
+      <span className="lesson-number" aria-hidden>
+        ★
+      </span>
+    );
+  }
+  return <span className="lesson-number">{lesson.number}</span>;
+}
+
+/** "Unit 1 project" above a project's title (lessons need no tag: their number says it). */
+function LessonKind({ lesson }: { lesson: Lesson }) {
+  if (lesson.kind !== 'project') return null;
+  return <span className="lesson-kind">{lessonName(lesson)}</span>;
 }

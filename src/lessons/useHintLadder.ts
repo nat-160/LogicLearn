@@ -7,10 +7,14 @@ import { useEffect, useRef, useState } from 'react';
 import { inlineMarkdownToSpeech } from '../narration/plainText';
 import { isStepDone, stepKey, useProgress } from './progress';
 import { stuckText } from './sharedMessages';
-import type { Lesson, Step } from './types';
+import type { Lesson } from './types';
 import { useTell } from './useTell';
 
-export function useHintLadder(lesson: Lesson, step: Step) {
+/** `step` can be a step, or a project brief with its own id ("build--door-alarm"). */
+export function useHintLadder(
+  lesson: Lesson,
+  step: { id: string; hints: string[]; locale: string },
+) {
   const key = stepKey(lesson.id, step.id);
   const revealHint = useProgress((s) => s.revealHint);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));

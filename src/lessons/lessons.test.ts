@@ -14,7 +14,10 @@ import {
   findComponentDef,
   findIO,
   GATE_TYPES,
+  grade,
+  gradeRule,
   MISCONCEPTION_IDS,
+  rowNumber,
   rowsFromRules,
   type CircuitDoc,
 } from '../sim';
@@ -32,7 +35,7 @@ import {
   localizeLesson,
   SHARED_FOLDER,
 } from './lessonText';
-import { isBuildStep, isPredictStep } from './types';
+import { isBuildStep, isPredictStep, isProjectStep } from './types';
 
 describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def) => {
   const lesson = localizeLesson(def, DEFAULT_LOCALE);
@@ -66,7 +69,8 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
   });
 
   it('every text file belongs to a step (no misspelled file names)', () => {
-    const names = new Set(['lesson', ...def.steps.map((s) => s.id)]);
+    const briefIds = def.steps.flatMap((s) => (isProjectStep(s) ? s.briefs.map((b) => b.id) : []));
+    const names = new Set(['lesson', ...def.steps.map((s) => s.id), ...briefIds]);
     for (const file of listLessonFiles().filter((f) => f.lesson === def.id)) {
       expect(names.has(file.name), `${file.locale}/${file.name}.md`).toBe(true);
       expect(
@@ -104,6 +108,73 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(step.hints.length).toBeGreaterThan(0);
       });
     });
+  }
+
+  for (const step of lesson.steps.filter(isProjectStep)) {
+    describe.each(step.briefs.map((b) => [b.id, b] as const))(
+      `project step "${step.id}", brief %s`,
+      (briefId, brief) => {
+        const spec = {
+          inputs: brief.inputs,
+          outputs: brief.outputs,
+          rule: brief.example.rule,
+          criteria: brief.criteria,
+          ...(brief.constraints && { constraints: brief.constraints }),
+        };
+
+        it(`has ${DEFAULT_LOCALE} text with at least one hint`, () => {
+          expect(findLessonFile(def.id, DEFAULT_LOCALE, briefId)?.locale).toBe(DEFAULT_LOCALE);
+          expect(brief.title).not.toBe(briefId);
+          expect(brief.prose.trim().length).toBeGreaterThan(20);
+          expect(brief.hints.length).toBeGreaterThanOrEqual(1);
+        });
+
+        it('lists its inputs and outputs in the order the truth table shows them', () => {
+          const { inputs, outputs } = findIO(brief.starter);
+          expect(brief.inputs).toEqual(inputs.map((p) => p.label));
+          expect(brief.outputs).toEqual(outputs.map((p) => p.label));
+        });
+
+        it('gives rows that exist, once each, and (for a student rule) leaves some open', () => {
+          const rows = brief.rule.kind === 'student' ? brief.rule.given : brief.rule.rows;
+          const numbers = rows.map((r) => rowNumber(r.inputs));
+          expect(new Set(numbers).size).toBe(numbers.length);
+          for (const r of rows) {
+            expect(r.inputs).toHaveLength(brief.inputs.length);
+            expect(r.outputs).toHaveLength(brief.outputs.length);
+          }
+          const total = 2 ** brief.inputs.length;
+          if (brief.rule.kind === 'student') expect(rows.length).toBeLessThan(total);
+          else expect(rows.length).toBe(total);
+        });
+
+        it("has an example rule that keeps the brief's rows and passes the rule checks", () => {
+          expect(brief.example.rule).toHaveLength(2 ** brief.inputs.length);
+          expect(gradeRule(spec).filter((c) => !c.pass)).toEqual([]);
+        });
+
+        it('has an example solution that passes every criterion', () => {
+          const result = grade(brief.example.solution, spec);
+          expect(result.criteria.filter((c) => !c.pass)).toEqual([]);
+          expect(result.pass).toBe(true);
+        });
+
+        it('starter circuit does not already pass', () => {
+          expect(grade(brief.starter, spec).pass).toBe(false);
+        });
+
+        it('only offers parts that exist, and the example only adds parts from the palette', () => {
+          for (const type of brief.palette) expect(findComponentDef(type), type).toBeDefined();
+          const starterIds = new Set(brief.starter.components.map((c) => c.id));
+          for (const part of brief.example.solution.components) {
+            if (!starterIds.has(part.id)) expect(brief.palette).toContain(part.type);
+          }
+          for (const part of brief.starter.components.filter((c) => c.locked)) {
+            expect(brief.example.solution.components.map((c) => c.id)).toContain(part.id);
+          }
+        });
+      },
+    );
   }
 
   for (const step of lesson.steps.filter(isBuildStep)) {

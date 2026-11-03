@@ -1,5 +1,6 @@
 /** Lesson title and a dot for each step: done ✓, current, or locked. */
 import { lessonHref } from '../app/routes';
+import { lessonName } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import type { Lesson } from './types';
 
@@ -8,7 +9,7 @@ export function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
   return (
     <header className="lesson-header">
       <p className="lesson-kicker">
-        Lesson {lesson.number}: {lesson.title}
+        {lessonName(lesson)}: {lesson.title}
       </p>
       <ol className="step-dots" aria-label="Steps">
         {lesson.steps.map((s, i) => {

@@ -14,7 +14,7 @@
  *    text and hints, written in Markdown so they can be edited without touching code.
  * `localizeLesson()` (lessonText.ts) joins the two into a `Lesson` for the chosen language.
  */
-import type { CheckSpec, CircuitDoc } from '../sim';
+import type { CheckRow, CheckSpec, CircuitDoc, Criterion } from '../sim';
 
 interface BaseStepDef {
   /** Stable id, used to save progress and to name the step's text file. Don't rename. */
@@ -60,7 +60,37 @@ export interface PredictStepDef extends BaseStepDef {
   circuits: CircuitDoc[];
 }
 
-export type StepDef = ExplainStepDef | BuildStepDef | PredictStepDef;
+/**
+ * One choice in an open project ("door alarm", "voting machine"). Its "rule" is the truth
+ * table the circuit must follow:
+ *  - 'student': the brief fixes some rows and the student decides the rest – their own
+ *    rule, which is then graded like any other;
+ *  - 'fixed': the brief gives the whole table.
+ * The grader (src/sim/grader.ts) checks the circuit against the rule and `criteria`.
+ * Its words are in <locale>/<brief id>.md.
+ */
+export interface ProjectBriefDef {
+  /** Stable id: names the text file and the saved work. Don't rename. */
+  id: string;
+  starter: CircuitDoc;
+  palette: string[];
+  /** Input and output labels, in truth-table (label) order. */
+  inputs: string[];
+  outputs: string[];
+  rule: { kind: 'student'; given: CheckRow[] } | { kind: 'fixed'; rows: CheckRow[] };
+  criteria: Criterion[];
+  constraints?: CheckSpec['constraints'];
+  /** A complete rule and a circuit that passes it (tests; the teacher answer key later). */
+  example: { rule: CheckRow[]; solution: CircuitDoc };
+}
+
+/** An open project: choose a brief, write (or read) its rule, build, and get a checklist. */
+export interface ProjectStepDef extends BaseStepDef {
+  kind: 'project';
+  briefs: ProjectBriefDef[];
+}
+
+export type StepDef = ExplainStepDef | BuildStepDef | PredictStepDef | ProjectStepDef;
 
 export interface LessonDef {
   id: string;
@@ -97,7 +127,9 @@ export interface StepText {
 export type ExplainStep = ExplainStepDef & StepText;
 export type BuildStep = BuildStepDef & StepText;
 export type PredictStep = PredictStepDef & StepText;
-export type Step = ExplainStep | BuildStep | PredictStep;
+export type ProjectBrief = ProjectBriefDef & StepText;
+export type ProjectStep = Omit<ProjectStepDef, 'briefs'> & StepText & { briefs: ProjectBrief[] };
+export type Step = ExplainStep | BuildStep | PredictStep | ProjectStep;
 
 /** A lesson with its text in one language: what the lesson screens use. */
 export interface Lesson extends Omit<LessonDef, 'steps'> {
@@ -114,6 +146,13 @@ export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDe
 
 export function isPredictStep<T extends StepDef>(step: T): step is T & PredictStepDef {
   return step.kind === 'predict';
+}
+
+/** Works for a step definition (ProjectStepDef) and a localized step (ProjectStep). */
+export function isProjectStep<T extends StepDef | Step>(
+  step: T,
+): step is Extract<T, { kind: 'project' }> {
+  return step.kind === 'project';
 }
 
 /**

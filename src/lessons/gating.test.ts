@@ -1,4 +1,4 @@
-import { isLessonUnlocked, nextStepFor, prerequisite } from './gating';
+import { isLessonUnlocked, lessonName, nextStepFor, prerequisite } from './gating';
 import type { ProgressMap, StepProgress } from './progress';
 import type { Lesson } from './types';
 
@@ -63,6 +63,11 @@ describe('lesson gating', () => {
 
   it('keeps a started lesson open, even if a lesson is added before it later', () => {
     expect(open(progress('two/a'))).toEqual(['tour', 'one', 'two', '-', '-']);
+  });
+
+  it('names lessons by number and projects by unit', () => {
+    expect(lessonName({ ...two, number: 2 })).toBe('Lesson 2');
+    expect(lessonName(project)).toBe('Unit 1 project');
   });
 
   it('opens everything with "unlock all" (test version)', () => {
