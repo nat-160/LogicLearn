@@ -8,7 +8,20 @@
  * a student does.
  */
 import { DEFAULT_LOCALE, LOCALES } from '../i18n/locales';
-import { check, findComponentDef, findIO, GATE_TYPES } from '../sim';
+import {
+  check,
+  computeTruthTable,
+  findComponentDef,
+  findIO,
+  GATE_TYPES,
+  type CircuitDoc,
+} from '../sim';
+
+function tableOf(circuit: CircuitDoc) {
+  const result = computeTruthTable(circuit);
+  if (!result.ok) throw new Error(`${circuit.name}: too many inputs`);
+  return result.table;
+}
 import { LESSON_DEFS, UNITS } from './catalog';
 import {
   findLessonFile,
@@ -17,7 +30,7 @@ import {
   localizeLesson,
   SHARED_FOLDER,
 } from './lessonText';
-import { isBuildStep } from './types';
+import { isBuildStep, isPredictStep } from './types';
 
 describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def) => {
   const lesson = localizeLesson(def, DEFAULT_LOCALE);
@@ -60,6 +73,36 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
       ).toBe(true);
     }
   });
+
+  for (const step of lesson.steps.filter(isPredictStep)) {
+    describe(`predict step "${step.id}"`, () => {
+      it('has circuits to predict (a challenge: at least two, with different tables)', () => {
+        expect(step.circuits.length).toBeGreaterThanOrEqual(step.level === 'challenge' ? 2 : 1);
+        const tables = step.circuits.map((c) => JSON.stringify(tableOf(c).rows));
+        expect(new Set(tables).size).toBe(tables.length);
+      });
+
+      it('only predicts circuits that are fully locked, small, settled and connected', () => {
+        for (const circuit of step.circuits) {
+          expect(
+            circuit.components.every((c) => c.locked),
+            circuit.name,
+          ).toBe(true);
+          const table = tableOf(circuit);
+          expect(table.inputs.length).toBeLessThanOrEqual(6);
+          expect(table.outputs.length).toBeGreaterThan(0);
+          for (const row of table.rows) {
+            expect(row.settled).toBe(true);
+            expect(row.outputs, circuit.name).not.toContain('X');
+          }
+        }
+      });
+
+      it('has at least one hint', () => {
+        expect(step.hints.length).toBeGreaterThan(0);
+      });
+    });
+  }
 
   for (const step of lesson.steps.filter(isBuildStep)) {
     describe(`step "${step.id}"`, () => {
@@ -112,10 +155,10 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 });
 
 /** Names a file in content/_shared/<locale>/ may have (see lessonText.ts). */
-const SHARED_NAMES = [/^unit-\d+$/, /^gate-[A-Z]+$/, /^nudge-stuck$/];
+const SHARED_NAMES = [/^unit-\d+$/, /^gate-[A-Z]+$/, /^nudge-stuck$/, /^predict-reveal$/];
 
 /** Shared files every build needs in en-US. */
-const REQUIRED_SHARED = [...GATE_TYPES.map((t) => `gate-${t}`), 'nudge-stuck'];
+const REQUIRED_SHARED = [...GATE_TYPES.map((t) => `gate-${t}`), 'nudge-stuck', 'predict-reveal'];
 
 describe('lessons and units', () => {
   it('lessons have unique ids, and each belongs to a unit', () => {

@@ -1542,3 +1542,97 @@ button.next {
   font-weight: 600;
   color: var(--accent-text);
 }
+
+/* ---------- Prediction table (PredictTable.tsx) ---------- */
+
+.predict-count {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+}
+
+.predict-table td.col-output {
+  padding: 2px 4px;
+}
+
+/* A cell: two radio choices, 0 and 1, each a large enough target to tap. */
+.predict-cell {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.predict-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 4px;
+  border: var(--line-width) solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.predict-choice input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* The chosen value is shown by the filled radio and a stronger border, not color alone. */
+.predict-choice:has(input:checked) {
+  border-color: var(--accent);
+  border-width: 2px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.predict-choice:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.predict-cell:disabled .predict-choice {
+  cursor: default;
+}
+
+.predict-given {
+  font-weight: 700;
+}
+
+.right-mark {
+  color: var(--ok);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.predict-message {
+  margin: 10px 0 0;
+  font-weight: 600;
+}
+
+.predict-reveal {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.predict-reveal h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.truth-table-panel + .panel button.primary,
+.panel > button.primary {
+  margin-top: 10px;
+}

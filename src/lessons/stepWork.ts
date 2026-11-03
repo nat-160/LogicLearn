@@ -65,3 +65,25 @@ export function loadWork(key: string, starter: CircuitDoc): CircuitDoc | null {
     return null;
   }
 }
+
+/**
+ * Other per-step state kept in this browser (a prediction in progress, a project's rule):
+ * saved as JSON under "logiclearn:<kind>:<lesson>/<step>". What comes back is untrusted
+ * and must be checked by the caller.
+ */
+export function saveStepState(
+  kind: string,
+  lessonId: string,
+  stepId: string,
+  value: unknown,
+): void {
+  writeLocal(storageKey(`${kind}:${stepKey(lessonId, stepId)}`), JSON.stringify(value));
+}
+
+export function loadStepState(kind: string, lessonId: string, stepId: string): unknown {
+  try {
+    return JSON.parse(readLocal(storageKey(`${kind}:${stepKey(lessonId, stepId)}`)) ?? 'null');
+  } catch {
+    return null;
+  }
+}

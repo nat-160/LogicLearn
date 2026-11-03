@@ -130,3 +130,40 @@ export function gateTruthTable(type: string): {
   }));
   return { inputs, rows };
 }
+
+/** A student's prediction for one output in one row: 0, 1, or not filled in yet. */
+export type Prediction = Bit | null;
+
+export interface PredictionResult {
+  /** right[row][output]: whether that prediction matches the circuit. */
+  right: boolean[][];
+  /** Rows where every output was predicted right. */
+  rowsRight: number;
+  rows: number;
+  /** Whether every prediction is filled in. */
+  complete: boolean;
+}
+
+/**
+ * Compare a student's predicted truth table with the real one, row by row. `cells` is
+ * [row][output], in the table's own row and output order. A missing prediction is wrong.
+ */
+export function comparePredictions(
+  table: TruthTable,
+  cells: readonly (readonly Prediction[])[],
+): PredictionResult {
+  const right = table.rows.map((row, r) =>
+    row.outputs.map((actual, o) => {
+      const guess = cells[r]?.[o] ?? null;
+      return guess !== null && guess === actual;
+    }),
+  );
+  return {
+    right,
+    rowsRight: right.filter((row) => row.every(Boolean)).length,
+    rows: table.rows.length,
+    complete: table.rows.every((row, r) =>
+      row.outputs.every((_, o) => (cells[r]?.[o] ?? null) !== null),
+    ),
+  };
+}

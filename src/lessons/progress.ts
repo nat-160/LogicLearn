@@ -24,6 +24,16 @@ export interface StepProgress {
   /** ISO timestamps; may be empty in old or hand-made records. */
   firstSeen: string;
   lastSeen: string;
+  /** Prediction steps: rows right on the first try and at best, out of `rows`. */
+  predicted?: { firstRight: number; bestRight: number; rows: number };
+}
+
+/** What one press of Check (or "Check my predictions") found. */
+export interface Attempt {
+  pass: boolean;
+  triedRows?: Iterable<number>;
+  /** Prediction steps: how many rows were predicted right, out of how many. */
+  predicted?: { right: number; rows: number };
 }
 
 const KEY = storageKey('progress:v1');
@@ -77,7 +87,7 @@ function parseStep(raw: unknown): StepProgress | undefined {
   ) {
     return undefined;
   }
-  return {
+  const step: StepProgress = {
     done,
     attempts,
     hintsUsed,
@@ -85,6 +95,18 @@ function parseStep(raw: unknown): StepProgress | undefined {
     firstSeen,
     lastSeen,
   };
+  if (raw.predicted !== undefined) {
+    const p = raw.predicted;
+    if (!isRecord(p)) return undefined;
+    const firstRight = count(p.firstRight);
+    const bestRight = count(p.bestRight);
+    const rowCount = count(p.rows);
+    if (firstRight === undefined || bestRight === undefined || rowCount === undefined) {
+      return undefined;
+    }
+    step.predicted = { firstRight, bestRight, rows: rowCount };
+  }
+  return step;
 }
 
 /**
@@ -108,13 +130,28 @@ const latest = (a: string, b: string) => (a > b ? a : b);
 
 /** Two records of the same step combined, without undoing any progress. */
 export function mergeStep(a: StepProgress, b: StepProgress): StepProgress {
-  return {
+  const merged: StepProgress = {
     done: a.done || b.done,
     attempts: Math.max(a.attempts, b.attempts),
     hintsUsed: Math.max(a.hintsUsed, b.hintsUsed),
     triedRows: [...new Set([...a.triedRows, ...b.triedRows])].sort((x, y) => x - y),
     firstSeen: earliest(a.firstSeen, b.firstSeen),
     lastSeen: latest(a.lastSeen, b.lastSeen),
+  };
+  const predicted = mergePredicted(a, b);
+  if (predicted) merged.predicted = predicted;
+  return merged;
+}
+
+/** The first try comes from whichever record started first; the best is the best of both. */
+function mergePredicted(a: StepProgress, b: StepProgress): StepProgress['predicted'] {
+  if (!a.predicted || !b.predicted) return a.predicted ?? b.predicted;
+  const aFirst = !!a.firstSeen && (!b.firstSeen || a.firstSeen <= b.firstSeen);
+  const first = aFirst ? a : b;
+  return {
+    firstRight: first.predicted!.firstRight,
+    bestRight: Math.max(a.predicted.bestRight, b.predicted.bestRight),
+    rows: Math.max(a.predicted.rows, b.predicted.rows),
   };
 }
 
@@ -141,12 +178,7 @@ interface ProgressState {
   steps: ProgressMap;
   /** Note that a step was opened. */
   visit(lessonId: string, stepId: string): void;
-  recordAttempt(
-    lessonId: string,
-    stepId: string,
-    passed: boolean,
-    triedRows: Iterable<number>,
-  ): void;
+  recordAttempt(lessonId: string, stepId: string, attempt: Attempt): void;
   /** Note that hint number `level` (1, 2, …) was revealed. */
   revealHint(lessonId: string, stepId: string, level: number): void;
   complete(lessonId: string, stepId: string): void;
@@ -188,11 +220,18 @@ export const useProgress = create<ProgressState>()((set, get) => {
   return {
     steps: load(),
     visit: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({})),
-    recordAttempt: (lessonId, stepId, passed, triedRows) =>
+    recordAttempt: (lessonId, stepId, { pass, triedRows = [], predicted }) =>
       update(stepKey(lessonId, stepId), (old) => ({
         attempts: old.attempts + 1,
-        done: old.done || passed,
+        done: old.done || pass,
         triedRows: [...new Set([...old.triedRows, ...triedRows])].sort((a, b) => a - b),
+        ...(predicted && {
+          predicted: {
+            firstRight: old.predicted?.firstRight ?? predicted.right,
+            bestRight: Math.max(old.predicted?.bestRight ?? 0, predicted.right),
+            rows: predicted.rows,
+          },
+        }),
       })),
     revealHint: (lessonId, stepId, level) =>
       update(stepKey(lessonId, stepId), (old) => ({

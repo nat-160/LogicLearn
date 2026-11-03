@@ -5,6 +5,7 @@
  *
  *  - ExplainStepView: text and an example circuit to explore, then Continue.
  *  - BuildStepView:   build a circuit, Check it, hints one at a time.
+ *  - PredictStepView: fill in a circuit's truth table before it shows its values.
  *
  * Accessibility: every step has a "Read aloud" button (and can be read automatically,
  * see Settings); check results and revealed hints are announced to screen readers; and
@@ -17,7 +18,8 @@ import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
 import { isLessonUnlocked, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
-import { isBuildStep } from './types';
+import { PredictStepView } from './PredictStepView';
+import { isBuildStep, isPredictStep } from './types';
 
 export function LessonPage({ lessonId, step }: { lessonId: string; step: number }) {
   const lessons = getLessons(useLocale());
@@ -67,9 +69,9 @@ export function LessonPage({ lessonId, step }: { lessonId: string; step: number 
     );
   }
   const current = lesson.steps[index];
-  return isBuildStep(current) ? (
-    <BuildStepView lesson={lesson} step={current} index={index} />
-  ) : (
-    <ExplainStepView lesson={lesson} step={current} index={index} />
-  );
+  if (isBuildStep(current)) return <BuildStepView lesson={lesson} step={current} index={index} />;
+  if (isPredictStep(current)) {
+    return <PredictStepView lesson={lesson} step={current} index={index} />;
+  }
+  return <ExplainStepView lesson={lesson} step={current} index={index} />;
 }

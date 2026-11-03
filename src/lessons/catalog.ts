@@ -2,6 +2,7 @@
  * Every lesson, in order, plus the planned lessons that aren't built yet (shown as
  * "coming soon" in the lesson list). The order follows docs/curriculum-outline.md.
  */
+import { circuitToTableLesson } from './content/circuit-to-table';
 import { editorTourLesson } from './content/editor-tour';
 import { notAndLesson } from './content/not-and';
 import { orXorLesson } from './content/or-xor';
@@ -15,6 +16,7 @@ export const LESSON_DEFS: LessonDef[] = [
   signalsLesson,
   notAndLesson,
   orXorLesson,
+  circuitToTableLesson,
 ];
 
 /** The units, each with a title and summary in content/_shared/<locale>/unit-N.md. */
@@ -28,7 +30,6 @@ export interface PlannedLesson {
 
 /** Lessons from the curriculum outline that are not built yet (English titles for now). */
 export const PLANNED_LESSONS: PlannedLesson[] = [
-  { number: 4, unit: 1, title: 'From circuit to truth table' },
   { number: 5, unit: 2, title: 'NAND and NOR' },
   { number: 6, unit: 2, title: 'XNOR, implication, and English → logic' },
   { number: 7, unit: 2, title: 'From truth table to circuit' },

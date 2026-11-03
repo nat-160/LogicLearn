@@ -4,7 +4,8 @@
  * A lesson is a list of steps, following the course structure: direct instruction
  * ("explain"), then guided construction ("guided": build with a starter circuit and a
  * limited set of parts), then a mastery check ("challenge": less help, sometimes in
- * predict-first mode). Remediation and project steps arrive in Phase 2.
+ * predict-first mode). "predict" steps ask for a circuit's whole truth table before the
+ * circuit shows its values.
  *
  * A lesson comes in two halves:
  *  - its DEFINITION (`LessonDef`, in content/<lesson>/index.ts): ids, circuits, checks,
@@ -40,11 +41,26 @@ export interface BuildStepDef extends BaseStepDef {
    * presses Check, so the task can't be solved by flipping switches until it looks right.
    */
   liveOutputs?: boolean;
-  /** Whether the truth table is shown while building. 'predict' arrives in Phase 2. */
+  /** Whether the truth table is shown while building. */
   truthTable?: 'live' | 'hidden';
 }
 
-export type StepDef = ExplainStepDef | BuildStepDef;
+/**
+ * Predict the truth table of a given circuit, then see the real one (predict → observe →
+ * explain). The circuit is read-only and its values stay hidden until the student
+ * submits a prediction for every row.
+ *  - level 'guided': any complete prediction finishes the step; the answers are shown.
+ *  - level 'challenge': every row must be right. After a miss the wrong rows are shown and
+ *    the student tries the next circuit in `circuits`, so the answer can't be copied.
+ */
+export interface PredictStepDef extends BaseStepDef {
+  kind: 'predict';
+  level: 'guided' | 'challenge';
+  /** Every part locked. A challenge needs at least two circuits with different tables. */
+  circuits: CircuitDoc[];
+}
+
+export type StepDef = ExplainStepDef | BuildStepDef | PredictStepDef;
 
 export interface LessonDef {
   id: string;
@@ -80,7 +96,8 @@ export interface StepText {
 
 export type ExplainStep = ExplainStepDef & StepText;
 export type BuildStep = BuildStepDef & StepText;
-export type Step = ExplainStep | BuildStep;
+export type PredictStep = PredictStepDef & StepText;
+export type Step = ExplainStep | BuildStep | PredictStep;
 
 /** A lesson with its text in one language: what the lesson screens use. */
 export interface Lesson extends Omit<LessonDef, 'steps'> {
@@ -93,6 +110,10 @@ export interface Lesson extends Omit<LessonDef, 'steps'> {
 
 export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDef {
   return step.kind === 'guided' || step.kind === 'challenge';
+}
+
+export function isPredictStep<T extends StepDef>(step: T): step is T & PredictStepDef {
+  return step.kind === 'predict';
 }
 
 /**

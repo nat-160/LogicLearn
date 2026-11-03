@@ -9,7 +9,7 @@
 import { MarkdownInline } from './Markdown';
 import { stuckText } from './sharedMessages';
 import { textLang } from './stepSpeech';
-import type { BuildStep } from './types';
+import type { Step } from './types';
 
 export function HintLadder({
   step,
@@ -17,7 +17,7 @@ export function HintLadder({
   onShow,
   stuck,
 }: {
-  step: BuildStep;
+  step: Step;
   /** How many hints are revealed. */
   shown: number;
   onShow: () => void;

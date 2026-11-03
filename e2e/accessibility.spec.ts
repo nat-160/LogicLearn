@@ -168,7 +168,7 @@ const THEMES = [
   { name: 'high-contrast light', prefs: { contrast: 'high', colorScheme: 'light' } },
   { name: 'high-contrast dark', prefs: { contrast: 'high', colorScheme: 'dark' } },
 ];
-const PAGES: { name: string; hash: string; open?: string }[] = [
+const PAGES: { name: string; hash: string; open?: string; seed?: string[] }[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
@@ -178,6 +178,11 @@ const PAGES: { name: string; hash: string; open?: string }[] = [
     open: 'Gate reminder',
   },
   { name: 'sandbox', hash: '#/sandbox' },
+  {
+    name: 'prediction step',
+    hash: '#/lesson/circuit-to-table/2',
+    seed: ['not-and/challenge', 'or-xor/exactly-one', 'circuit-to-table/count-the-rows'],
+  },
 ];
 
 test.describe('focus on the highlighted truth-table row', () => {
@@ -215,6 +220,7 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
           (prefs) => localStorage.setItem('logiclearn:prefs:v1', JSON.stringify(prefs)),
           theme.prefs,
         );
+        if (target.seed) await seedProgress(page, target.seed);
         await page.goto(target.hash);
         if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
         await page.waitForTimeout(300);
