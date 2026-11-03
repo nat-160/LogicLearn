@@ -150,6 +150,7 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 
         it("has an example rule that keeps the brief's rows and passes the rule checks", () => {
           expect(brief.example.rule).toHaveLength(2 ** brief.inputs.length);
+          if (brief.rule.kind === 'fixed') expect(brief.example.rule).toEqual(brief.rule.rows);
           expect(gradeRule(spec).filter((c) => !c.pass)).toEqual([]);
         });
 
@@ -211,6 +212,13 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         for (const type of step.palette) expect(findComponentDef(type), type).toBeDefined();
       });
 
+      it('only offers gates the step allows (e.g. "only NAND")', () => {
+        const allowed = step.spec.constraints?.allowedTypes;
+        if (!allowed) return;
+        const gates = step.palette.filter((t) => !findComponentDef(t)?.io);
+        for (const type of gates) expect(allowed, type).toContain(type);
+      });
+
       it('solution keeps every locked starter part', () => {
         const locked = step.starter.components.filter((c) => c.locked).map((c) => c.id);
         const solutionIds = new Set(step.solution.components.map((c) => c.id));
@@ -258,6 +266,13 @@ const REQUIRED_SHARED = [
 ];
 
 describe('lessons and units', () => {
+  it('lists lessons in course order (gating opens them in this order)', () => {
+    const numbers = LESSON_DEFS.map((l) => l.number);
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    const units = LESSON_DEFS.map((l) => l.unit);
+    expect(units).toEqual([...units].sort((a, b) => a - b));
+  });
+
   it('lessons have unique ids, and each belongs to a unit', () => {
     const ids = LESSON_DEFS.map((l) => l.id);
     expect(new Set(ids).size).toBe(ids.length);

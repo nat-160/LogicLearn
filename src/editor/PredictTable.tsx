@@ -11,6 +11,7 @@
  * "✓ right" or "✗ wrong" in words, so color is never the only cue.
  */
 import type { Bit, Prediction, Value } from '../sim';
+import { TableScroll } from './TableScroll';
 
 export interface PredictTableResult {
   /** The real outputs, [row][output]. */
@@ -31,6 +32,7 @@ export function PredictTable({
   result,
   currentRow,
   disabled = false,
+  showCount = true,
 }: {
   /** Unique on the page: used for the radio groups' names. */
   id: string;
@@ -49,14 +51,18 @@ export function PredictTable({
   /** The row the switches are set to now (highlighted). */
   currentRow?: number;
   disabled?: boolean;
+  /** The "6 of 8 rows filled in" line (not needed when every cell is given). */
+  showCount?: boolean;
 }) {
   const filled = rows.filter((_, r) => outputs.every((_, o) => cells[r]?.[o] != null)).length;
   return (
     <div className="predict-table-wrap">
-      <p className="small predict-count" data-testid={`${id}-count`}>
-        {filled} of {rows.length} rows filled in
-      </p>
-      <div className="table-scroll">
+      {showCount && (
+        <p className="small predict-count" data-testid={`${id}-count`}>
+          {filled} of {rows.length} rows filled in
+        </p>
+      )}
+      <TableScroll label={caption}>
         <table className="truth-table predict-table" data-testid={id}>
           <caption className="sr-only">{caption}</caption>
           <thead>
@@ -153,7 +159,7 @@ export function PredictTable({
             })}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
     </div>
   );
 }

@@ -856,6 +856,12 @@ select {
   overflow-x: auto;
 }
 
+/* Only focusable while it scrolls (TableScroll.tsx). */
+.table-scroll:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
 .truth-table {
   width: 100%;
   border-collapse: collapse;

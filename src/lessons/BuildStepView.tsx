@@ -21,6 +21,7 @@ import { Editor } from '../editor/Editor';
 import { useEditor, useEditorStore } from '../editor/editorContext';
 import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
+import { TargetTable } from '../editor/TargetTable';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { INTERFACE_LOCALE } from '../i18n/locales';
 import { findIO, type CircuitDoc, type Misconception } from '../sim';
@@ -97,6 +98,8 @@ export function BuildStepView({
           <Inspector />
           {showTable ? (
             <TruthTablePanel spec={step.spec} />
+          ) : step.showTarget ? (
+            <TargetTable spec={step.spec} />
           ) : (
             <section className="panel">
               <h2 className="panel-title">Truth table</h2>

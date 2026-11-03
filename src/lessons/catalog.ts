@@ -2,12 +2,17 @@
  * Every lesson, in order, plus the planned lessons that aren't built yet (shown as
  * "coming soon" in the lesson list). The order follows docs/curriculum-outline.md.
  */
+import { addersLesson } from './content/adders';
 import { circuitToTableLesson } from './content/circuit-to-table';
 import { editorTourLesson } from './content/editor-tour';
+import { nandNorLesson } from './content/nand-nor';
 import { notAndLesson } from './content/not-and';
 import { orXorLesson } from './content/or-xor';
 import { signalsLesson } from './content/signals';
+import { tableToCircuitLesson } from './content/table-to-circuit';
 import { unit1ProjectLesson } from './content/unit-1-project';
+import { unit2ProjectLesson } from './content/unit-2-project';
+import { xnorIfThenLesson } from './content/xnor-if-then';
 import { findSharedText, localizeLesson } from './lessonText';
 import type { Lesson, LessonDef } from './types';
 
@@ -19,6 +24,11 @@ export const LESSON_DEFS: LessonDef[] = [
   orXorLesson,
   circuitToTableLesson,
   unit1ProjectLesson,
+  nandNorLesson,
+  xnorIfThenLesson,
+  tableToCircuitLesson,
+  addersLesson,
+  unit2ProjectLesson,
 ];
 
 /** The units, each with a title and summary in content/_shared/<locale>/unit-N.md. */
@@ -31,12 +41,7 @@ export interface PlannedLesson {
 }
 
 /** Lessons from the curriculum outline that are not built yet (English titles for now). */
-export const PLANNED_LESSONS: PlannedLesson[] = [
-  { number: 5, unit: 2, title: 'NAND and NOR' },
-  { number: 6, unit: 2, title: 'XNOR, implication, and English → logic' },
-  { number: 7, unit: 2, title: 'From truth table to circuit' },
-  { number: 8, unit: 2, title: 'Useful circuits: adders' },
-];
+export const PLANNED_LESSONS: PlannedLesson[] = [];
 
 /** A unit's title and one-line summary in the given language. */
 export function unitText(unit: number, locale: string): { title: string; summary: string } {

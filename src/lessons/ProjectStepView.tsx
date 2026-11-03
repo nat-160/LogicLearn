@@ -240,6 +240,7 @@ function RulePanel({
         given={given}
         onChange={onChange}
         currentRow={currentRow}
+        showCount={!fixed}
       />
       {ruleChecks.length > 0 && <CriteriaList results={ruleChecks} />}
     </section>

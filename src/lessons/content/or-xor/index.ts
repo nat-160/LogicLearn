@@ -7,26 +7,9 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, io } from '../helpers';
+import { b, gateExample, io } from '../helpers';
 
 const twoToOne = (name: string) => buildCircuit({ name, parts: io(['A', 'B'], ['Y']) });
-
-/** A 2-input gate example with locked switches A, B and light Y. */
-const gateExample = (name: string, type: string) =>
-  buildCircuit({
-    name,
-    parts: [
-      { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
-      { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
-      { id: 'g', type, at: [7, 0], locked: true },
-      { id: 'Y', type: 'LIGHT', at: [14, 1], locked: true },
-    ],
-    wires: [
-      ['A', 'g.in0'],
-      ['B', 'g.in1'],
-      ['g', 'Y'],
-    ],
-  });
 
 /** A solution: a 2-input gate between A, B and Y. */
 const oneGate = (name: string, type: string, id: string) =>

@@ -202,6 +202,22 @@ const PAGES: {
     seed: ['circuit-to-table/challenge', 'unit-1-project/brief'],
     click: ['rule-door-alarm-r2-o0-1', 'rule-door-alarm-r6-o0-0', 'check-project'],
   },
+  {
+    name: 'challenge with a target table',
+    hash: '#/lesson/table-to-circuit/4',
+    seed: [
+      'circuit-to-table/challenge',
+      'table-to-circuit/one-row-at-a-time',
+      'table-to-circuit/by-itself',
+      'table-to-circuit/two-rows',
+    ],
+  },
+  {
+    name: 'number display project',
+    hash: '#/lesson/unit-2-project/2',
+    seed: ['adders/two-bit-adder', 'unit-2-project/brief'],
+    click: ['check-project'],
+  },
 ];
 
 test.describe('focus on the highlighted truth-table row', () => {

@@ -43,6 +43,12 @@ export interface BuildStepDef extends BaseStepDef {
   liveOutputs?: boolean;
   /** Whether the truth table is shown while building. */
   truthTable?: 'live' | 'hidden';
+  /**
+   * The task is a truth table ("build a circuit for this table"): while the circuit's
+   * own table is hidden, the target table is shown instead. (A live truth table already
+   * shows the target in its "wanted" column.)
+   */
+  showTarget?: boolean;
 }
 
 /**
