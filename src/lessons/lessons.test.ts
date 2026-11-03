@@ -8,7 +8,7 @@
  * a student does.
  */
 import { DEFAULT_LOCALE, LOCALES } from '../i18n/locales';
-import { check, findComponentDef } from '../sim';
+import { check, findComponentDef, findIO } from '../sim';
 import { LESSON_DEFS } from './catalog';
 import { findLessonFile, listLessonFiles, localizeLesson } from './lessonText';
 import { isBuildStep } from './types';
@@ -67,8 +67,20 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(check(step.starter, step.spec).pass).toBe(false);
       });
 
-      it('has at least one hint', () => {
-        expect(step.hints.length).toBeGreaterThan(0);
+      it('has enough hints (guided: at least 2, challenge: at least 1)', () => {
+        expect(step.hints.length).toBeGreaterThanOrEqual(step.kind === 'guided' ? 2 : 1);
+      });
+
+      it("lists the spec's inputs and outputs in the order the truth table shows them", () => {
+        // The truth table sorts switches and lights by label; the "wanted" column and the
+        // tried-rows count only line up when the spec uses the same order.
+        const { inputs, outputs } = findIO(step.solution);
+        expect(step.spec.inputs).toEqual(inputs.map((p) => p.label));
+        expect(step.spec.outputs).toEqual(outputs.map((p) => p.label));
+      });
+
+      it('only offers parts that exist', () => {
+        for (const type of step.palette) expect(findComponentDef(type), type).toBeDefined();
       });
 
       it('solution keeps every locked starter part', () => {

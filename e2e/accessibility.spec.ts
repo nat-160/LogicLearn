@@ -4,7 +4,7 @@
  */
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { press } from './helpers';
+import { press, seedProgress } from './helpers';
 
 const html = (page: Page) => page.locator('html');
 
@@ -228,20 +228,7 @@ test.describe('without a pointer', () => {
   test.skip(({ hasTouch }) => !!hasTouch, 'keyboard flow');
 
   test('a lesson circuit can be built and checked with the keyboard alone', async ({ page }) => {
-    await page.addInitScript(() => {
-      const done = {
-        done: true,
-        attempts: 0,
-        hintsUsed: 0,
-        triedRows: [],
-        firstSeen: '',
-        lastSeen: '',
-      };
-      localStorage.setItem(
-        'logiclearn:progress:v1',
-        JSON.stringify({ 'not-and/what-is-a-gate': done }),
-      );
-    });
+    await seedProgress(page, ['not-and/what-is-a-gate']);
     await page.goto('#/lesson/not-and/2');
 
     // Add a NOT gate: focus the palette button and press Enter.
@@ -275,20 +262,7 @@ test.describe('without a pointer', () => {
   test('parts and wires on the canvas have names, and deleting keeps focus nearby', async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      const done = {
-        done: true,
-        attempts: 0,
-        hintsUsed: 0,
-        triedRows: [],
-        firstSeen: '',
-        lastSeen: '',
-      };
-      localStorage.setItem(
-        'logiclearn:progress:v1',
-        JSON.stringify({ 'not-and/what-is-a-gate': done }),
-      );
-    });
+    await seedProgress(page, ['not-and/what-is-a-gate']);
     await page.goto('#/lesson/not-and/2');
     await page.getByTestId('palette-NOT').press('Enter');
     const gate = page.getByRole('group', { name: 'NOT gate 1' });

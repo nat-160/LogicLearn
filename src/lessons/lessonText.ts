@@ -116,6 +116,31 @@ function findStepText(
   return undefined;
 }
 
+/**
+ * Text shared by many lessons – unit titles, the gate reminder card, feedback messages –
+ * lives in content/_shared/<locale>/<name>.md, in the same format as a step file.
+ */
+export const SHARED_FOLDER = '_shared';
+
+/** A shared text file in the given language (or en-US if it isn't translated yet). */
+export function findSharedText(
+  name: string,
+  locale: string,
+  files: LessonFiles = FILES,
+): StepText | undefined {
+  return findStepText(SHARED_FOLDER, locale, name, files);
+}
+
+/**
+ * Fill in {placeholders} such as {tried} or {output} in a shared text. Placeholders that
+ * aren't given are left as they are, so a mistake shows up instead of vanishing.
+ */
+export function fillPlaceholders(text: string, params: Record<string, string | number>): string {
+  return text.replace(/\{([a-z]+)\}/g, (whole, name: string) =>
+    name in params ? String(params[name]) : whole,
+  );
+}
+
 /** Join a lesson definition with its text in the given language. */
 export function localizeLesson(def: LessonDef, locale: string, files: LessonFiles = FILES): Lesson {
   const info = findLessonFile(def.id, locale, 'lesson', files);

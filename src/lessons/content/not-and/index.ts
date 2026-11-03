@@ -6,29 +6,9 @@
  * to it (en-US/<step-id>.md). lessons.test.ts proves every reference solution passes its
  * check and every starter circuit does not.
  */
-import { buildCircuit, rowsFrom, type Bit } from '../../../sim';
+import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-
-const b = (v: boolean | number): Bit => (v ? 1 : 0);
-
-/**
- * Locked switches (left) and lights (right) that every build step starts with, placed so
- * their pins line up with a 2-input gate's pins (inputs 40px apart, output in between).
- */
-const io = (inputs: string[], outputs: string[]) => [
-  ...inputs.map((id, i) => ({
-    id,
-    type: 'SWITCH',
-    at: [0, i * 4] as [number, number],
-    locked: true,
-  })),
-  ...outputs.map((id, i) => ({
-    id,
-    type: 'LIGHT',
-    at: [20, (inputs.length === 1 ? 0 : 1) + i * 4] as [number, number],
-    locked: true,
-  })),
-];
+import { b, io } from '../helpers';
 
 export const notAndLesson: LessonDef = {
   id: 'not-and',

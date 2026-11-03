@@ -1,5 +1,12 @@
 import { resolveLocale } from '../i18n/locales';
-import { findLessonFile, localizeLesson, parseLessonInfo, parseStepText } from './lessonText';
+import {
+  fillPlaceholders,
+  findLessonFile,
+  findSharedText,
+  localizeLesson,
+  parseLessonInfo,
+  parseStepText,
+} from './lessonText';
 import type { LessonDef } from './types';
 
 describe('parseStepText', () => {
@@ -101,5 +108,27 @@ describe('languages', () => {
     expect(resolveLocale('es_us', available)).toBe('es-US');
     expect(resolveLocale('fr-FR', available)).toBe('en-US');
     expect(resolveLocale(null, available)).toBe('en-US');
+  });
+});
+
+describe('shared text', () => {
+  const files = {
+    './content/_shared/en-US/nudge.md': '# Try every row\n\nYou tried {tried} of {total} rows.',
+    './content/_shared/es-US/nudge.md': '<!-- draft -->\n',
+  };
+
+  it('finds a shared file, falling back to en-US when a translation is empty', () => {
+    expect(findSharedText('nudge', 'es-US', files)).toMatchObject({
+      title: 'Try every row',
+      locale: 'en-US',
+    });
+    expect(findSharedText('missing', 'en-US', files)).toBeUndefined();
+  });
+
+  it('fills in placeholders and leaves unknown ones visible', () => {
+    expect(fillPlaceholders('You tried {tried} of {total} rows.', { tried: 2, total: 4 })).toBe(
+      'You tried 2 of 4 rows.',
+    );
+    expect(fillPlaceholders('Row {row}', {})).toBe('Row {row}');
   });
 });
