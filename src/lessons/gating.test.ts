@@ -7,6 +7,7 @@ const lesson = (id: string, unit: number, extra: Partial<Lesson> = {}): Lesson =
   number: 0,
   unit,
   standards: [],
+  practice: [],
   title: id,
   summary: '',
   locale: 'en-US',

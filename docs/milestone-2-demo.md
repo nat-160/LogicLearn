@@ -39,6 +39,9 @@
   (research: students test only the rows that confirm their guess).
 - Press **Check anyway**: "acts like OR… what should happen when both inputs are 1?" –
   the misconception is recognized from the pattern of wrong rows (Herman et al., ICER '08).
+- Below the result: **"Want a short practice on this first? Practice: OR or XOR?"**
+  Open it: predict OR and XOR side by side, see that only the 1,1 row differs, then
+  **Back to step 4**. Practice never counts towards finishing the lesson.
 - Mention: Phase 2 checks each output and each rule of a word problem separately, and
   also spots an inverted output and an output that ignores an input.
 

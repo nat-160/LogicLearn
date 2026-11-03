@@ -7,7 +7,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, gateExample, io } from '../helpers';
+import { b, gateExample, io, twoGates } from '../helpers';
 
 const ONLY_NAND = { allowedTypes: ['NAND'] };
 
@@ -139,6 +139,17 @@ export const nandNorLesson: LessonDef = {
       palette: ['NAND'],
       liveOutputs: false,
       truthTable: 'hidden',
+    },
+  ],
+  practice: [
+    {
+      // NAND ("not both") and XOR ("exactly one") differ only when both inputs are 0.
+      id: 'neither-on',
+      kind: 'predict',
+      level: 'guided',
+      circuits: [twoGates('NAND and XOR', 'NAND', 'XOR')],
+      for: ['not-both-as-xor'],
+      from: ['build-not-both'],
     },
   ],
 };

@@ -27,10 +27,10 @@ import { INTERFACE_LOCALE } from '../i18n/locales';
 import { findIO, type CircuitDoc, type Misconception } from '../sim';
 import { HintLadder } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
-import { goNext } from './navigation';
-import { isStepDone, useProgress } from './progress';
+import { findPractice } from './practice';
+import { NextStepButton, PracticeOffer, StepHeader, type PracticePlace } from './PracticeNav';
+import { isStepDone, stepKey, useProgress } from './progress';
 import { stepSpeech } from './stepSpeech';
-import { StepNav } from './StepNav';
 import { StepText } from './StepText';
 import { loadWork, saveWork, workKey } from './stepWork';
 import type { BuildStep, Lesson } from './types';
@@ -41,10 +41,13 @@ export function BuildStepView({
   lesson,
   step,
   index,
+  practice,
 }: {
   lesson: Lesson;
   step: BuildStep;
   index: number;
+  /** Shown as a practice step (outside the numbered steps). */
+  practice?: PracticePlace;
 }) {
   const key = workKey(lesson.id, step.id);
   const visit = useProgress((s) => s.visit);
@@ -85,6 +88,7 @@ export function BuildStepView({
           lesson={lesson}
           step={step}
           index={index}
+          practice={practice}
           blind={blind}
           onChecked={() => setChecked(true)}
           onStartOver={() => {
@@ -119,6 +123,7 @@ function BuildPanel({
   lesson,
   step,
   index,
+  practice,
   blind,
   onChecked,
   onStartOver,
@@ -126,6 +131,7 @@ function BuildPanel({
   lesson: Lesson;
   step: BuildStep;
   index: number;
+  practice?: PracticePlace;
   blind: boolean;
   onChecked: () => void;
   onStartOver: () => void;
@@ -146,7 +152,12 @@ function BuildPanel({
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
   const hints = useHintLadder(lesson, step);
-  const isLast = index === lesson.steps.length - 1;
+  const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
+  // After a failed check: a practice step on the recognized mistake (or after a few tries).
+  const offer =
+    result && !result.pass && !practice
+      ? findPractice(lesson, step.id, result.misconception?.id, attempts)
+      : undefined;
   const tell = useTell();
   const words = (m: Misconception) => misconceptionText(m, step.locale);
 
@@ -169,15 +180,21 @@ function BuildPanel({
       misconception: r.misconception?.id,
     });
     onChecked();
-    tell('result', summarizeCheck(r, words), INTERFACE_LOCALE);
+    const practiceOffered =
+      !r.pass && !practice && findPractice(lesson, step.id, r.misconception?.id, attempts + 1);
+    tell(
+      'result',
+      summarizeCheck(r, words) + (practiceOffered ? ' A short practice is offered below.' : ''),
+      INTERFACE_LOCALE,
+    );
   };
 
   return (
     <div className="lesson-panel">
-      <StepNav lesson={lesson} index={index} />
+      <StepHeader lesson={lesson} index={index} practice={practice} />
       <StepText
         step={step}
-        tag={step.kind === 'challenge' ? 'Challenge' : undefined}
+        tag={practice ? 'Practice' : step.kind === 'challenge' ? 'Challenge' : undefined}
         speech={() => stepSpeech(step, hints.shown, result, words)}
       />
 
@@ -213,16 +230,8 @@ function BuildPanel({
         />
       )}
       {result && <CheckResultView result={result} words={words} />}
-      {done && (
-        <button
-          type="button"
-          className="primary next"
-          onClick={() => goNext(lesson, index)}
-          data-testid="next-step"
-        >
-          {isLast ? 'Finish lesson ✔' : 'Next step →'}
-        </button>
-      )}
+      {offer && <PracticeOffer lesson={lesson} practice={offer} />}
+      {done && <NextStepButton lesson={lesson} index={index} practice={practice} />}
     </div>
   );
 }

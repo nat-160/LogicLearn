@@ -98,6 +98,18 @@ export interface ProjectStepDef extends BaseStepDef {
 
 export type StepDef = ExplainStepDef | BuildStepDef | PredictStepDef | ProjectStepDef;
 
+/**
+ * A short practice step on one idea, offered after a mistake – not one of the lesson's
+ * numbered steps, so adding one never shifts the numbering, and it never counts towards
+ * finishing the lesson. Its text is in <locale>/practice-<id>.md.
+ */
+export type PracticeDef = (BuildStepDef | PredictStepDef) & {
+  /** Misconception ids (src/sim/misconceptions.ts) this practice helps with. */
+  for: string[];
+  /** The lesson steps that offer it: on a matching mistake, or after 3 failed checks. */
+  from: string[];
+};
+
 export interface LessonDef {
   id: string;
   number: number;
@@ -112,6 +124,8 @@ export interface LessonDef {
   optional?: boolean;
   /** Gate types this lesson teaches, for the gate reminder card. */
   introduces?: string[];
+  /** Practice steps, offered from the lesson's steps (never required). */
+  practice?: PracticeDef[];
   /** Curriculum standards covered, e.g. "IB A1.2.3". */
   standards: string[];
   steps: StepDef[];
@@ -137,13 +151,24 @@ export type ProjectBrief = ProjectBriefDef & StepText;
 export type ProjectStep = Omit<ProjectStepDef, 'briefs'> & StepText & { briefs: ProjectBrief[] };
 export type Step = ExplainStep | BuildStep | PredictStep | ProjectStep;
 
+/**
+ * A practice step with its text. Its `id` is "practice-<practice id>" (its progress and
+ * saved work are kept under that id); `practiceId` is the id in the route.
+ */
+export type Practice = (BuildStep | PredictStep) & {
+  practiceId: string;
+  for: string[];
+  from: string[];
+};
+
 /** A lesson with its text in one language: what the lesson screens use. */
-export interface Lesson extends Omit<LessonDef, 'steps'> {
+export interface Lesson extends Omit<LessonDef, 'steps' | 'practice'> {
   title: string;
   /** One sentence for the lesson list. */
   summary: string;
   locale: string;
   steps: Step[];
+  practice: Practice[];
 }
 
 export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDef {

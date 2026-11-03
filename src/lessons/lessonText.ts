@@ -23,6 +23,7 @@ import {
   HINTS_PATTERN,
   type Lesson,
   type LessonDef,
+  type Practice,
   type Step,
   type StepText,
 } from './types';
@@ -145,14 +146,17 @@ export function fillPlaceholders(text: string, params: Record<string, string | n
 export function localizeLesson(def: LessonDef, locale: string, files: LessonFiles = FILES): Lesson {
   const info = findLessonFile(def.id, locale, 'lesson', files);
   const { title, summary } = parseLessonInfo(info?.text ?? '');
-  const steps = def.steps.map((stepDef): Step => {
-    const text = findStepText(def.id, locale, stepDef.id, files) ?? {
+  /** A text file's words, or empty text (the title falls back to the id). */
+  const textOf = (name: string) =>
+    findStepText(def.id, locale, name, files) ?? {
       title: '',
       prose: '',
       hints: [],
       draft: false,
       locale,
     };
+  const steps = def.steps.map((stepDef): Step => {
+    const text = textOf(stepDef.id);
     const step = { ...stepDef, ...text, title: text.title || stepDef.id };
     if (stepDef.kind !== 'project') return step as Step;
     // A project's briefs each have their own text file, named by the brief's id.
@@ -160,18 +164,25 @@ export function localizeLesson(def: LessonDef, locale: string, files: LessonFile
       ...step,
       kind: 'project',
       briefs: stepDef.briefs.map((brief) => {
-        const briefText = findStepText(def.id, locale, brief.id, files) ?? {
-          title: '',
-          prose: '',
-          hints: [],
-          draft: false,
-          locale,
-        };
+        const briefText = textOf(brief.id);
         return { ...brief, ...briefText, title: briefText.title || brief.id };
       }),
     };
   });
-  return { ...def, title: title || def.id, summary, locale: info?.locale ?? locale, steps };
+  // Practice steps: text in practice-<id>.md, progress kept under the same name.
+  const practice = (def.practice ?? []).map((p): Practice => {
+    const id = `practice-${p.id}`;
+    const text = textOf(id);
+    return { ...p, ...text, id, practiceId: p.id, title: text.title || id } as Practice;
+  });
+  return {
+    ...def,
+    title: title || def.id,
+    summary,
+    locale: info?.locale ?? locale,
+    steps,
+    practice,
+  };
 }
 
 /** The names of every text file, by lesson and locale (for the content tests). */

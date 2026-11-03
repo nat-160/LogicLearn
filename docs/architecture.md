@@ -78,6 +78,9 @@ text in `content/_shared/`). There are five step kinds, each with its own view:
 - `predict` – fill in a circuit's truth table before it shows its values;
 - `project` – choose a brief, write your own rule, build, get a checklist.
 
+Practice steps are build or predict steps kept outside the numbered steps (so they never
+shift the numbering), offered after a recognized mistake (`practice.ts`).
+
 Lessons open in course order and steps in lesson order (`gating.ts`), with escapes: a
 started lesson stays open, projects never block the next unit, and the test version can
 unlock everything. Progress (no personal data) is saved in the browser; it is checked

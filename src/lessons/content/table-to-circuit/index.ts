@@ -142,4 +142,30 @@ export const tableToCircuitLesson: LessonDef = {
       truthTable: 'hidden',
     },
   ],
+  practice: [
+    {
+      // "A by itself" needs B off, too: A AND (NOT B).
+      id: 'alone',
+      kind: 'guided',
+      starter: buildCircuit({ name: 'A by itself', parts: io(['A', 'B'], ['Y']) }),
+      solution: buildCircuit({
+        name: 'A by itself',
+        parts: [
+          ...io(['A', 'B'], ['Y']),
+          { id: 'not-1', type: 'NOT', at: [6, 3] },
+          { id: 'and-1', type: 'AND', at: [12, 0] },
+        ],
+        wires: [
+          ['A', 'and-1.in0'],
+          ['B', 'not-1'],
+          ['not-1', 'and-1.in1'],
+          ['and-1', 'Y'],
+        ],
+      }),
+      spec: { inputs: ['A', 'B'], outputs: ['Y'], expected: rowsFrom(2, (a, bb) => b(a && !bb)) },
+      palette: ['AND', 'OR', 'NOT'],
+      for: ['ignores-input'],
+      from: ['by-itself', 'two-rows', 'any-table'],
+    },
+  ],
 };

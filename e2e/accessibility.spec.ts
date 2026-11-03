@@ -213,6 +213,11 @@ const PAGES: {
     ],
   },
   {
+    name: 'practice step',
+    hash: '#/lesson/or-xor/practice/both-on',
+    seed: ['not-and/challenge'],
+  },
+  {
     name: 'number display project',
     hash: '#/lesson/unit-2-project/2',
     seed: ['adders/two-bit-adder', 'unit-2-project/brief'],

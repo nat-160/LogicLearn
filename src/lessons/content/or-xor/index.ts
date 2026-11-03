@@ -7,7 +7,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, gateExample, io } from '../helpers';
+import { b, gateExample, io, twoGates } from '../helpers';
 
 const twoToOne = (name: string) => buildCircuit({ name, parts: io(['A', 'B'], ['Y']) });
 
@@ -105,6 +105,17 @@ export const orXorLesson: LessonDef = {
       palette: ['AND', 'OR', 'NOT'],
       liveOutputs: false,
       truthTable: 'hidden',
+    },
+  ],
+  practice: [
+    {
+      // OR and XOR differ only when both inputs are 1.
+      id: 'both-on',
+      kind: 'predict',
+      level: 'guided',
+      circuits: [twoGates('OR and XOR', 'OR', 'XOR')],
+      for: ['xor-as-or'],
+      from: ['build-xor', 'exactly-one'],
     },
   ],
 };

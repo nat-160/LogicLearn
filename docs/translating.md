@@ -20,6 +20,8 @@ src/lessons/content/
       lesson.md, brief.md, build.md
       door-alarm.md         a project also has one file per brief, named by its id
       voting.md
+  or-xor/en-US/
+      practice-both-on.md   a practice step: "practice-" and the practice's id
   _shared/                  text used by many lessons
     en-US/
       unit-1.md             a unit's title and summary

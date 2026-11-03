@@ -36,8 +36,10 @@ direct instruction → guided construction → open construction sequence from t
 - **Feedback (Phase 2):** a failed check names the recognized mistake (the
   _misconception signature_, the pattern of wrong rows), and pressing Check before
   trying every row suggests trying the rest first.
-- **Practice steps (Phase 3):** after a recognized mistake, an offered short practice
-  step on just that idea.
+- **Practice steps (Phase 2):** after a recognized mistake (or 3 failed checks), an
+  offered short practice step on just that idea. Built: `or-xor` `both-on` (OR or XOR?),
+  `nand-nor` `neither-on` (not both, or exactly one?), `xnor-if-then` `false-if` and
+  `both-off`, `table-to-circuit` `alone` (A by itself).
 - **Habits in every lesson** (from Herman et al., ICER '08): check **every** row, starting
   with all zeros; re-read the rule and check each row before pressing Check.
 - **Test-outs (Phase 3)** before each unit let students who already know the material skip it.

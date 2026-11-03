@@ -8,7 +8,7 @@
  */
 import { buildCircuit, rowsFromRules, type RulePart } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { gateExample, io } from '../helpers';
+import { gateExample, io, twoGates } from '../helpers';
 
 const IF_THEN: RulePart[] = [{ fn: 'IMPLY', inputs: ['A', 'B'] }];
 
@@ -156,6 +156,48 @@ export const xnorIfThenLesson: LessonDef = {
       palette: PALETTE,
       liveOutputs: false,
       truthTable: 'hidden',
+    },
+  ],
+  practice: [
+    {
+      // "If A then B" next to AND: they differ on the rows where A is 0.
+      id: 'false-if',
+      kind: 'predict',
+      level: 'guided',
+      circuits: [
+        buildCircuit({
+          name: 'AND and if-then',
+          parts: [
+            { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+            { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
+            { id: 'gx', type: 'AND', at: [10, -4], locked: true },
+            { id: 'n', type: 'NOT', at: [5, 2], locked: true },
+            { id: 'gy', type: 'OR', at: [10, 4], locked: true },
+            { id: 'X', type: 'LIGHT', at: [18, -3], locked: true },
+            { id: 'Y', type: 'LIGHT', at: [18, 5], locked: true },
+          ],
+          wires: [
+            ['A', 'gx.in0'],
+            ['B', 'gx.in1'],
+            ['A', 'n'],
+            ['n', 'gy.in0'],
+            ['B', 'gy.in1'],
+            ['gx', 'X'],
+            ['gy', 'Y'],
+          ],
+        }),
+      ],
+      for: ['if-then-as-and'],
+      from: ['build-if-then', 'two-rules', 'three-rules'],
+    },
+    {
+      // XNOR ("they match") next to AND: they differ when both inputs are 0.
+      id: 'both-off',
+      kind: 'predict',
+      level: 'guided',
+      circuits: [twoGates('AND and XNOR', 'AND', 'XNOR')],
+      for: ['iff-as-and'],
+      from: ['three-rules'],
     },
   ],
 };

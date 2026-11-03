@@ -33,6 +33,31 @@ export const io = (
   })),
 ];
 
+/**
+ * Two gates side by side on the same switches A and B: X = A <typeX> B, Y = A <typeY> B.
+ * For practice steps that compare two gates row by row. Every part is locked.
+ */
+export const twoGates = (name: string, typeX: string, typeY: string) =>
+  buildCircuit({
+    name,
+    parts: [
+      { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+      { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
+      { id: 'gx', type: typeX, at: [8, -3], locked: true },
+      { id: 'gy', type: typeY, at: [8, 4], locked: true },
+      { id: 'X', type: 'LIGHT', at: [16, -2], locked: true },
+      { id: 'Y', type: 'LIGHT', at: [16, 5], locked: true },
+    ],
+    wires: [
+      ['A', 'gx.in0'],
+      ['B', 'gx.in1'],
+      ['A', 'gy.in0'],
+      ['B', 'gy.in1'],
+      ['gx', 'X'],
+      ['gy', 'Y'],
+    ],
+  });
+
 /** An explain-step example: one 2-input gate between locked switches A, B and light Y. */
 export const gateExample = (name: string, type: string) =>
   buildCircuit({

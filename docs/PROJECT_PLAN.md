@@ -373,8 +373,10 @@ gates later.
   - `project` *(Phase 2)*: one or more **briefs**. A brief fixes some rows of the truth
     table (or all of them); the student fills in the rest ("Your rule"), builds it, and
     gets the grader's checklist. Each brief ships an example rule and circuit.
-  - Practice steps *(Phase 3)*: short steps offered after a recognized mistake. They sit
-    outside the numbered steps, so numbering never shifts.
+  - Practice steps *(Phase 2, P2.12)*: short build or predict steps offered after a
+    recognized mistake, or after 3 failed checks. They sit outside the numbered steps
+    (`#/lesson/<id>/practice/<id>`), so numbering never shifts, and never count towards
+    finishing a lesson.
 - **Step options (seams):**
   - `liveOutputs: boolean` (default true). When false, lights show "?" until the student
     presses Check: the "predict first" / blind mode.
@@ -743,10 +745,10 @@ The author's beta testing (2026-10-29) added §3.9 and §3.10:
 > in the open rows; practice steps only if ahead, test-outs in Phase 3. Prediction mode
 > moved up, because Lesson 4 needs it.
 >
-> **Status:** built ahead of schedule (P2.1–P2.11 and P2.13): Lessons 0–8, both unit
-> projects, gating, progress files, the hint ladder and gate reminder, prediction mode,
-> misconception feedback v2, the tried-rows nudge, the grader, and the push button,
-> seven-segment display and light colors. Practice steps and test-outs are in Phase 3.
+> **Status:** built ahead of schedule (P2.1–P2.13): Lessons 0–8, both unit projects,
+> gating, progress files, the hint ladder and gate reminder, prediction mode,
+> misconception feedback v2, the tried-rows nudge, the grader, practice steps, and the
+> push button, seven-segment display and light colors. Test-outs are in Phase 3.
 > Summary: [phase-2-report.md](phase-2-report.md); demo script:
 > [milestone-2-demo.md](milestone-2-demo.md).
 
@@ -993,5 +995,5 @@ details are in [phase-2-report.md](phase-2-report.md). Spec changes:
   and `ignores-input`, multi-pin outputs, and the grader.
 - §3.7: the `predict` and `project` step kinds, `showTarget`, the progress fields,
   `parseProgress`/`mergeProgress`, and lesson gating. `truthTable: "predict"` became the
-  `predict` step kind; remediation became Phase 3 practice steps.
-- §6: Phase 2 status. Practice steps and test-outs move to Phase 3, as the author decided.
+  `predict` step kind; remediation became practice steps (built, since Phase 2 ran ahead).
+- §6: Phase 2 status. Test-outs move to Phase 3, as the author decided.

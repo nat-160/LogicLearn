@@ -7,6 +7,7 @@
  *  - BuildStepView:   build a circuit, Check it, hints one at a time.
  *  - PredictStepView: fill in a circuit's truth table before it shows its values.
  *  - ProjectStepView: an open project, checked against a checklist.
+ * A practice step (outside the numbered steps) uses the build or predict view.
  *
  * Accessibility: every step has a "Read aloud" button (and can be read automatically,
  * see Settings); check results and revealed hints are announced to screen readers; and
@@ -19,11 +20,21 @@ import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
 import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
+import { practiceReturnIndex } from './practice';
 import { PredictStepView } from './PredictStepView';
 import { ProjectStepView } from './ProjectStepView';
 import { isBuildStep, isPredictStep, isProjectStep } from './types';
 
-export function LessonPage({ lessonId, step }: { lessonId: string; step: number }) {
+export function LessonPage({
+  lessonId,
+  step,
+  practice: practiceId,
+}: {
+  lessonId: string;
+  step: number;
+  /** A practice step's id (#/lesson/<id>/practice/<practice id>). */
+  practice?: string;
+}) {
   const lessons = getLessons(useLocale());
   const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
   const lesson = lessons[lessonIndex];
@@ -55,6 +66,25 @@ export function LessonPage({ lessonId, step }: { lessonId: string; step: number 
           </a>
         )}
       </div>
+    );
+  }
+  if (practiceId !== undefined) {
+    // Practice is open whenever its lesson is, and never required.
+    const practice = lesson.practice.find((p) => p.practiceId === practiceId);
+    if (!practice) {
+      return (
+        <div className="page narrow">
+          <h1>Practice not found</h1>
+          <a href={lessonHref(lesson.id)}>Back to the lesson</a>
+        </div>
+      );
+    }
+    const returnIndex = practiceReturnIndex(lesson, practice, steps);
+    const place = { returnIndex };
+    return isPredictStep(practice) ? (
+      <PredictStepView lesson={lesson} step={practice} index={returnIndex} practice={place} />
+    ) : (
+      <BuildStepView lesson={lesson} step={practice} index={returnIndex} practice={place} />
     );
   }
   const index = Math.min(step, lesson.steps.length) - 1;

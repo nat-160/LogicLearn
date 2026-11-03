@@ -1143,9 +1143,28 @@ select {
   margin-top: 12px;
 }
 
-button.next {
+button.next,
+a.button.next {
   margin-top: 12px;
   width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ---------- Practice steps (PracticeNav.tsx) ---------- */
+
+.practice-offer {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: var(--line-width) solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.practice-offer a,
+.lesson-header > a {
+  font-weight: 700;
 }
 
 /* ---------- Share page ---------- */

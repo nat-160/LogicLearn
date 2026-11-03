@@ -30,10 +30,9 @@ import { HintLadder } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
 import { findSharedText } from './lessonText';
 import { Markdown } from './Markdown';
-import { goNext } from './navigation';
+import { NextStepButton, StepHeader, type PracticePlace } from './PracticeNav';
 import { isStepDone, useProgress } from './progress';
 import { stepSpeech, textLang } from './stepSpeech';
-import { StepNav } from './StepNav';
 import { StepText } from './StepText';
 import { loadStepState, saveStepState } from './stepWork';
 import type { Lesson, PredictStep } from './types';
@@ -93,10 +92,13 @@ export function PredictStepView({
   lesson,
   step,
   index,
+  practice,
 }: {
   lesson: Lesson;
   step: PredictStep;
   index: number;
+  /** Shown as a practice step (outside the numbered steps). */
+  practice?: PracticePlace;
 }) {
   const visit = useProgress((s) => s.visit);
   const [state, setState] = useState<PredictState>(
@@ -125,7 +127,7 @@ export function PredictStepView({
       store={store}
       readOnly
       blind={!state.revealed}
-      lead={<PredictPanel lesson={lesson} step={step} index={index} />}
+      lead={<PredictPanel lesson={lesson} step={step} index={index} practice={practice} />}
       side={
         <PredictSide lesson={lesson} step={step} table={table} state={state} setState={setState} />
       }
@@ -138,34 +140,26 @@ function PredictPanel({
   lesson,
   step,
   index,
+  practice,
 }: {
   lesson: Lesson;
   step: PredictStep;
   index: number;
+  practice?: PracticePlace;
 }) {
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
   const hints = useHintLadder(lesson, step);
-  const isLast = index === lesson.steps.length - 1;
   return (
     <div className="lesson-panel">
-      <StepNav lesson={lesson} index={index} />
+      <StepHeader lesson={lesson} index={index} practice={practice} />
       <StepText
         step={step}
-        tag={step.level === 'challenge' ? 'Challenge' : undefined}
+        tag={practice ? 'Practice' : step.level === 'challenge' ? 'Challenge' : undefined}
         speech={() => stepSpeech(step, hints.shown, null)}
       />
       <HintLadder step={step} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />
       <LessonGateReference lessonId={lesson.id} />
-      {done && (
-        <button
-          type="button"
-          className="primary next"
-          onClick={() => goNext(lesson, index)}
-          data-testid="next-step"
-        >
-          {isLast ? 'Finish lesson ✔' : 'Next step →'}
-        </button>
-      )}
+      {done && <NextStepButton lesson={lesson} index={index} practice={practice} />}
     </div>
   );
 }

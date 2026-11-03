@@ -71,7 +71,8 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 
   it('every text file belongs to a step (no misspelled file names)', () => {
     const briefIds = def.steps.flatMap((s) => (isProjectStep(s) ? s.briefs.map((b) => b.id) : []));
-    const names = new Set(['lesson', ...def.steps.map((s) => s.id), ...briefIds]);
+    const practiceIds = (def.practice ?? []).map((p) => `practice-${p.id}`);
+    const names = new Set(['lesson', ...def.steps.map((s) => s.id), ...briefIds, ...practiceIds]);
     for (const file of listLessonFiles().filter((f) => f.lesson === def.id)) {
       expect(names.has(file.name), `${file.locale}/${file.name}.md`).toBe(true);
       expect(
@@ -81,7 +82,10 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
     }
   });
 
-  for (const step of lesson.steps.filter(isPredictStep)) {
+  // Practice steps are build or predict steps too, and get the same checks.
+  const withPractice = [...lesson.steps, ...lesson.practice];
+
+  for (const step of withPractice.filter(isPredictStep)) {
     describe(`predict step "${step.id}"`, () => {
       it('has circuits to predict (a challenge: at least two, with different tables)', () => {
         expect(step.circuits.length).toBeGreaterThanOrEqual(step.level === 'challenge' ? 2 : 1);
@@ -107,6 +111,31 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 
       it('has at least one hint', () => {
         expect(step.hints.length).toBeGreaterThan(0);
+      });
+    });
+  }
+
+  if (lesson.practice.length > 0) {
+    describe('practice steps', () => {
+      it(`have unique ids and ${DEFAULT_LOCALE} text`, () => {
+        const ids = lesson.practice.map((p) => p.practiceId);
+        expect(new Set(ids).size).toBe(ids.length);
+        for (const p of lesson.practice) {
+          expect(findLessonFile(def.id, DEFAULT_LOCALE, p.id)?.locale, p.id).toBe(DEFAULT_LOCALE);
+          expect(p.title, p.id).not.toBe(p.id);
+          expect(p.prose.trim().length, p.id).toBeGreaterThan(20);
+        }
+      });
+
+      it('are offered from build steps of this lesson, for mistakes the checker knows', () => {
+        for (const p of lesson.practice) {
+          expect(p.from.length, p.id).toBeGreaterThan(0);
+          for (const from of p.from) {
+            const step = lesson.steps.find((s) => s.id === from);
+            expect(step && isBuildStep(step), `${p.id} from ${from}`).toBe(true);
+          }
+          for (const id of p.for) expect(MISCONCEPTION_IDS, p.id).toContain(id);
+        }
       });
     });
   }
@@ -183,7 +212,7 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
     );
   }
 
-  for (const step of lesson.steps.filter(isBuildStep)) {
+  for (const step of withPractice.filter(isBuildStep)) {
     describe(`step "${step.id}"`, () => {
       it('reference solution passes the check', () => {
         const result = check(step.solution, step.spec);

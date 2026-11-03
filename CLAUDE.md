@@ -63,6 +63,9 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 - Step kinds (`src/lessons/types.ts`): `explain`, `guided`, `challenge`, `predict` (fill
   in a circuit's truth table first) and `project` (briefs, the student's own rule, the
   grader's checklist – `src/sim/grader.ts`). Each has its own view in `src/lessons/`.
+- Practice steps (`practice` in a `LessonDef`) are build or predict steps outside the
+  numbered steps, offered after a matching mistake (`for`) on the steps in `from`. Their
+  text is `<locale>/practice-<id>.md`; they never count towards finishing a lesson.
 - Text used by many lessons (unit titles, the gate reminder, misconception feedback,
   nudges) is in `src/lessons/content/_shared/<locale>/`. A new misconception id needs a
   `misconception-<id>.md` there (a content test checks it).
