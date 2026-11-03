@@ -9,7 +9,7 @@
  */
 import { compile, findLoops, UNCONNECTED } from './compile';
 import type { CircuitDoc } from './circuit';
-import { diagnoseMisconception, type Misconception } from './misconceptions';
+import { diagnoseMisconception, type Misconception, type RulePart } from './misconceptions';
 import { findComponentDef } from './registry';
 import { evaluateRow, findIO, type IOPart } from './truthTable';
 import { allInputRows, type Bit, type Value } from './values';
@@ -26,6 +26,12 @@ export interface CheckSpec {
   outputs: string[];
   /** The rows to check. Use `rowsFrom()` to generate a full table from a function. */
   expected: CheckRow[];
+  /**
+   * For word problems: the rules the expected output is made of (all must hold, so the
+   * output is their AND). Lets the checker say which rule a mistake is in. Lesson tests
+   * check that `expected` matches rowsFromRules().
+   */
+  rules?: RulePart[];
   /** Rules about gates. Input and output parts (switches, lights) never count. */
   constraints?: {
     /** Only these gate types may be used, e.g. ["NAND"]. */
@@ -244,6 +250,9 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
     inputCount: spec.inputs.length,
     outputCount: spec.outputs.length,
     rows,
+    inputs: spec.inputs,
+    outputs: spec.outputs,
+    rules: spec.rules,
   });
   const pass = mismatches.length === 0 && !diagnostics.some((d) => d.severity === 'error');
   return { pass, rows, mismatches, diagnostics, ...(misconception && { misconception }) };

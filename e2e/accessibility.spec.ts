@@ -266,6 +266,7 @@ test.describe('without a pointer', () => {
       'Switch A → NOT gate 1, input',
     );
 
+    await page.getByTestId('tt-row-1').press('Enter'); // try every row before checking
     await page.getByTestId('check-button').press('Enter');
     await expect(page.getByTestId('check-result')).toContainText('Correct');
     await expect(page.getByTestId('announcer')).toContainText('Correct! Every row matches.');

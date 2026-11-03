@@ -26,6 +26,8 @@ export interface StepProgress {
   lastSeen: string;
   /** Prediction steps: rows right on the first try and at best, out of `rows`. */
   predicted?: { firstRight: number; bestRight: number; rows: number };
+  /** Misconceptions recognized in failed checks (ids from the checker), oldest first. */
+  misconceptions?: string[];
 }
 
 /** What one press of Check (or "Check my predictions") found. */
@@ -34,7 +36,15 @@ export interface Attempt {
   triedRows?: Iterable<number>;
   /** Prediction steps: how many rows were predicted right, out of how many. */
   predicted?: { right: number; rows: number };
+  /** The misconception the checker recognized, if any. */
+  misconception?: string;
 }
+
+const MAX_MISCONCEPTIONS = 20;
+const MISCONCEPTION_ID = /^[a-z0-9-]{1,40}$/;
+
+const addMisconceptions = (a: readonly string[], b: readonly string[]) =>
+  [...new Set([...a, ...b])].slice(0, MAX_MISCONCEPTIONS);
 
 const KEY = storageKey('progress:v1');
 
@@ -106,6 +116,16 @@ function parseStep(raw: unknown): StepProgress | undefined {
     }
     step.predicted = { firstRight, bestRight, rows: rowCount };
   }
+  if (raw.misconceptions !== undefined) {
+    const ids = raw.misconceptions;
+    if (
+      !Array.isArray(ids) ||
+      !ids.every((id) => typeof id === 'string' && MISCONCEPTION_ID.test(id))
+    ) {
+      return undefined;
+    }
+    step.misconceptions = addMisconceptions([], ids as string[]);
+  }
   return step;
 }
 
@@ -140,6 +160,9 @@ export function mergeStep(a: StepProgress, b: StepProgress): StepProgress {
   };
   const predicted = mergePredicted(a, b);
   if (predicted) merged.predicted = predicted;
+  if (a.misconceptions || b.misconceptions) {
+    merged.misconceptions = addMisconceptions(a.misconceptions ?? [], b.misconceptions ?? []);
+  }
   return merged;
 }
 
@@ -220,11 +243,14 @@ export const useProgress = create<ProgressState>()((set, get) => {
   return {
     steps: load(),
     visit: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({})),
-    recordAttempt: (lessonId, stepId, { pass, triedRows = [], predicted }) =>
+    recordAttempt: (lessonId, stepId, { pass, triedRows = [], predicted, misconception }) =>
       update(stepKey(lessonId, stepId), (old) => ({
         attempts: old.attempts + 1,
         done: old.done || pass,
         triedRows: [...new Set([...old.triedRows, ...triedRows])].sort((a, b) => a - b),
+        ...(misconception && {
+          misconceptions: addMisconceptions(old.misconceptions ?? [], [misconception]),
+        }),
         ...(predicted && {
           predicted: {
             firstRight: old.predicted?.firstRight ?? predicted.right,

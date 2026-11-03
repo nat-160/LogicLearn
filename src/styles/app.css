@@ -1636,3 +1636,27 @@ button.next {
 .panel > button.primary {
   margin-top: 10px;
 }
+
+/* ---------- Tried-rows nudge ---------- */
+
+.nudge {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: var(--line-width) solid var(--accent);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.nudge-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.nudge .prose {
+  font-size: 14px;
+}
+
+.nudge .button-row {
+  margin: 8px 0 0;
+}

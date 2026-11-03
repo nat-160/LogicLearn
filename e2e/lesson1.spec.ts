@@ -22,6 +22,7 @@ test('Lesson 1 can be completed, and then Lesson 2 opens', async ({ page }, test
   }
   await connect(page, testInfo, ['A', 'out'], ['light-1', 'in']);
   await connect(page, testInfo, ['B', 'out'], ['light-2', 'in']);
+  for (const row of [1, 2, 3]) await press(page.getByTestId(`tt-row-${row}`), testInfo);
   await press(page.getByTestId('check-button'), testInfo);
   await expect(page.getByTestId('check-result')).toContainText('Correct');
   await press(page.getByTestId('next-step'), testInfo);

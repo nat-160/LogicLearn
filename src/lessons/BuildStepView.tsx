@@ -12,14 +12,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { debounce } from '../app/debounce';
 import { CheckResultView } from '../editor/CheckPanel';
 import { summarizeCheck } from '../editor/checkSummary';
+import { misconceptionText } from './misconceptionText';
+import { nudgeTitle } from './sharedMessages';
+import { rowsToTry } from './triedRows';
+import { TriedRowsNudge } from './TriedRowsNudge';
 import { useCheck } from '../editor/useCheck';
 import { Editor } from '../editor/Editor';
-import { useEditor } from '../editor/editorContext';
+import { useEditor, useEditorStore } from '../editor/editorContext';
 import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { INTERFACE_LOCALE } from '../i18n/locales';
-import type { CircuitDoc } from '../sim';
+import { findIO, type CircuitDoc, type Misconception } from '../sim';
 import { HintLadder } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
 import { goNext } from './navigation';
@@ -80,6 +84,7 @@ export function BuildStepView({
           lesson={lesson}
           step={step}
           index={index}
+          blind={blind}
           onChecked={() => setChecked(true)}
           onStartOver={() => {
             store.getState().loadDoc(step.starter, { keepHistory: true });
@@ -111,28 +116,57 @@ function BuildPanel({
   lesson,
   step,
   index,
+  blind,
   onChecked,
   onStartOver,
 }: {
   lesson: Lesson;
   step: BuildStep;
   index: number;
+  blind: boolean;
   onChecked: () => void;
   onStartOver: () => void;
 }) {
   const { result, run } = useCheck();
+  const store = useEditorStore();
   const triedRows = useEditor((s) => s.triedRows);
+  const designVersion = useEditor((s) => s.designVersion);
+  const doc = useEditor((s) => s.doc);
+  const values = useEditor((s) => s.values);
+  const untried = useMemo(
+    () => rowsToTry(doc, values, triedRows, step.spec, blind),
+    [doc, values, triedRows, step.spec, blind],
+  );
+  // The design version the "try every row" nudge was shown for (once per version).
+  const [nudgedAt, setNudgedAt] = useState<number | null>(null);
+  const showNudge = nudgedAt === designVersion && untried.length > 0;
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
   const hints = useHintLadder(lesson, step);
   const isLast = index === lesson.steps.length - 1;
   const tell = useTell();
+  const words = (m: Misconception) => misconceptionText(m, step.locale);
 
   const onCheck = () => {
+    if (untried.length > 0 && nudgedAt !== designVersion) {
+      // Not every row tried yet: suggest trying them first (once per version).
+      setNudgedAt(designVersion);
+      const total = step.spec.expected.length;
+      tell('nudge', nudgeTitle(step.locale, total - untried.length, total), step.locale);
+      return;
+    }
+    runCheck();
+  };
+
+  const runCheck = () => {
     const r = run(step.spec);
-    recordAttempt(lesson.id, step.id, { pass: r.pass, triedRows });
+    recordAttempt(lesson.id, step.id, {
+      pass: r.pass,
+      triedRows,
+      misconception: r.misconception?.id,
+    });
     onChecked();
-    tell('result', summarizeCheck(r), INTERFACE_LOCALE);
+    tell('result', summarizeCheck(r, words), INTERFACE_LOCALE);
   };
 
   return (
@@ -159,7 +193,23 @@ function BuildPanel({
           Start over
         </button>
       </div>
-      {result && <CheckResultView result={result} />}
+      {showNudge && (
+        <TriedRowsNudge
+          inputs={step.spec.inputs}
+          untried={untried}
+          total={step.spec.expected.length}
+          locale={step.locale}
+          onTryRow={(bits) => {
+            const { inputs } = findIO(store.getState().doc);
+            store.getState().setInputs(Object.fromEntries(inputs.map((p, i) => [p.id, bits[i]])));
+          }}
+          onCheckAnyway={() => {
+            setNudgedAt(null);
+            runCheck();
+          }}
+        />
+      )}
+      {result && <CheckResultView result={result} words={words} />}
       {done && (
         <button
           type="button"

@@ -26,6 +26,12 @@ test('complete the first two steps of the demo lesson', async ({ page }, testInf
   await connect(page, testInfo, ['A', 'out'], ['not-1', 'in0']);
   await connect(page, testInfo, ['not-1', 'out'], ['Y', 'in']);
   await press(page.getByTestId('check-button'), testInfo);
+  // Only the A = 0 row was tried: a nudge offers the other row first.
+  await expect(page.getByTestId('tried-rows-nudge')).toContainText('You have tried 1 of 2 rows.');
+  await expect(page.getByTestId('check-result')).toHaveCount(0);
+  await press(page.getByTestId('try-row'), testInfo);
+  await expect(page.getByTestId('try-row')).toHaveCount(0); // every row tried now
+  await press(page.getByTestId('check-button'), testInfo);
   await expect(page.getByTestId('check-result')).toContainText('Correct');
   await press(page.getByTestId('next-step'), testInfo);
   await expect(page.getByRole('heading', { name: 'AND: all inputs must be on' })).toBeVisible();

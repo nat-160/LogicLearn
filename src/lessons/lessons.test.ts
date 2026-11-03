@@ -14,6 +14,8 @@ import {
   findComponentDef,
   findIO,
   GATE_TYPES,
+  MISCONCEPTION_IDS,
+  rowsFromRules,
   type CircuitDoc,
 } from '../sim';
 
@@ -128,6 +130,12 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(step.spec.outputs).toEqual(outputs.map((p) => p.label));
       });
 
+      it('lists rules (if any) that make exactly the expected rows', () => {
+        if (!step.spec.rules) return;
+        expect(step.spec.outputs).toHaveLength(1);
+        expect(rowsFromRules(step.spec.inputs, step.spec.rules)).toEqual(step.spec.expected);
+      });
+
       it('only offers parts that exist', () => {
         for (const type of step.palette) expect(findComponentDef(type), type).toBeDefined();
       });
@@ -155,10 +163,28 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 });
 
 /** Names a file in content/_shared/<locale>/ may have (see lessonText.ts). */
-const SHARED_NAMES = [/^unit-\d+$/, /^gate-[A-Z]+$/, /^nudge-stuck$/, /^predict-reveal$/];
+const SHARED_NAMES = [
+  /^unit-\d+$/,
+  /^gate-[A-Z]+$/,
+  /^misconception-[a-z-]+$/,
+  /^nudge-(stuck|untried-rows)$/,
+  /^predict-reveal$/,
+];
+
+/** The {placeholders} each shared text may use (others would show up unfilled). */
+const PLACEHOLDERS: [RegExp, string[]][] = [
+  [/^misconception-/, ['output', 'input', 'rule']],
+  [/^nudge-untried-rows$/, ['tried', 'total']],
+];
 
 /** Shared files every build needs in en-US. */
-const REQUIRED_SHARED = [...GATE_TYPES.map((t) => `gate-${t}`), 'nudge-stuck', 'predict-reveal'];
+const REQUIRED_SHARED = [
+  ...GATE_TYPES.map((t) => `gate-${t}`),
+  ...MISCONCEPTION_IDS.map((id) => `misconception-${id}`),
+  'nudge-stuck',
+  'nudge-untried-rows',
+  'predict-reveal',
+];
 
 describe('lessons and units', () => {
   it('lessons have unique ids, and each belongs to a unit', () => {
@@ -187,6 +213,17 @@ describe('lessons and units', () => {
   it('lessons only introduce real gates', () => {
     for (const def of LESSON_DEFS) {
       for (const type of def.introduces ?? []) expect(GATE_TYPES, def.id).toContain(type);
+    }
+  });
+
+  it('shared texts only use the placeholders that are filled in', () => {
+    for (const file of listLessonFiles().filter((f) => f.lesson === SHARED_FOLDER)) {
+      const text = findSharedText(file.name, file.locale);
+      const used = [
+        ...`${text?.title} ${text?.prose} ${text?.hints.join(' ')}`.matchAll(/\{([a-z]+)\}/g),
+      ].map((m) => m[1]);
+      const allowed = PLACEHOLDERS.find(([name]) => name.test(file.name))?.[1] ?? [];
+      for (const name of used) expect(allowed, `${file.locale}/${file.name}.md`).toContain(name);
     }
   });
 
