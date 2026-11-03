@@ -15,7 +15,23 @@ src/lessons/content/
       what-is-a-gate.md     one file per step, named by the step's id
       build-not.md
       …
+  unit-1-project/
+    en-US/
+      lesson.md, brief.md, build.md
+      door-alarm.md         a project also has one file per brief, named by its id
+      voting.md
+  _shared/                  text used by many lessons
+    en-US/
+      unit-1.md             a unit's title and summary
+      gate-AND.md           the gate reminder card: one file per gate
+      misconception-xor-as-or.md   feedback for a recognized mistake
+      nudge-untried-rows.md, nudge-stuck.md, predict-reveal.md
 ```
+
+Some shared files contain placeholders in braces, such as `{output}`, `{input}` or
+`{tried}`. Keep them exactly as they are (don't translate the word inside the braces):
+the app fills them in. `npm test` checks that each file only uses the placeholders it is
+given.
 
 A step file looks like this:
 
@@ -69,7 +85,7 @@ lesson text.
 
 ## Not translated yet
 
-- Interface text (buttons, messages), and the checker's explanations and hints, are
-  still English. They are identified by stable codes (`MISSING_IO`, `xor-as-or`, …), so
+- Interface text (buttons, messages, the project checklist), and the checker's other
+  explanations, are still English. They are identified by stable codes (`MISSING_IO`, `xor-as-or`, …), so
   they can move into per-language message files later.
 - Labels inside circuits (A, B, Y) stay as they are.

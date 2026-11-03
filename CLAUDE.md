@@ -28,7 +28,9 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
   `src/sim/circuit.ts` that return a new doc. Simulation values are never stored in it.
 - **New parts go in the registry** (`src/sim/components.ts`) with their `io` role if they
   are inputs/outputs, plus geometry + drawing in `src/editor`. The simulator, truth table
-  and checker must not need changes for a new part.
+  and checker must not need changes for a new part. An output part may have several input
+  pins (the seven-segment display): each pin becomes its own truth-table column, labelled
+  `<label>.<pin>` (`D.a` … `D.g`). Props from files go through the part's `normalizeProps`.
 - **Loaded data is untrusted.** Files, share links and localStorage go through
   `parseCircuit`/`loadCircuit`, which rebuild the doc from checked fields.
 - **Editor state** lives in one zustand store per editor (`src/editor/store.ts`). Design
@@ -54,13 +56,24 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 
 - A lesson is `src/lessons/content/<lesson>/index.ts` (circuits, checks, parts lists –
   no words) plus a folder per language, `<lesson>/en-US/`, with `lesson.md` (title +
-  summary) and one `<step-id>.md` per step (title, text, `<!-- hints -->` list). Register
-  the lesson in `src/lessons/catalog.ts`. Translations: `docs/translating.md`.
+  summary) and one `<step-id>.md` per step (title, text, `<!-- hints -->` list). A project
+  step also has one `<brief-id>.md` per brief. Register the lesson in
+  `src/lessons/catalog.ts`, in course order (gating opens lessons in that order).
+  Translations: `docs/translating.md`.
+- Step kinds (`src/lessons/types.ts`): `explain`, `guided`, `challenge`, `predict` (fill
+  in a circuit's truth table first) and `project` (briefs, the student's own rule, the
+  grader's checklist – `src/sim/grader.ts`). Each has its own view in `src/lessons/`.
+- Text used by many lessons (unit titles, the gate reminder, misconception feedback,
+  nudges) is in `src/lessons/content/_shared/<locale>/`. A new misconception id needs a
+  `misconception-<id>.md` there (a content test checks it).
 - The course author writes the final lesson text. Placeholder text is short bullet points
   and starts with `<!-- draft -->`; remove that line when the real text is in.
-- Every guided/challenge step needs a reference `solution`. `src/lessons/lessons.test.ts`
-  checks that each solution passes and each starter fails.
-- Don't rename a published step `id`: saved progress is keyed by it.
+- Every guided/challenge step needs a reference `solution`, and every project brief an
+  `example` rule and circuit. `src/lessons/lessons.test.ts` checks that each solution
+  passes, each starter fails, and spec labels are in truth-table order.
+- Don't rename a published lesson, step or brief `id`: saved progress and work are keyed
+  by them. Changing a step's locked starter parts (their ids, types or labels) discards
+  students' saved circuits for that step (`starterFingerprint` in `stepWork.ts`).
 
 ## Conventions
 

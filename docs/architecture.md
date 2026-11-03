@@ -22,7 +22,13 @@ How LogicLearn turns a drawing into a working circuit.
  ┌──────┴───────┐      ┌───────────────┐      ┌──────────────────┐
  │ truth table  │ ───► │    checker    │ ───► │ misconception    │
  │ (every row)  │      │ (vs CheckSpec)│      │ signatures       │
- └──────────────┘      └───────────────┘      └──────────────────┘
+ └──────────────┘      └───────┬───────┘      └──────────────────┘
+                               │
+                       ┌───────┴───────┐
+                       │    grader     │  projects: the student's own rule
+                       │ (checklist of │  + criteria → "Done / Not yet"
+                       │   criteria)   │
+                       └───────────────┘
 ```
 
 ## The pieces
@@ -48,7 +54,13 @@ lint rule keep it that way.
 - `checker.ts` – compares a circuit with a **CheckSpec** (labels + expected rows + gate
   rules) and returns exactly which rows are wrong and why.
 - `misconceptions.ts` – recognizes specific mistakes from the _pattern_ of wrong rows,
-  e.g. an XOR built for "not both" is wrong only on the 0,0 row.
+  e.g. an XOR built for "not both" is wrong only on the 0,0 row. It looks at each output
+  on its own, at each rule of a word problem, and for outputs that are inverted or
+  ignore an input.
+- `grader.ts` – grades a project: the circuit against the student's own rule, plus a
+  checklist of criteria (the rule keeps the brief's rows, every output depends on every
+  input, gate counts, required parts). It returns codes and numbers; the lesson screens
+  write the sentences.
 - `serialize.ts` – loading untrusted JSON (files, links, storage) safely.
 
 **`src/editor` — the canvas.** One zustand store per editor holds the document, the
@@ -58,9 +70,21 @@ components draw the gates (hand-made ANSI symbols) and wires. Touch is first-cla
 tap-to-add, tap-to-connect, 36px pin targets, and buttons for every shortcut.
 
 **`src/lessons` — the course.** A lesson is data: steps with starter circuits, reference
-solutions, check specs and hints, plus one Markdown file of text per step. Steps unlock
-in order; progress (no personal data) is saved in the browser. Content tests prove every
-step is solvable and not already solved.
+solutions, check specs and hints, plus one Markdown file of text per step (and shared
+text in `content/_shared/`). There are five step kinds, each with its own view:
+
+- `explain` – text and an example circuit to explore;
+- `guided` and `challenge` – build a circuit, press Check (`BuildStepView`);
+- `predict` – fill in a circuit's truth table before it shows its values;
+- `project` – choose a brief, write your own rule, build, get a checklist.
+
+Lessons open in course order and steps in lesson order (`gating.ts`), with escapes: a
+started lesson stays open, projects never block the next unit, and the test version can
+unlock everything. Progress (no personal data) is saved in the browser; it is checked
+field by field when loaded, and two copies are merged without undoing anything
+(`progress.ts`). Students can save it, with their circuits, to a file and load it
+elsewhere (`progressFile.ts`). Content tests prove every step is solvable and not
+already solved.
 
 **`src/storage`, `src/app`** — localStorage with safe fallbacks, circuit files, share
 links (the circuit is compressed into the link itself, so no server is needed), pages,
