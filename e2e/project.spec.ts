@@ -60,6 +60,13 @@ test('the door alarm: finish the rule, build it, pass every item, then cut a wir
   await expect(page.getByTestId('rule-door-alarm-count')).toHaveText('8 of 8 rows filled in');
   await page.getByTestId('check-project').click();
   await expect(checklist(page).filter({ hasText: 'Not yet:' })).toHaveCount(2);
+  // The OR gate's loose input is unknown (X), so every row where D AND R is 0 is marked.
+  await expect(page.locator('tr.is-wrong')).toHaveCount(6);
+
+  // Changing the rule clears the old marks: they described the old rule.
+  await page.getByTestId('rule-door-alarm-r2-o0-0').check();
+  await expect(page.locator('tr.is-wrong')).toHaveCount(0);
+  await expect(page.getByTestId('project-result')).toHaveCount(0);
 });
 
 test('the voting machine: a rule that ignores a judge is caught before building', async ({

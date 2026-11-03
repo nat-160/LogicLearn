@@ -92,7 +92,7 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
                 <span className="sr-only">Tried</span>
               </th>
               {table.inputs.map((p) => (
-                <th key={p.label} scope="col" className="col-input">
+                <th key={p.id} scope="col" className="col-input">
                   {p.label}
                 </th>
               ))}

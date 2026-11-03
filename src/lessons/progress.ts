@@ -63,68 +63,53 @@ export const isStepKey = (key: string) => STEP_KEY.test(key);
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** A whole number in range, the default when missing, or undefined when it's invalid. */
-function count(v: unknown, fallback = 0): number | undefined {
-  if (v === undefined) return fallback;
+/** A whole number in range, or 0 when it is missing or invalid. */
+function count(v: unknown): number {
   return Number.isInteger(v) && (v as number) >= 0 && (v as number) <= MAX_COUNT
     ? (v as number)
-    : undefined;
+    : 0;
 }
 
-function text(v: unknown): string | undefined {
-  if (v === undefined) return '';
-  return typeof v === 'string' && v.length <= MAX_TEXT ? v : undefined;
+/** A short text (a timestamp), or '' when it is missing or invalid. */
+function text(v: unknown): string {
+  return typeof v === 'string' && v.length <= MAX_TEXT ? v : '';
 }
 
-/** One step's record rebuilt from checked fields, or undefined if it is malformed. */
+const isRow = (r: unknown): r is number =>
+  Number.isInteger(r) && (r as number) >= 0 && (r as number) <= MAX_ROW;
+
+/**
+ * One step's record rebuilt from checked fields, or undefined if it is not a record at
+ * all. A damaged detail (a tried row out of range, a bad count, a score from a newer
+ * version) is dropped or reset on its own: it must never cost the student a finished
+ * step. Only `done` itself has to be right.
+ */
 function parseStep(raw: unknown): StepProgress | undefined {
   if (!isRecord(raw)) return undefined;
   const done = raw.done === undefined ? false : raw.done;
-  const attempts = count(raw.attempts);
-  const hintsUsed = count(raw.hintsUsed);
-  const firstSeen = text(raw.firstSeen);
-  const lastSeen = text(raw.lastSeen);
-  const rows = raw.triedRows === undefined ? [] : raw.triedRows;
-  if (
-    typeof done !== 'boolean' ||
-    attempts === undefined ||
-    hintsUsed === undefined ||
-    firstSeen === undefined ||
-    lastSeen === undefined ||
-    !Array.isArray(rows) ||
-    rows.length > MAX_ROW + 1 ||
-    !rows.every((r) => Number.isInteger(r) && r >= 0 && r <= MAX_ROW)
-  ) {
-    return undefined;
-  }
+  if (typeof done !== 'boolean') return undefined;
+  const rows = Array.isArray(raw.triedRows) ? raw.triedRows.slice(0, MAX_ROW + 1) : [];
   const step: StepProgress = {
     done,
-    attempts,
-    hintsUsed,
-    triedRows: [...new Set(rows as number[])].sort((a, b) => a - b),
-    firstSeen,
-    lastSeen,
+    attempts: count(raw.attempts),
+    hintsUsed: count(raw.hintsUsed),
+    triedRows: [...new Set(rows.filter(isRow))].sort((a, b) => a - b),
+    firstSeen: text(raw.firstSeen),
+    lastSeen: text(raw.lastSeen),
   };
-  if (raw.predicted !== undefined) {
-    const p = raw.predicted;
-    if (!isRecord(p)) return undefined;
-    const firstRight = count(p.firstRight);
-    const bestRight = count(p.bestRight);
-    const rowCount = count(p.rows);
-    if (firstRight === undefined || bestRight === undefined || rowCount === undefined) {
-      return undefined;
-    }
-    step.predicted = { firstRight, bestRight, rows: rowCount };
+  const p = raw.predicted;
+  if (isRecord(p) && [p.firstRight, p.bestRight, p.rows].every((n) => count(n) === n)) {
+    step.predicted = {
+      firstRight: p.firstRight as number,
+      bestRight: p.bestRight as number,
+      rows: p.rows as number,
+    };
   }
-  if (raw.misconceptions !== undefined) {
-    const ids = raw.misconceptions;
-    if (
-      !Array.isArray(ids) ||
-      !ids.every((id) => typeof id === 'string' && MISCONCEPTION_ID.test(id))
-    ) {
-      return undefined;
-    }
-    step.misconceptions = addMisconceptions([], ids as string[]);
+  if (Array.isArray(raw.misconceptions)) {
+    const ids = raw.misconceptions.filter(
+      (id): id is string => typeof id === 'string' && MISCONCEPTION_ID.test(id),
+    );
+    if (ids.length > 0) step.misconceptions = addMisconceptions([], ids);
   }
   return step;
 }
@@ -247,7 +232,10 @@ export const useProgress = create<ProgressState>()((set, get) => {
       update(stepKey(lessonId, stepId), (old) => ({
         attempts: old.attempts + 1,
         done: old.done || pass,
-        triedRows: [...new Set([...old.triedRows, ...triedRows])].sort((a, b) => a - b),
+        // Rows beyond the checker's limit (a circuit with many extra switches) aren't kept.
+        triedRows: [...new Set([...old.triedRows, ...[...triedRows].filter(isRow)])].sort(
+          (a, b) => a - b,
+        ),
         ...(misconception && {
           misconceptions: addMisconceptions(old.misconceptions ?? [], [misconception]),
         }),
@@ -271,7 +259,10 @@ export const useProgress = create<ProgressState>()((set, get) => {
     },
     resetLesson: (lesson) => {
       const steps = mergeProgress(get().steps, load());
-      for (const step of lesson.steps) delete steps[stepKey(lesson.id, step.id)];
+      // Every record of the lesson, including a project brief's ("build--door-alarm").
+      for (const key of Object.keys(steps)) {
+        if (key.startsWith(`${lesson.id}/`)) delete steps[key];
+      }
       set({ steps });
       writeLocal(KEY, JSON.stringify(steps));
     },
@@ -283,11 +274,20 @@ export function isStepDone(steps: ProgressMap, lessonId: string, stepId: string)
 }
 
 /**
- * Steps unlock in order: a step is open once every step before it is done. Once the
- * lesson's last step is done, every step stays open – so a step added to a lesson later
- * never locks a student out of a lesson they already finished.
+ * Steps unlock in order: a step is open once every step before it is done. A step that is
+ * done stays open, and once the lesson's last step is done every step stays open – so a
+ * step added to a lesson later never locks a student out of work they already finished.
+ * The test version's "Unlock all lessons" opens every step too.
  */
-export function isStepUnlocked(steps: ProgressMap, lesson: Lesson, index: number): boolean {
+export function isStepUnlocked(
+  steps: ProgressMap,
+  lesson: Lesson,
+  index: number,
+  unlockAll = false,
+): boolean {
+  if (unlockAll) return true;
+  const step = lesson.steps[index];
+  if (step && isStepDone(steps, lesson.id, step.id)) return true;
   const last = lesson.steps[lesson.steps.length - 1];
   if (last && isStepDone(steps, lesson.id, last.id)) return true;
   return lesson.steps.slice(0, index).every((s) => isStepDone(steps, lesson.id, s.id));

@@ -22,14 +22,48 @@ steps) and test-outs move to Phase 3, as the author decided.
 | P2.11 Unit 2 project           | **Number display**: two switches show 0–3 on the seven-segment display (fixed rule; the example uses 6 gates).                                                                                                                                                          |
 | P2.13 Release                  | These docs, the Milestone 2 demo script, and an independent review (below).                                                                                                                                                                                             |
 
-**Tests:** 497 unit and content tests; 147 browser tests pass locally in Chromium with a
+**Tests:** 507 unit and content tests; 147 browser tests pass locally in Chromium with a
 mouse and with taps only (CI adds Firefox and WebKit). Every build step's solution
 passes and its starter fails; every project brief's example rule and circuit pass the
 grader; every new screen is scanned by axe in all four themes.
 
 ## Independent review
 
-_To be filled in when the review finishes._
+A separate reviewer agent read the whole Phase 2 change without seeing the reasoning
+behind it, and confirmed several findings by running code. Fixed, each with a test:
+
+1. **A finished step could be lost on reload.** One damaged detail in a saved record (a
+   tried row above 1023, from a circuit with 11+ extra switches; a score from a newer
+   version) threw away the whole record, `done` included. Now only the damaged detail is
+   dropped.
+2. **The project checklist could say "undefined never changes…"** when the circuit
+   couldn't be tested at all (a loop, a repeated label). It now says the item is checked
+   once the circuit can be tested.
+3. **Old "✗ wrong" marks stayed after the project rule changed.** Changing the rule now
+   clears them.
+4. **The "Stuck? A hint is ready" note never appeared in projects**, because checks were
+   counted on the project step and hints on the brief. The note now counts the step's
+   checks. (Also found while fixing it: the project steps' own hints were never shown;
+   they moved into the brief files, and a content test keeps them there.)
+5. **"Read this step aloud" skipped the brief's text** on projects, and read the
+   checker's built-in misconception wording instead of the lesson's. Both fixed.
+6. **A finished step could be locked** if an earlier step was not done (a step added
+   later, or an imported file). A done step now always stays open.
+7. **"Unlock all lessons" didn't unlock steps** on the test version. It does now.
+8. **A light labeled "D.a" next to a display "D"** made two columns with one name, and
+   the checker silently used one. It is now reported as a repeated label.
+9. **Duplicate React keys** in the truth table when two switches share a label.
+
+Also added: a content test that every lesson, step and brief id can be saved under the
+progress key pattern.
+
+Not changed:
+
+- A lesson reset made in one tab would not stick in another open tab, since merging never
+  undoes progress. No screen resets a lesson yet; a reset will need a marker that the
+  merge respects.
+- A prediction challenge cycles back to its first circuit after three misses (an author
+  decision; see the summary for options).
 
 ## Changes from the plan
 

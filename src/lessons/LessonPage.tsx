@@ -58,7 +58,7 @@ export function LessonPage({ lessonId, step }: { lessonId: string; step: number 
     );
   }
   const index = Math.min(step, lesson.steps.length) - 1;
-  if (!isStepUnlocked(steps, lesson, index)) {
+  if (!isStepUnlocked(steps, lesson, index, unlockAll)) {
     const firstOpen = lesson.steps.findIndex((s) => !isStepDone(steps, lesson.id, s.id));
     return (
       <div className="page narrow">

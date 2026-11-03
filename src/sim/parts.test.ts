@@ -51,6 +51,23 @@ describe('a seven-segment display', () => {
     ]);
   });
 
+  it('reports a light whose label clashes with one of its columns ("D.a")', () => {
+    const spec = {
+      inputs: ['A'],
+      outputs: SEGMENTS.map((s) => `D.${s}`),
+      expected: [{ inputs: [0 as Bit], outputs: SEGMENTS.map((): Bit => 0) }],
+    };
+    const clash = buildCircuit({
+      parts: [
+        { id: 'A', type: 'SWITCH' },
+        { id: 'D', type: 'SEVEN_SEG' },
+        { id: 'L', type: 'LIGHT', label: 'D.a' },
+      ],
+    });
+    const duplicate = check(clash, spec).diagnostics.filter((d) => d.code === 'DUPLICATE_LABEL');
+    expect(duplicate.map((d) => d.componentIds)).toEqual([['D', 'L']]);
+  });
+
   it('never counts as a gate', () => {
     const spec = {
       inputs: ['A'],

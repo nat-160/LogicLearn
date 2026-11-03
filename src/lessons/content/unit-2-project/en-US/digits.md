@@ -8,6 +8,7 @@
 
 <!-- hints -->
 
-- Segments a and d have the same column – one circuit can drive both.
-- Segment e is on for 0 and 2: whenever B is 0.
-- Segment f is on only for 0: when neither A nor B is on.
+- Some columns are easy: compare segment g's column with switch A's.
+- Segments a and d have the same column – one circuit can drive both. Segment e is on for 0 and 2: whenever B is 0.
+- Segment b is on for every number: A OR (NOT A) is always 1. Segment f is on only for 0: when neither A nor B is on.
+- Show me how: a = d = A OR (NOT B); b = A OR (NOT A); c = (NOT A) OR B; e = NOT B; f = A NOR B; g = A.

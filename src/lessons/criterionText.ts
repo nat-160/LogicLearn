@@ -21,9 +21,12 @@ export function criterionText({ criterion, pass, details = {} }: CriterionResult
         ? 'Your rule uses every input.'
         : `Your rule never uses ${details.input} – should it matter?`;
     case 'outputs-use-every-input':
-      return pass
-        ? 'Every output depends on every input.'
-        : `${details.output} never changes when ${details.input} changes – is ${details.input} connected?`;
+      if (pass) return 'Every output depends on every input.';
+      // No details: the circuit couldn't be tested at all (a loop, a repeated label…).
+      if (details.output === undefined) {
+        return 'Every output should depend on every input – this is checked once your circuit can be tested.';
+      }
+      return `${details.output} never changes when ${details.input} changes – is ${details.input} connected?`;
     case 'min-gates':
       return pass
         ? `Uses at least ${criterion.count} gates.`

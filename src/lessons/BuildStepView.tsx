@@ -178,7 +178,7 @@ function BuildPanel({
       <StepText
         step={step}
         tag={step.kind === 'challenge' ? 'Challenge' : undefined}
-        speech={() => stepSpeech(step, hints.shown, result)}
+        speech={() => stepSpeech(step, hints.shown, result, words)}
       />
 
       <HintLadder step={step} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />

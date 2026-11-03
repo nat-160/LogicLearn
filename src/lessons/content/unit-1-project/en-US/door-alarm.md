@@ -9,6 +9,7 @@
 
 <!-- hints -->
 
+- Read your rule one row at a time: for which rows must the light be on?
 - Start with the rows where the alarm is set (R = 1). Which of them sound the alarm?
 - "Door open **and** alarm set" is one way to sound the alarm. The panic button is another – join the two ways with OR.
 - If panic always works, L = P OR (D AND R).

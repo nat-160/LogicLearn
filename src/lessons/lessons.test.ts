@@ -35,6 +35,7 @@ import {
   localizeLesson,
   SHARED_FOLDER,
 } from './lessonText';
+import { isStepKey } from './progress';
 import { isBuildStep, isPredictStep, isProjectStep } from './types';
 
 describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def) => {
@@ -121,6 +122,10 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
           criteria: brief.criteria,
           ...(brief.constraints && { constraints: brief.constraints }),
         };
+
+        it('keeps hints in the brief, not the project step (only brief hints are shown)', () => {
+          expect(step.hints).toEqual([]);
+        });
 
         it(`has ${DEFAULT_LOCALE} text with at least one hint`, () => {
           expect(findLessonFile(def.id, DEFAULT_LOCALE, briefId)?.locale).toBe(DEFAULT_LOCALE);
@@ -271,6 +276,19 @@ describe('lessons and units', () => {
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
     const units = LESSON_DEFS.map((l) => l.unit);
     expect(units).toEqual([...units].sort((a, b) => a - b));
+  });
+
+  it('uses ids that progress can be saved under (lowercase letters, digits, dashes)', () => {
+    for (const def of LESSON_DEFS) {
+      for (const step of def.steps) {
+        expect(isStepKey(`${def.id}/${step.id}`), `${def.id}/${step.id}`).toBe(true);
+        if (!isProjectStep(step)) continue;
+        for (const brief of step.briefs) {
+          const key = `${def.id}/${step.id}--${brief.id}`;
+          expect(isStepKey(key), key).toBe(true);
+        }
+      }
+    }
   });
 
   it('lessons have unique ids, and each belongs to a unit', () => {

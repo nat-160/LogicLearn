@@ -1,4 +1,11 @@
-import { mergeProgress, mergeStep, parseProgress, type StepProgress } from './progress';
+import {
+  isStepUnlocked,
+  mergeProgress,
+  mergeStep,
+  parseProgress,
+  type StepProgress,
+} from './progress';
+import type { Lesson } from './types';
 
 const step = (over: Partial<StepProgress> = {}): StepProgress => ({
   done: false,
@@ -25,17 +32,31 @@ describe('parseProgress', () => {
     expect(parseProgress(JSON.parse(JSON.stringify(saved)))).toEqual(saved);
   });
 
-  it('drops malformed steps and keeps the rest', () => {
+  it('drops records that are not steps, and keeps the rest', () => {
     const parsed = parseProgress({
       'not-and/good': step({ done: true }),
       '../escape': step(),
       'not-and/not-an-object': 'done',
       'not-and/done-is-text': { ...step(), done: 'yes' },
-      'not-and/negative': { ...step(), attempts: -1 },
-      'not-and/huge-row': { ...step(), triedRows: [5000] },
-      'not-and/long-date': { ...step(), lastSeen: 'x'.repeat(500) },
     });
     expect(Object.keys(parsed)).toEqual(['not-and/good']);
+  });
+
+  it('drops a damaged detail on its own, never the finished step', () => {
+    const parsed = parseProgress({
+      'not-and/negative': { ...step({ done: true }), attempts: -1 },
+      'not-and/huge-row': { ...step({ done: true }), triedRows: [0, 1024, 5000, 'x'] },
+      'not-and/long-date': { ...step({ done: true }), lastSeen: 'x'.repeat(500) },
+      'not-and/newer-score': { ...step({ done: true }), predicted: { firstRight: 'all' } },
+      'not-and/odd-ids': { ...step({ done: true }), misconceptions: ['xor-as-or', 'BAD ID', 7] },
+    });
+    expect(parsed).toEqual({
+      'not-and/negative': step({ done: true }),
+      'not-and/huge-row': step({ done: true, triedRows: [0] }),
+      'not-and/long-date': step({ done: true }),
+      'not-and/newer-score': step({ done: true }),
+      'not-and/odd-ids': step({ done: true, misconceptions: ['xor-as-or'] }),
+    });
   });
 
   it('fills in missing fields, ignores unknown ones, and tidies tried rows', () => {
@@ -94,5 +115,30 @@ describe('mergeProgress', () => {
     );
     expect(Object.keys(merged).sort()).toEqual(['l/a', 'l/b', 'l/c']);
     expect(merged['l/b'].attempts).toBe(2);
+  });
+});
+
+describe('isStepUnlocked', () => {
+  const lesson = {
+    id: 'l',
+    steps: ['a', 'b', 'c', 'd'].map((id) => ({ id })),
+  } as unknown as Lesson;
+  const done = (...ids: string[]) =>
+    Object.fromEntries(ids.map((id) => [`l/${id}`, step({ done: true })]));
+  const open = (steps: ReturnType<typeof done>, unlockAll = false) =>
+    lesson.steps.map((_, i) => isStepUnlocked(steps, lesson, i, unlockAll));
+
+  it('opens steps in order', () => {
+    expect(open({})).toEqual([true, false, false, false]);
+    expect(open(done('a', 'b'))).toEqual([true, true, true, false]);
+  });
+
+  it('keeps a finished step open, even if an earlier one is not done (a step added later)', () => {
+    expect(open(done('a', 'c'))).toEqual([true, true, true, false]);
+  });
+
+  it('opens every step once the last is done, or with "Unlock all lessons"', () => {
+    expect(open(done('d'))).toEqual([true, true, true, true]);
+    expect(open({}, true)).toEqual([true, true, true, true]);
   });
 });

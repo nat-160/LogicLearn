@@ -1,11 +1,12 @@
 /** Lesson title and a dot for each step: done ✓, current, or locked. */
 import { lessonHref } from '../app/routes';
-import { lessonName } from './gating';
+import { lessonName, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import type { Lesson } from './types';
 
 export function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
   const steps = useProgress((s) => s.steps);
+  const unlockAll = useUnlockAll((s) => s.unlockAll);
   return (
     <header className="lesson-header">
       <p className="lesson-kicker">
@@ -14,7 +15,7 @@ export function StepNav({ lesson, index }: { lesson: Lesson; index: number }) {
       <ol className="step-dots" aria-label="Steps">
         {lesson.steps.map((s, i) => {
           const done = isStepDone(steps, lesson.id, s.id);
-          const open = isStepUnlocked(steps, lesson, i);
+          const open = isStepUnlocked(steps, lesson, i, unlockAll);
           const label = `Step ${i + 1}: ${s.title}${done ? ' (done)' : open ? '' : ' (locked)'}`;
           return (
             <li key={s.id}>

@@ -10,15 +10,20 @@ import { stuckText } from './sharedMessages';
 import type { Lesson } from './types';
 import { useTell } from './useTell';
 
-/** `step` can be a step, or a project brief with its own id ("build--door-alarm"). */
+/**
+ * `step` can be a step, or a project brief with its own id ("build--door-alarm"), which
+ * keeps its own revealed hints. `checkedAs` is the step whose checks count towards the
+ * "stuck" note (a brief's checks are recorded on its project step).
+ */
 export function useHintLadder(
   lesson: Lesson,
   step: { id: string; hints: string[]; locale: string },
+  checkedAs: string = step.id,
 ) {
   const key = stepKey(lesson.id, step.id);
   const revealHint = useProgress((s) => s.revealHint);
-  const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
-  const attempts = useProgress((s) => s.steps[key]?.attempts ?? 0);
+  const done = useProgress((s) => isStepDone(s.steps, lesson.id, checkedAs));
+  const attempts = useProgress((s) => s.steps[stepKey(lesson.id, checkedAs)]?.attempts ?? 0);
   const [shown, setShown] = useState(() =>
     Math.min(useProgress.getState().steps[key]?.hintsUsed ?? 0, step.hints.length),
   );

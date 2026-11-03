@@ -117,6 +117,22 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
       });
     }
   }
+  // Different labels can still make the same column: a light labeled "D.a" next to a
+  // display labeled "D". Then the checker couldn't tell which one is meant.
+  const partsByColumn = new Map<string, Set<string>>();
+  for (const part of all) {
+    partsByColumn.set(part.label, (partsByColumn.get(part.label) ?? new Set()).add(part.id));
+  }
+  for (const [label, ids] of partsByColumn) {
+    if (ids.size > 1 && (partsByLabel.get(label)?.size ?? 0) < 2) {
+      diagnostics.push({
+        code: 'DUPLICATE_LABEL',
+        severity: 'error',
+        message: `Two parts both make the truth-table column "${label}". Change one of their labels.`,
+        componentIds: [...ids],
+      });
+    }
+  }
   const findPart = (label: string, role: 'input' | 'output') =>
     (role === 'input' ? io.inputs : io.outputs).find((p) => p.label === label);
   const specInputs = spec.inputs.map((label) => findPart(label, 'input'));

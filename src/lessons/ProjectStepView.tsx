@@ -150,6 +150,8 @@ function BriefView({
   const onChangeRule = (row: number, output: number, bit: Bit) => {
     const next = cells.map((r, i) => (i === row ? r.map((c, o) => (o === output ? bit : c)) : r));
     setCells(next);
+    // Marks from the last check describe the old rule.
+    store.getState().setHighlight({});
     saveProjectWork(key, brief.starter, store.getState().doc, next);
   };
 
@@ -287,7 +289,8 @@ function ProjectPanel({
   const store = useEditorStore();
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
-  const hints = useHintLadder(lesson, { ...brief, id: `${step.id}--${brief.id}` });
+  // Each brief keeps its own revealed hints; checks count on the project step.
+  const hints = useHintLadder(lesson, { ...brief, id: `${step.id}--${brief.id}` }, step.id);
   const tell = useTell();
   const [outcome, setOutcome] = useState<{
     version: number;
@@ -335,7 +338,7 @@ function ProjectPanel({
       <StepText
         step={step}
         tag="Project"
-        speech={() => `${stepSpeech(step, 0, null)} ${brief.title}.`}
+        speech={() => `${stepSpeech(step, 0, null)} ${stepSpeech(brief, hints.shown, null)}`}
       />
       {step.briefs.length > 1 && (
         <fieldset className="brief-choice">
@@ -358,7 +361,13 @@ function ProjectPanel({
         <h2 id="brief-title">{brief.title}</h2>
         <Markdown source={brief.prose} draft={brief.draft} />
       </section>
-      <HintLadder step={brief} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />
+      {/* A brief's last hint shows how, as in guided steps. */}
+      <HintLadder
+        step={{ ...brief, kind: 'guided' }}
+        shown={hints.shown}
+        onShow={hints.show}
+        stuck={hints.stuck}
+      />
       <LessonGateReference lessonId={lesson.id} />
       <div className="lesson-actions">
         <button type="button" className="primary" onClick={onCheck} data-testid="check-project">

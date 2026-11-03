@@ -9,6 +9,7 @@
 
 <!-- hints -->
 
+- Read your rule one row at a time: for which votes must the light be on?
 - Your rule must depend on all three judges – every vote should be able to matter.
 - "Two or more yes votes" (majority) is a common rule. Which pairs of judges can pass a vote together?
 - Majority: Y = (A AND B) OR (C AND (A OR B)).
