@@ -275,6 +275,25 @@ select {
   background: var(--surface-alt);
 }
 
+/* "Your progress" on the lesson list: a card, not a side-panel section. */
+.progress-actions {
+  margin: 0 0 24px;
+  border: var(--line-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.progress-actions p {
+  margin: 0 0 10px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .unit + .unit {
   margin-top: 28px;
 }

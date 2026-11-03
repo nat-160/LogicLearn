@@ -8,6 +8,7 @@ import { useLocale } from '../settings/display';
 import { getLessons, PLANNED_LESSONS, UNITS, unitText } from './catalog';
 import { isLessonUnlocked, prerequisite, useUnlockAll } from './gating';
 import { lessonProgress, useProgress } from './progress';
+import { ProgressActions } from './ProgressActions';
 import type { Lesson } from './types';
 
 type Entry =
@@ -23,6 +24,7 @@ export function LessonList() {
   return (
     <div className="page">
       <h1>Lessons</h1>
+      <ProgressActions />
       {IS_TEST_VERSION && <UnlockAllSwitch />}
       {UNITS.map((unit) => {
         const { title, summary } = unitText(unit, locale);

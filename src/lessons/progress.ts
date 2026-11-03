@@ -36,6 +36,9 @@ const MAX_ROW = 1023; // the checker handles up to 10 inputs
 const MAX_TEXT = 40;
 const STEP_KEY = /^[a-z0-9][a-z0-9-]{0,63}\/[a-z0-9][a-z0-9-]{0,63}$/;
 
+/** Whether `key` looks like "lesson-id/step-id". */
+export const isStepKey = (key: string) => STEP_KEY.test(key);
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -146,6 +149,8 @@ interface ProgressState {
   recordHint(lessonId: string, stepId: string): void;
   complete(lessonId: string, stepId: string): void;
   resetLesson(lesson: Lesson): void;
+  /** Add progress from elsewhere (an imported file), never undoing any progress. */
+  mergeIn(incoming: ProgressMap): void;
 }
 
 export const useProgress = create<ProgressState>()((set, get) => {
@@ -190,6 +195,11 @@ export const useProgress = create<ProgressState>()((set, get) => {
     recordHint: (lessonId, stepId) =>
       update(stepKey(lessonId, stepId), (old) => ({ hintsUsed: old.hintsUsed + 1 })),
     complete: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({ done: true })),
+    mergeIn: (incoming) => {
+      const steps = mergeProgress(mergeProgress(get().steps, load()), incoming);
+      set({ steps });
+      writeLocal(KEY, JSON.stringify(steps));
+    },
     resetLesson: (lesson) => {
       const steps = mergeProgress(get().steps, load());
       for (const step of lesson.steps) delete steps[stepKey(lesson.id, step.id)];

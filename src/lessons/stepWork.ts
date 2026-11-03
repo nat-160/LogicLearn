@@ -7,12 +7,39 @@
  * ignored, so the student starts from the new starter instead of getting stuck.
  */
 import { loadCircuit, type CircuitDoc } from '../sim';
-import { readLocal, storageKey, writeLocal } from '../storage/storage';
+import { listLocalKeys, readLocal, storageKey, writeLocal } from '../storage/storage';
+import { parseSavedWork, type SavedWork } from './progressFile';
 import { stepKey } from './progress';
 
 /** Where a step's work is saved: "logiclearn:work:<lesson>/<step>". */
 export function workKey(lessonId: string, stepId: string): string {
   return storageKey(`work:${stepKey(lessonId, stepId)}`);
+}
+
+const WORK_PREFIX = 'work:';
+
+/** Every saved circuit in this browser, by "lesson/step" (for the progress file). */
+export function readAllWork(): Record<string, SavedWork> {
+  const out: Record<string, SavedWork> = {};
+  for (const name of listLocalKeys(WORK_PREFIX)) {
+    try {
+      const saved = parseSavedWork(JSON.parse(readLocal(storageKey(name)) ?? 'null'));
+      if (saved) out[name.slice(WORK_PREFIX.length)] = saved;
+    } catch {
+      // A damaged save is left out of the file.
+    }
+  }
+  return out;
+}
+
+/** Whether this browser has a saved circuit for "lesson/step". */
+export function hasWork(key: string): boolean {
+  return readLocal(storageKey(`${WORK_PREFIX}${key}`)) !== null;
+}
+
+/** Save a circuit for "lesson/step" (when loading a progress file). */
+export function writeWork(key: string, saved: SavedWork): void {
+  writeLocal(storageKey(`${WORK_PREFIX}${key}`), JSON.stringify(saved));
 }
 
 export function starterFingerprint(starter: CircuitDoc): string {
