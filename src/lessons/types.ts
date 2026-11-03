@@ -4,7 +4,8 @@
  * A lesson is a list of steps, following the course structure: direct instruction
  * ("explain"), then guided construction ("guided": build with a starter circuit and a
  * limited set of parts), then a mastery check ("challenge": less help, sometimes in
- * predict-first mode). Remediation and project steps arrive in Phase 2.
+ * predict-first mode). "predict" steps ask for a circuit's whole truth table before the
+ * circuit shows its values.
  *
  * A lesson comes in two halves:
  *  - its DEFINITION (`LessonDef`, in content/<lesson>/index.ts): ids, circuits, checks,
@@ -13,7 +14,7 @@
  *    text and hints, written in Markdown so they can be edited without touching code.
  * `localizeLesson()` (lessonText.ts) joins the two into a `Lesson` for the chosen language.
  */
-import type { CheckSpec, CircuitDoc } from '../sim';
+import type { CheckRow, CheckSpec, CircuitDoc, Criterion } from '../sim';
 
 interface BaseStepDef {
   /** Stable id, used to save progress and to name the step's text file. Don't rename. */
@@ -40,15 +41,91 @@ export interface BuildStepDef extends BaseStepDef {
    * presses Check, so the task can't be solved by flipping switches until it looks right.
    */
   liveOutputs?: boolean;
-  /** Whether the truth table is shown while building. 'predict' arrives in Phase 2. */
+  /** Whether the truth table is shown while building. */
   truthTable?: 'live' | 'hidden';
+  /**
+   * The task is a truth table ("build a circuit for this table"): while the circuit's
+   * own table is hidden, the target table is shown instead. (A live truth table already
+   * shows the target in its "wanted" column.)
+   */
+  showTarget?: boolean;
 }
 
-export type StepDef = ExplainStepDef | BuildStepDef;
+/**
+ * Predict the truth table of a given circuit, then see the real one (predict → observe →
+ * explain). The circuit is read-only and its values stay hidden until the student
+ * submits a prediction for every row.
+ *  - level 'guided': any complete prediction finishes the step; the answers are shown.
+ *  - level 'challenge': every row must be right. After a miss the wrong rows are shown and
+ *    the student tries the next circuit in `circuits`, so the answer can't be copied.
+ */
+export interface PredictStepDef extends BaseStepDef {
+  kind: 'predict';
+  level: 'guided' | 'challenge';
+  /** Every part locked. A challenge needs at least two circuits with different tables. */
+  circuits: CircuitDoc[];
+}
+
+/**
+ * One choice in an open project ("door alarm", "voting machine"). Its "rule" is the truth
+ * table the circuit must follow:
+ *  - 'student': the brief fixes some rows and the student decides the rest – their own
+ *    rule, which is then graded like any other;
+ *  - 'fixed': the brief gives the whole table.
+ * The grader (src/sim/grader.ts) checks the circuit against the rule and `criteria`.
+ * Its words are in <locale>/<brief id>.md.
+ */
+export interface ProjectBriefDef {
+  /** Stable id: names the text file and the saved work. Don't rename. */
+  id: string;
+  starter: CircuitDoc;
+  palette: string[];
+  /** Input and output labels, in truth-table (label) order. */
+  inputs: string[];
+  outputs: string[];
+  rule: { kind: 'student'; given: CheckRow[] } | { kind: 'fixed'; rows: CheckRow[] };
+  criteria: Criterion[];
+  constraints?: CheckSpec['constraints'];
+  /** A complete rule and a circuit that passes it (tests; the teacher answer key later). */
+  example: { rule: CheckRow[]; solution: CircuitDoc };
+}
+
+/** An open project: choose a brief, write (or read) its rule, build, and get a checklist. */
+export interface ProjectStepDef extends BaseStepDef {
+  kind: 'project';
+  briefs: ProjectBriefDef[];
+}
+
+export type StepDef = ExplainStepDef | BuildStepDef | PredictStepDef | ProjectStepDef;
+
+/**
+ * A short practice step on one idea, offered after a mistake – not one of the lesson's
+ * numbered steps, so adding one never shifts the numbering, and it never counts towards
+ * finishing the lesson. Its text is in <locale>/practice-<id>.md.
+ */
+export type PracticeDef = (BuildStepDef | PredictStepDef) & {
+  /** Misconception ids (src/sim/misconceptions.ts) this practice helps with. */
+  for: string[];
+  /** The lesson steps that offer it: on a matching mistake, or after 3 failed checks. */
+  from: string[];
+};
 
 export interface LessonDef {
   id: string;
   number: number;
+  /** The unit the lesson belongs to (docs/curriculum-outline.md). */
+  unit: number;
+  /**
+   * 'lesson' (the default) or 'project' (a unit's open project). Projects open when their
+   * unit's lessons are done, and never block the next unit.
+   */
+  kind?: 'lesson' | 'project';
+  /** An optional lesson (the editor tour): always open, and never required. */
+  optional?: boolean;
+  /** Gate types this lesson teaches, for the gate reminder card. */
+  introduces?: string[];
+  /** Practice steps, offered from the lesson's steps (never required). */
+  practice?: PracticeDef[];
   /** Curriculum standards covered, e.g. "IB A1.2.3". */
   standards: string[];
   steps: StepDef[];
@@ -69,19 +146,44 @@ export interface StepText {
 
 export type ExplainStep = ExplainStepDef & StepText;
 export type BuildStep = BuildStepDef & StepText;
-export type Step = ExplainStep | BuildStep;
+export type PredictStep = PredictStepDef & StepText;
+export type ProjectBrief = ProjectBriefDef & StepText;
+export type ProjectStep = Omit<ProjectStepDef, 'briefs'> & StepText & { briefs: ProjectBrief[] };
+export type Step = ExplainStep | BuildStep | PredictStep | ProjectStep;
+
+/**
+ * A practice step with its text. Its `id` is "practice-<practice id>" (its progress and
+ * saved work are kept under that id); `practiceId` is the id in the route.
+ */
+export type Practice = (BuildStep | PredictStep) & {
+  practiceId: string;
+  for: string[];
+  from: string[];
+};
 
 /** A lesson with its text in one language: what the lesson screens use. */
-export interface Lesson extends Omit<LessonDef, 'steps'> {
+export interface Lesson extends Omit<LessonDef, 'steps' | 'practice'> {
   title: string;
   /** One sentence for the lesson list. */
   summary: string;
   locale: string;
   steps: Step[];
+  practice: Practice[];
 }
 
 export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDef {
   return step.kind === 'guided' || step.kind === 'challenge';
+}
+
+export function isPredictStep<T extends StepDef>(step: T): step is T & PredictStepDef {
+  return step.kind === 'predict';
+}
+
+/** Works for a step definition (ProjectStepDef) and a localized step (ProjectStep). */
+export function isProjectStep<T extends StepDef | Step>(
+  step: T,
+): step is Extract<T, { kind: 'project' }> {
+  return step.kind === 'project';
 }
 
 /**

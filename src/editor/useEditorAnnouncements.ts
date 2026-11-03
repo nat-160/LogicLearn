@@ -1,20 +1,27 @@
 import { useContext, useEffect } from 'react';
 import { announce } from '../a11y/announcer';
 import { findIO } from '../sim';
-import { partName } from './describe';
+import { describeDisplay, displaySegments, partName } from './describe';
 import { BlindContext, useEditorStore } from './editorContext';
 
 /**
- * Announce when a light changes ("Light Y is now on"), and messages from the editor such
- * as why a connection was refused. Lights are not announced in predict-first mode.
+ * Announce when a light or display changes ("Light Y is now on", "Seven-segment display D
+ * now shows 3"), and messages from the editor such as why a connection was refused.
+ * Outputs are not announced in predict-first mode.
  */
 export function useEditorAnnouncements(): void {
   const store = useEditorStore();
   const blind = useContext(BlindContext);
   useEffect(() => {
+    // What each output shows: a light's value, or a display's description.
     const lightValues = () => {
       const { doc, values } = store.getState();
-      return new Map(findIO(doc).outputs.map((p) => [p.id, values[`${p.id}.in`]]));
+      return new Map(
+        findIO(doc).outputs.map((p) => [
+          p.id,
+          p.pin ? describeDisplay(displaySegments(p.id, values)) : values[`${p.id}.in`],
+        ]),
+      );
     };
     let before = lightValues();
     return store.subscribe((state, previous) => {
@@ -28,7 +35,9 @@ export function useEditorAnnouncements(): void {
         for (const [id, value] of after) {
           if (before.has(id) && before.get(id) !== value && value !== 'X') {
             const part = state.doc.components.find((c) => c.id === id);
-            if (part) changes.push(`${partName(part)} is now ${value === 1 ? 'on' : 'off'}.`);
+            if (!part) continue;
+            if (typeof value === 'string') changes.push(`${partName(part)} now ${value}.`);
+            else changes.push(`${partName(part)} is now ${value === 1 ? 'on' : 'off'}.`);
           }
         }
         if (changes.length) announce(changes.join(' '));

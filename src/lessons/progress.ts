@@ -3,6 +3,11 @@
  * steps are done, how many check attempts and hints were used, which truth-table rows
  * were tried, and when. Later phases use the same records for test-outs, teacher
  * completion codes and the opt-in beta export.
+ *
+ * Saved progress is untrusted data (it may be old, edited, or come from a file), so it is
+ * always rebuilt field by field by parseProgress(). Two copies of progress (another tab, an
+ * imported file) are combined by mergeProgress(), which never undoes progress: a step that
+ * is done stays done, counts only go up, and tried rows are added together.
  */
 import { create } from 'zustand';
 import { readLocal, storageKey, writeLocal } from '../storage/storage';
@@ -12,23 +17,164 @@ export interface StepProgress {
   done: boolean;
   /** How many times Check was pressed. */
   attempts: number;
+  /** The highest hint revealed (1 = the first hint), so hints stay shown after a reload. */
   hintsUsed: number;
   /** Truth-table row numbers tried with the switches. */
   triedRows: number[];
+  /** ISO timestamps; may be empty in old or hand-made records. */
   firstSeen: string;
   lastSeen: string;
+  /** Prediction steps: rows right on the first try and at best, out of `rows`. */
+  predicted?: { firstRight: number; bestRight: number; rows: number };
+  /** Misconceptions recognized in failed checks (ids from the checker), oldest first. */
+  misconceptions?: string[];
 }
+
+/** What one press of Check (or "Check my predictions") found. */
+export interface Attempt {
+  pass: boolean;
+  triedRows?: Iterable<number>;
+  /** Prediction steps: how many rows were predicted right, out of how many. */
+  predicted?: { right: number; rows: number };
+  /** The misconception the checker recognized, if any. */
+  misconception?: string;
+}
+
+const MAX_MISCONCEPTIONS = 20;
+const MISCONCEPTION_ID = /^[a-z0-9-]{1,40}$/;
+
+const addMisconceptions = (a: readonly string[], b: readonly string[]) =>
+  [...new Set([...a, ...b])].slice(0, MAX_MISCONCEPTIONS);
 
 const KEY = storageKey('progress:v1');
 
-type ProgressMap = Record<string, StepProgress>;
+export type ProgressMap = Record<string, StepProgress>;
+
+// Limits for loaded data, so a damaged or hostile file can't fill memory or the screen.
+const MAX_STEPS = 1000;
+const MAX_COUNT = 1_000_000;
+const MAX_ROW = 1023; // the checker handles up to 10 inputs
+const MAX_TEXT = 40;
+const STEP_KEY = /^[a-z0-9][a-z0-9-]{0,63}\/[a-z0-9][a-z0-9-]{0,63}$/;
+
+/** Whether `key` looks like "lesson-id/step-id". */
+export const isStepKey = (key: string) => STEP_KEY.test(key);
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** A whole number in range, or 0 when it is missing or invalid. */
+function count(v: unknown): number {
+  return Number.isInteger(v) && (v as number) >= 0 && (v as number) <= MAX_COUNT
+    ? (v as number)
+    : 0;
+}
+
+/** A short text (a timestamp), or '' when it is missing or invalid. */
+function text(v: unknown): string {
+  return typeof v === 'string' && v.length <= MAX_TEXT ? v : '';
+}
+
+const isRow = (r: unknown): r is number =>
+  Number.isInteger(r) && (r as number) >= 0 && (r as number) <= MAX_ROW;
+
+/**
+ * One step's record rebuilt from checked fields, or undefined if it is not a record at
+ * all. A damaged detail (a tried row out of range, a bad count, a score from a newer
+ * version) is dropped or reset on its own: it must never cost the student a finished
+ * step. Only `done` itself has to be right.
+ */
+function parseStep(raw: unknown): StepProgress | undefined {
+  if (!isRecord(raw)) return undefined;
+  const done = raw.done === undefined ? false : raw.done;
+  if (typeof done !== 'boolean') return undefined;
+  const rows = Array.isArray(raw.triedRows) ? raw.triedRows.slice(0, MAX_ROW + 1) : [];
+  const step: StepProgress = {
+    done,
+    attempts: count(raw.attempts),
+    hintsUsed: count(raw.hintsUsed),
+    triedRows: [...new Set(rows.filter(isRow))].sort((a, b) => a - b),
+    firstSeen: text(raw.firstSeen),
+    lastSeen: text(raw.lastSeen),
+  };
+  const p = raw.predicted;
+  if (isRecord(p) && [p.firstRight, p.bestRight, p.rows].every((n) => count(n) === n)) {
+    step.predicted = {
+      firstRight: p.firstRight as number,
+      bestRight: p.bestRight as number,
+      rows: p.rows as number,
+    };
+  }
+  if (Array.isArray(raw.misconceptions)) {
+    const ids = raw.misconceptions.filter(
+      (id): id is string => typeof id === 'string' && MISCONCEPTION_ID.test(id),
+    );
+    if (ids.length > 0) step.misconceptions = addMisconceptions([], ids);
+  }
+  return step;
+}
+
+/**
+ * Progress rebuilt from untrusted data (localStorage, another tab, a file). Malformed
+ * steps are dropped and the rest is kept; unknown fields are ignored.
+ */
+export function parseProgress(raw: unknown): ProgressMap {
+  const out: ProgressMap = {};
+  if (!isRecord(raw)) return out;
+  for (const [key, value] of Object.entries(raw).slice(0, MAX_STEPS)) {
+    if (!STEP_KEY.test(key)) continue;
+    const step = parseStep(value);
+    if (step) out[key] = step;
+  }
+  return out;
+}
+
+/** The earlier (or later) of two timestamps, ignoring empty ones. */
+const earliest = (a: string, b: string) => (!a ? b : !b ? a : a < b ? a : b);
+const latest = (a: string, b: string) => (a > b ? a : b);
+
+/** Two records of the same step combined, without undoing any progress. */
+export function mergeStep(a: StepProgress, b: StepProgress): StepProgress {
+  const merged: StepProgress = {
+    done: a.done || b.done,
+    attempts: Math.max(a.attempts, b.attempts),
+    hintsUsed: Math.max(a.hintsUsed, b.hintsUsed),
+    triedRows: [...new Set([...a.triedRows, ...b.triedRows])].sort((x, y) => x - y),
+    firstSeen: earliest(a.firstSeen, b.firstSeen),
+    lastSeen: latest(a.lastSeen, b.lastSeen),
+  };
+  const predicted = mergePredicted(a, b);
+  if (predicted) merged.predicted = predicted;
+  if (a.misconceptions || b.misconceptions) {
+    merged.misconceptions = addMisconceptions(a.misconceptions ?? [], b.misconceptions ?? []);
+  }
+  return merged;
+}
+
+/** The first try comes from whichever record started first; the best is the best of both. */
+function mergePredicted(a: StepProgress, b: StepProgress): StepProgress['predicted'] {
+  if (!a.predicted || !b.predicted) return a.predicted ?? b.predicted;
+  const aFirst = !!a.firstSeen && (!b.firstSeen || a.firstSeen <= b.firstSeen);
+  const first = aFirst ? a : b;
+  return {
+    firstRight: first.predicted!.firstRight,
+    bestRight: Math.max(a.predicted.bestRight, b.predicted.bestRight),
+    rows: Math.max(a.predicted.rows, b.predicted.rows),
+  };
+}
+
+/** Two copies of progress combined, step by step (see mergeStep). */
+export function mergeProgress(a: ProgressMap, b: ProgressMap): ProgressMap {
+  const out: ProgressMap = { ...a };
+  for (const [key, step] of Object.entries(b)) {
+    out[key] = out[key] ? mergeStep(out[key], step) : step;
+  }
+  return out;
+}
 
 function load(): ProgressMap {
   try {
-    const parsed: unknown = JSON.parse(readLocal(KEY) ?? '{}');
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as ProgressMap)
-      : {};
+    return parseProgress(JSON.parse(readLocal(KEY) ?? '{}'));
   } catch {
     return {};
   }
@@ -40,15 +186,13 @@ interface ProgressState {
   steps: ProgressMap;
   /** Note that a step was opened. */
   visit(lessonId: string, stepId: string): void;
-  recordAttempt(
-    lessonId: string,
-    stepId: string,
-    passed: boolean,
-    triedRows: Iterable<number>,
-  ): void;
-  recordHint(lessonId: string, stepId: string): void;
+  recordAttempt(lessonId: string, stepId: string, attempt: Attempt): void;
+  /** Note that hint number `level` (1, 2, …) was revealed. */
+  revealHint(lessonId: string, stepId: string, level: number): void;
   complete(lessonId: string, stepId: string): void;
   resetLesson(lesson: Lesson): void;
+  /** Add progress from elsewhere (an imported file), never undoing any progress. */
+  mergeIn(incoming: ProgressMap): void;
 }
 
 export const useProgress = create<ProgressState>()((set, get) => {
@@ -58,7 +202,7 @@ export const useProgress = create<ProgressState>()((set, get) => {
    */
   const update = (key: string, change: (old: StepProgress) => Partial<StepProgress>) => {
     const now = new Date().toISOString();
-    const saved = { ...get().steps, ...load() };
+    const saved = mergeProgress(get().steps, load());
     const old: StepProgress = saved[key] ?? {
       done: false,
       attempts: 0,
@@ -77,25 +221,48 @@ export const useProgress = create<ProgressState>()((set, get) => {
   // Follow progress made in other tabs.
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', (e) => {
-      if (e.key === KEY) set({ steps: load() });
+      if (e.key === KEY) set({ steps: mergeProgress(get().steps, load()) });
     });
   }
 
   return {
     steps: load(),
     visit: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({})),
-    recordAttempt: (lessonId, stepId, passed, triedRows) =>
+    recordAttempt: (lessonId, stepId, { pass, triedRows = [], predicted, misconception }) =>
       update(stepKey(lessonId, stepId), (old) => ({
         attempts: old.attempts + 1,
-        done: old.done || passed,
-        triedRows: [...new Set([...old.triedRows, ...triedRows])].sort((a, b) => a - b),
+        done: old.done || pass,
+        // Rows beyond the checker's limit (a circuit with many extra switches) aren't kept.
+        triedRows: [...new Set([...old.triedRows, ...[...triedRows].filter(isRow)])].sort(
+          (a, b) => a - b,
+        ),
+        ...(misconception && {
+          misconceptions: addMisconceptions(old.misconceptions ?? [], [misconception]),
+        }),
+        ...(predicted && {
+          predicted: {
+            firstRight: old.predicted?.firstRight ?? predicted.right,
+            bestRight: Math.max(old.predicted?.bestRight ?? 0, predicted.right),
+            rows: predicted.rows,
+          },
+        }),
       })),
-    recordHint: (lessonId, stepId) =>
-      update(stepKey(lessonId, stepId), (old) => ({ hintsUsed: old.hintsUsed + 1 })),
+    revealHint: (lessonId, stepId, level) =>
+      update(stepKey(lessonId, stepId), (old) => ({
+        hintsUsed: Math.max(old.hintsUsed, level),
+      })),
     complete: (lessonId, stepId) => update(stepKey(lessonId, stepId), () => ({ done: true })),
+    mergeIn: (incoming) => {
+      const steps = mergeProgress(mergeProgress(get().steps, load()), incoming);
+      set({ steps });
+      writeLocal(KEY, JSON.stringify(steps));
+    },
     resetLesson: (lesson) => {
-      const steps = { ...get().steps, ...load() };
-      for (const step of lesson.steps) delete steps[stepKey(lesson.id, step.id)];
+      const steps = mergeProgress(get().steps, load());
+      // Every record of the lesson, including a project brief's ("build--door-alarm").
+      for (const key of Object.keys(steps)) {
+        if (key.startsWith(`${lesson.id}/`)) delete steps[key];
+      }
       set({ steps });
       writeLocal(KEY, JSON.stringify(steps));
     },
@@ -106,8 +273,23 @@ export function isStepDone(steps: ProgressMap, lessonId: string, stepId: string)
   return steps[stepKey(lessonId, stepId)]?.done ?? false;
 }
 
-/** Steps unlock in order: a step is open once every step before it is done. */
-export function isStepUnlocked(steps: ProgressMap, lesson: Lesson, index: number): boolean {
+/**
+ * Steps unlock in order: a step is open once every step before it is done. A step that is
+ * done stays open, and once the lesson's last step is done every step stays open – so a
+ * step added to a lesson later never locks a student out of work they already finished.
+ * The test version's "Unlock all lessons" opens every step too.
+ */
+export function isStepUnlocked(
+  steps: ProgressMap,
+  lesson: Lesson,
+  index: number,
+  unlockAll = false,
+): boolean {
+  if (unlockAll) return true;
+  const step = lesson.steps[index];
+  if (step && isStepDone(steps, lesson.id, step.id)) return true;
+  const last = lesson.steps[lesson.steps.length - 1];
+  if (last && isStepDone(steps, lesson.id, last.id)) return true;
   return lesson.steps.slice(0, index).every((s) => isStepDone(steps, lesson.id, s.id));
 }
 

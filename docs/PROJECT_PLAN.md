@@ -296,6 +296,7 @@ gates later.
     inputs: string[];                 // labels, in order
     outputs: string[];
     expected: TruthTableRow[];        // data only; lesson authors may use rowsFrom(fn) to generate
+    rules?: RulePart[];               // Phase 2: a word problem's rules (expected = their AND)
     constraints?: {                   // gate constraints never count I/O parts
       allowedTypes?: string[];        // e.g. only NAND
       maxGates?: number;
@@ -312,9 +313,14 @@ gates later.
     mismatches: { inputs: Bit[]; expected: Bit[]; actual: Value[] }[];
     diagnostics: Diagnostic[];  // MISSING_IO, EXTRA_IO, DUPLICATE_LABEL, UNCONNECTED_INPUT,
                                 // OUTPUT_UNKNOWN, HAS_CYCLE, OSCILLATES,
-                                // DISALLOWED_TYPE, TOO_MANY_GATES
+                                // DISALLOWED_TYPE, TOO_MANY_GATES, MISSING_REQUIRED_TYPE
+    misconception?: Misconception;  // Phase 2: the recognized mistake, if any
   }
   ```
+
+- **Multi-pin outputs (Phase 2).** An output part with several input pins (the
+  seven-segment display) gives one column per pin, labelled `D.a` … `D.g`, in pin order.
+  Missing or duplicate labels are reported once per part.
 
 - **Misconception signatures.** Phase 1 builds the data and tests it; Phase 2 adds the hint
   text. Each signature is a target gate, a common wrong gate, and the set of rows where the
@@ -327,6 +333,20 @@ gates later.
   | XOR ("one or the other, not both") | OR | {1,1} | "What should happen when *both* are on?" |
   | ¬A + B ("if A then B"; Lesson 6) | AND | {0,0}, {0,1} | "If A is off, has the rule been broken?" |
   | Any spec | — | only the all-zeros row | "Did you check the case where every input is 0?" |
+
+  **Phase 2** checks these per output column, and per rule of a word problem (`rules`:
+  each rule's operator swapped for its common wrong one). Two more patterns: an output
+  that is the **opposite** of the wanted one in every row (`inverted-output`), and an
+  output that **ignores an input** it should depend on (`ignores-input`, the "by itself
+  needs a NOT" mistake). The feedback text is in `content/_shared/<locale>/misconception-<id>.md`,
+  with `{output}`, `{input}` and `{rule}` filled in, and the id is saved in progress.
+
+- **Grader (Phase 2, `src/sim/grader.ts`).** For projects: `grade(doc, spec)` checks the
+  circuit against the student's own rule and returns a **checklist** of criteria, each
+  passed or not, with details: `matches-rule`, `rule-keeps-rows` (the brief's given rows),
+  `rule-uses-every-input`, `outputs-use-every-input`, `min-gates`, `max-gates`,
+  `uses-part`. `gradeRule(spec)` checks the rule alone, before anything is built. The
+  grader returns codes and numbers; the lesson screens write the sentences.
 
 ### 3.7 Lesson framework
 
@@ -347,19 +367,36 @@ gates later.
     `hints[]`, and a **reference solution**.
   - `challenge`: the end-of-lesson mastery check. It has the same shape as `guided` but
     gives less help.
-  - `remediation` *(Phase 2)*: smaller guided steps, chosen by misconception signature.
-  - `project` *(Phase 2)*: open-ended, checked against basic criteria.
+  - `predict` *(Phase 2)*: fill in a read-only circuit's whole truth table before it shows
+    its values (`guided`: any complete prediction reveals the answers; `challenge`: every
+    row must be right, and a miss brings a different circuit).
+  - `project` *(Phase 2)*: one or more **briefs**. A brief fixes some rows of the truth
+    table (or all of them); the student fills in the rest ("Your rule"), builds it, and
+    gets the grader's checklist. Each brief ships an example rule and circuit.
+  - Practice steps *(Phase 2, P2.12)*: short build or predict steps offered after a
+    recognized mistake, or after 3 failed checks. They sit outside the numbered steps
+    (`#/lesson/<id>/practice/<id>`), so numbering never shifts, and never count towards
+    finishing a lesson.
 - **Step options (seams):**
   - `liveOutputs: boolean` (default true). When false, lights show "?" until the student
     presses Check: the "predict first" / blind mode.
-  - `truthTable: "live" | "hidden" | "predict"`. `predict` is Phase 2.
+  - `truthTable: "live" | "hidden"`.
+  - `showTarget` *(Phase 2)*: the task is a table ("build this"), so a hidden truth table
+    is replaced by the target table.
 - **Every guided or challenge step ships a reference solution.** A content test in CI asserts
   that each **solution passes** its `CheckSpec` and each **starter circuit fails** it. This
   catches unsolvable or trivially solved steps before students see them, which matters more
   as lessons are written quickly in Phase 2.
 - **Progress store** (localStorage, versioned) records, for each step: status, number of
-  attempts, hints used, the input rows the student tried, and first/last timestamps. It holds
-  **no personal information**. These fields cost almost nothing now; later they drive
+  attempts, the highest hint revealed, the input rows the student tried, first/last
+  timestamps, and (Phase 2) prediction scores and recognized misconception ids. It holds
+  **no personal information**. Loaded progress is rebuilt field by field
+  (`parseProgress`), and two copies are combined without undoing progress
+  (`mergeProgress`: done stays done, counts take the larger value, rows are added).
+- **Gating (Phase 2, `gating.ts`).** Steps open in order; a lesson opens when the previous
+  required lesson's last step is done. Escapes: the optional editor tour is always open,
+  a started lesson stays open, a unit's project opens after its last lesson but never
+  blocks the next unit, and the test version has "Unlock all lessons". These fields cost almost nothing now; later they drive
   gating, test-outs, completion codes and the opt-in beta export.
   - **Durability.** Safari's tracking prevention can erase a site's localStorage after
     7 days without a visit (Home Screen web apps are exempt), and shared or guest-mode
@@ -702,6 +739,19 @@ The author's beta testing (2026-10-29) added §3.9 and §3.10:
 
 ### Phase 2: Lessons and guidance (Nov 2 – Nov 13, M2)
 
+> **Detailed plan:** [phase-2-plan.md](phase-2-plan.md) (approved Nov 3): research, schemas,
+> 13 work packages, lesson-by-lesson content and the schedule. The author decided: strict
+> lesson gating with escapes; no hint pacing; Unit 1 project briefs where the student fills
+> in the open rows; practice steps only if ahead, test-outs in Phase 3. Prediction mode
+> moved up, because Lesson 4 needs it.
+>
+> **Status:** built ahead of schedule (P2.1–P2.13): Lessons 0–8, both unit projects,
+> gating, progress files, the hint ladder and gate reminder, prediction mode,
+> misconception feedback v2, the tried-rows nudge, the grader, practice steps, and the
+> push button, seven-segment display and light colors. Test-outs are in Phase 3.
+> Summary: [phase-2-report.md](phase-2-report.md); demo script:
+> [milestone-2-demo.md](milestone-2-demo.md).
+
 This is the heaviest phase. Work in this **priority order**:
 
 1. **Lessons 1–4**, progress gating, the hint ladder (progressive hints, plus a gate-reference
@@ -937,3 +987,13 @@ on the old code:
 - "Connections (keyboard)" was renamed **View and edit connections**: the tool is useful
   to everyone, not just keyboard users.
 - Narration was confirmed working.
+
+**v5, Phase 2** (2026-11-03). Built from [phase-2-plan.md](phase-2-plan.md); the
+details are in [phase-2-report.md](phase-2-report.md). Spec changes:
+
+- §3.6: `CheckSpec.rules`, per-output and per-rule misconceptions, `inverted-output`
+  and `ignores-input`, multi-pin outputs, and the grader.
+- §3.7: the `predict` and `project` step kinds, `showTarget`, the progress fields,
+  `parseProgress`/`mergeProgress`, and lesson gating. `truthTable: "predict"` became the
+  `predict` step kind; remediation became practice steps (built, since Phase 2 ran ahead).
+- §6: Phase 2 status. Test-outs move to Phase 3, as the author decided.

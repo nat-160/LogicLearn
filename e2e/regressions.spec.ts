@@ -2,7 +2,7 @@
  * Regression tests for defects found by an independent review of the UI.
  */
 import { expect, test } from '@playwright/test';
-import { addPart, light, press, switchButton } from './helpers';
+import { addPart, light, press, seedProgress, switchButton } from './helpers';
 
 const nodes = (page: import('@playwright/test').Page) => page.locator('.react-flow__node');
 
@@ -95,21 +95,10 @@ test('lesson progress from another tab is kept', async ({ context }, testInfo) =
 
 test('a light in a predict-first step cannot be read through the truth table', async ({ page }) => {
   // Covered by the challenge test; here: Start over hides values again.
-  await page.addInitScript(() => {
-    const done = {
-      done: true,
-      attempts: 1,
-      hintsUsed: 0,
-      triedRows: [],
-      firstSeen: '',
-      lastSeen: '',
-    };
-    const steps = ['what-is-a-gate', 'build-not', 'meet-and', 'build-and'];
-    localStorage.setItem(
-      'logiclearn:progress:v1',
-      JSON.stringify(Object.fromEntries(steps.map((s) => [`not-and/${s}`, done]))),
-    );
-  });
+  await seedProgress(
+    page,
+    ['what-is-a-gate', 'build-not', 'meet-and', 'build-and'].map((s) => `not-and/${s}`),
+  );
   await page.goto('#/lesson/not-and/5');
   await page.getByTestId('check-button').click();
   await expect(light(page, 'Y')).toHaveAttribute('aria-label', /Light Y: (on|off|unknown)/);

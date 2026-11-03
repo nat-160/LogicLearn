@@ -35,6 +35,14 @@ are used only if you choose one.
   keys move it.
 - In the truth table, **Enter** on a row sets the switches to that row.
 - **Ctrl+Z / Ctrl+Shift+Z** undo and redo.
+- A **push button** is held down while **Space** or **Enter** is held. With a screen
+  reader, which often sends a single click instead, one click holds it down and the next
+  lets it go (the button says which).
+- **Prediction tables and project rules:** each cell is a pair of radio buttons, 0 and 1.
+  **Tab** moves from cell to cell and the **arrow keys** choose. "Check my predictions"
+  moves focus to the first blank cell, if any.
+- A table too wide for its panel (such as the seven-segment display's) can be focused
+  and scrolled with the arrow keys.
 
 ### Screen readers and other reading tools
 
@@ -53,8 +61,10 @@ The conventions:
   - revealed hints;
   - parts added or deleted;
   - connections made or removed;
-  - lights changing;
-  - circuits that never settle.
+  - lights changing, and the digit a display shows;
+  - circuits that never settle;
+  - the "try every row" and "stuck?" notes;
+  - prediction results and the project checklist's summary.
 - Parts and wires on the canvas have names ("AND gate 1", "Wire from Switch A to AND
   gate 1, input 1"). After a delete, focus stays nearby instead of jumping to the top.
 - In predict-first challenges, light values stay hidden from screen readers too, until
@@ -66,8 +76,12 @@ The conventions:
   in `app.css` or a component. Each theme redefines the tokens.
 - **Never use color as the only cue.**
   - Wires: thick = 1, thin = 0, dashed = unknown.
-  - Wrong truth-table rows also say "✗ wrong".
+  - Wrong truth-table rows also say "✗ wrong"; prediction cells say "✓ right" or "✗ wrong".
   - The current row has a bar on its left.
+  - Project checklist lines start with "Done:" or "Not yet:".
+  - A light's color is part of its name ("Light L: on (red)"); unlit display segments
+    are drawn as outlines.
+  - Locked lessons say what to finish first, with a 🔒 that is only decoration.
 - **Announce changes** with `announce()` from `src/a11y/announcer.ts`. Don't create new
   `aria-live` regions or `role="alert"` banners. Regions that appear together with their
   message are often not read, and a banner plus `announce()` is read twice. Messages
@@ -102,3 +116,7 @@ The conventions:
 - [ ] Windows contrast theme (forced colors): wires and lights are still distinguishable.
 - [ ] Browser zoom at 200%: nothing is cut off, and the lesson text still reads well.
 - [ ] Dyslexia font on: the palette, toolbar and lesson panel don't overflow.
+- [ ] A screen reader on a push button: one activation holds it, the next lets it go.
+- [ ] A prediction step and the Unit 1 project with NVDA or VoiceOver: the radio cells
+      are read with their row and column, and the checklist is read after "Check my
+      project".

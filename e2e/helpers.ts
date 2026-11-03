@@ -31,3 +31,35 @@ export function light(page: Page, label: string): Locator {
 export function switchButton(page: Page, label: string): Locator {
   return page.getByRole('button', { name: new RegExp(`^Switch ${label}: (on|off)`) });
 }
+
+/** Where lesson progress is saved on the live build (the build the e2e tests run). */
+export const PROGRESS_KEY = 'logiclearn:progress:v1';
+
+/**
+ * Mark lesson steps as done before the page loads ("not-and/build-not" etc.). Progress
+ * that is already saved is kept and merged, so a reload during a test keeps what the
+ * test did.
+ */
+export async function seedProgress(page: Page, stepKeys: string[]): Promise<void> {
+  await page.addInitScript(
+    ([key, keys]) => {
+      let saved: Record<string, object> = {};
+      try {
+        saved = JSON.parse(localStorage.getItem(key) ?? '{}') ?? {};
+      } catch {
+        // start fresh
+      }
+      const done = {
+        done: true,
+        attempts: 1,
+        hintsUsed: 0,
+        triedRows: [],
+        firstSeen: '',
+        lastSeen: '',
+      };
+      for (const k of keys) saved[k] = { ...done, ...(saved[k] ?? {}), done: true };
+      localStorage.setItem(key, JSON.stringify(saved));
+    },
+    [PROGRESS_KEY, stepKeys] as const,
+  );
+}

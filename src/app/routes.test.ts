@@ -12,6 +12,12 @@ describe('parseRoute', () => {
       step: 3,
     });
     expect(parseRoute('#/share/abc-123')).toEqual({ page: 'share', data: 'abc-123' });
+    expect(parseRoute('#/lesson/or-xor/practice/both-on')).toEqual({
+      page: 'lesson',
+      lessonId: 'or-xor',
+      step: 1,
+      practice: 'both-on',
+    });
   });
 
   it('defaults to step 1 for a missing or bad step number', () => {

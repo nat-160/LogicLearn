@@ -73,7 +73,8 @@ export function Editor({
                 {lead}
               </aside>
             )}
-            {!readOnly && <Palette types={palette} />}
+            {/* A step can offer no parts at all (e.g. "label and wire these"). */}
+            {!readOnly && palette.length > 0 && <Palette types={palette} />}
             <div className="editor-main">
               {!readOnly && <Toolbar>{toolbarExtras}</Toolbar>}
               <Canvas readOnly={readOnly} />

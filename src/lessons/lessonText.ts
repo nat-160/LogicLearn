@@ -23,6 +23,7 @@ import {
   HINTS_PATTERN,
   type Lesson,
   type LessonDef,
+  type Practice,
   type Step,
   type StepText,
 } from './types';
@@ -116,21 +117,72 @@ function findStepText(
   return undefined;
 }
 
+/**
+ * Text shared by many lessons – unit titles, the gate reminder card, feedback messages –
+ * lives in content/_shared/<locale>/<name>.md, in the same format as a step file.
+ */
+export const SHARED_FOLDER = '_shared';
+
+/** A shared text file in the given language (or en-US if it isn't translated yet). */
+export function findSharedText(
+  name: string,
+  locale: string,
+  files: LessonFiles = FILES,
+): StepText | undefined {
+  return findStepText(SHARED_FOLDER, locale, name, files);
+}
+
+/**
+ * Fill in {placeholders} such as {tried} or {output} in a shared text. Placeholders that
+ * aren't given are left as they are, so a mistake shows up instead of vanishing.
+ */
+export function fillPlaceholders(text: string, params: Record<string, string | number>): string {
+  return text.replace(/\{([a-z]+)\}/g, (whole, name: string) =>
+    name in params ? String(params[name]) : whole,
+  );
+}
+
 /** Join a lesson definition with its text in the given language. */
 export function localizeLesson(def: LessonDef, locale: string, files: LessonFiles = FILES): Lesson {
   const info = findLessonFile(def.id, locale, 'lesson', files);
   const { title, summary } = parseLessonInfo(info?.text ?? '');
-  const steps = def.steps.map((stepDef): Step => {
-    const text = findStepText(def.id, locale, stepDef.id, files) ?? {
+  /** A text file's words, or empty text (the title falls back to the id). */
+  const textOf = (name: string) =>
+    findStepText(def.id, locale, name, files) ?? {
       title: '',
       prose: '',
       hints: [],
       draft: false,
       locale,
     };
-    return { ...stepDef, ...text, title: text.title || stepDef.id };
+  const steps = def.steps.map((stepDef): Step => {
+    const text = textOf(stepDef.id);
+    const step = { ...stepDef, ...text, title: text.title || stepDef.id };
+    if (stepDef.kind !== 'project') return step as Step;
+    // A project's briefs each have their own text file, named by the brief's id.
+    return {
+      ...step,
+      kind: 'project',
+      briefs: stepDef.briefs.map((brief) => {
+        const briefText = textOf(brief.id);
+        return { ...brief, ...briefText, title: briefText.title || brief.id };
+      }),
+    };
   });
-  return { ...def, title: title || def.id, summary, locale: info?.locale ?? locale, steps };
+  // Practice steps: text in practice-<id>.md, progress kept under the same name.
+  const practice = (def.practice ?? []).map((p): Practice => {
+    const id = `practice-${p.id}`;
+    const text = textOf(id);
+    return { ...p, ...text, id, practiceId: p.id, title: text.title || id } as Practice;
+  });
+  return {
+    ...def,
+    title: title || def.id,
+    summary,
+    locale: info?.locale ?? locale,
+    steps,
+    practice,
+  };
 }
 
 /** The names of every text file, by lesson and locale (for the content tests). */

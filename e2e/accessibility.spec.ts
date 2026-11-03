@@ -4,7 +4,7 @@
  */
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { press } from './helpers';
+import { press, seedProgress } from './helpers';
 
 const html = (page: Page) => page.locator('html');
 
@@ -168,11 +168,61 @@ const THEMES = [
   { name: 'high-contrast light', prefs: { contrast: 'high', colorScheme: 'light' } },
   { name: 'high-contrast dark', prefs: { contrast: 'high', colorScheme: 'dark' } },
 ];
-const PAGES = [
+const PAGES: {
+  name: string;
+  hash: string;
+  open?: string;
+  seed?: string[];
+  add?: string[];
+  /** Test ids to click once the page is open (in order). */
+  click?: string[];
+}[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
   { name: 'lesson step', hash: '#/lesson/not-and/1' },
+  {
+    name: 'lesson step with the gate reminder open',
+    hash: '#/lesson/not-and/1',
+    open: 'Gate reminder',
+  },
   { name: 'sandbox', hash: '#/sandbox' },
+  {
+    name: 'sandbox with a push button and a display',
+    hash: '#/sandbox',
+    add: ['PUSH_BUTTON', 'SEVEN_SEG'],
+  },
+  {
+    name: 'prediction step',
+    hash: '#/lesson/circuit-to-table/2',
+    seed: ['not-and/challenge', 'or-xor/exactly-one', 'circuit-to-table/count-the-rows'],
+  },
+  {
+    name: 'project with its checklist',
+    hash: '#/lesson/unit-1-project/2',
+    seed: ['circuit-to-table/challenge', 'unit-1-project/brief'],
+    click: ['rule-door-alarm-r2-o0-1', 'rule-door-alarm-r6-o0-0', 'check-project'],
+  },
+  {
+    name: 'challenge with a target table',
+    hash: '#/lesson/table-to-circuit/4',
+    seed: [
+      'circuit-to-table/challenge',
+      'table-to-circuit/one-row-at-a-time',
+      'table-to-circuit/by-itself',
+      'table-to-circuit/two-rows',
+    ],
+  },
+  {
+    name: 'practice step',
+    hash: '#/lesson/or-xor/practice/both-on',
+    seed: ['not-and/challenge'],
+  },
+  {
+    name: 'number display project',
+    hash: '#/lesson/unit-2-project/2',
+    seed: ['adders/two-bit-adder', 'unit-2-project/brief'],
+    click: ['check-project'],
+  },
 ];
 
 test.describe('focus on the highlighted truth-table row', () => {
@@ -210,7 +260,11 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
           (prefs) => localStorage.setItem('logiclearn:prefs:v1', JSON.stringify(prefs)),
           theme.prefs,
         );
+        if (target.seed) await seedProgress(page, target.seed);
         await page.goto(target.hash);
+        if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
+        for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
+        for (const id of target.click ?? []) await page.getByTestId(id).click();
         await page.waitForTimeout(300);
         const results = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -228,20 +282,7 @@ test.describe('without a pointer', () => {
   test.skip(({ hasTouch }) => !!hasTouch, 'keyboard flow');
 
   test('a lesson circuit can be built and checked with the keyboard alone', async ({ page }) => {
-    await page.addInitScript(() => {
-      const done = {
-        done: true,
-        attempts: 0,
-        hintsUsed: 0,
-        triedRows: [],
-        firstSeen: '',
-        lastSeen: '',
-      };
-      localStorage.setItem(
-        'logiclearn:progress:v1',
-        JSON.stringify({ 'not-and/what-is-a-gate': done }),
-      );
-    });
+    await seedProgress(page, ['not-and/what-is-a-gate']);
     await page.goto('#/lesson/not-and/2');
 
     // Add a NOT gate: focus the palette button and press Enter.
@@ -267,6 +308,7 @@ test.describe('without a pointer', () => {
       'Switch A → NOT gate 1, input',
     );
 
+    await page.getByTestId('tt-row-1').press('Enter'); // try every row before checking
     await page.getByTestId('check-button').press('Enter');
     await expect(page.getByTestId('check-result')).toContainText('Correct');
     await expect(page.getByTestId('announcer')).toContainText('Correct! Every row matches.');
@@ -275,20 +317,7 @@ test.describe('without a pointer', () => {
   test('parts and wires on the canvas have names, and deleting keeps focus nearby', async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      const done = {
-        done: true,
-        attempts: 0,
-        hintsUsed: 0,
-        triedRows: [],
-        firstSeen: '',
-        lastSeen: '',
-      };
-      localStorage.setItem(
-        'logiclearn:progress:v1',
-        JSON.stringify({ 'not-and/what-is-a-gate': done }),
-      );
-    });
+    await seedProgress(page, ['not-and/what-is-a-gate']);
     await page.goto('#/lesson/not-and/2');
     await page.getByTestId('palette-NOT').press('Enter');
     const gate = page.getByRole('group', { name: 'NOT gate 1' });

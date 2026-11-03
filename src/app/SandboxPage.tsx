@@ -8,6 +8,10 @@ import { Inspector } from '../editor/Inspector';
 import { createEditorStore } from '../editor/store';
 import { TARGETS } from '../editor/targets';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
+import { GateReference } from '../lessons/GateReference';
+import { misconceptionText } from '../lessons/misconceptionText';
+import { useLocale } from '../settings/display';
+import { GATE_TYPES } from '../sim';
 import { loadSandbox, requestPersistentStorage, saveSandbox } from '../storage/storage';
 import { debounce } from './debounce';
 import { exampleCircuit } from './exampleCircuit';
@@ -33,6 +37,7 @@ export function SandboxPage() {
   }, [autosave]);
 
   const target = TARGETS.find((t) => t.id === targetId);
+  const locale = useLocale();
   return (
     <>
       <h1 className="sr-only">Sandbox</h1>
@@ -42,8 +47,15 @@ export function SandboxPage() {
         side={
           <>
             <Inspector />
-            <TargetCheckPanel targetId={targetId} onTargetChange={setTargetId} />
+            <TargetCheckPanel
+              targetId={targetId}
+              onTargetChange={setTargetId}
+              words={(m) => misconceptionText(m, locale)}
+            />
             <TruthTablePanel spec={target?.spec} />
+            <section className="panel" aria-label="Gate reminder">
+              <GateReference gates={GATE_TYPES} />
+            </section>
           </>
         }
       />
