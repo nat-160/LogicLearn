@@ -26,6 +26,8 @@ export interface Preferences {
   voiceURI: string | null;
   /** Lesson language (BCP 47); null = the browser's language, if available. */
   locale: string | null;
+  /** Sound effects (a chime when a lesson is finished). Off unless chosen: classrooms. */
+  sounds: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -36,6 +38,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   speechRate: 1,
   voiceURI: null,
   locale: null,
+  sounds: false,
 };
 
 export const PREFERENCES_KEY = storageKey('prefs:v1');
@@ -55,6 +58,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
     speechRate: Math.min(2, Math.max(0.5, rate)),
     voiceURI: shortText(p.voiceURI),
     locale: shortText(p.locale),
+    sounds: p.sounds === true,
   };
 }
 

@@ -1934,3 +1934,140 @@ a.button.next {
 .icon-segment {
   fill: var(--segment-on);
 }
+
+/* ---------- Celebration (CompletePage.tsx) ---------- */
+
+.celebration {
+  text-align: center;
+}
+
+.celebration .button-row {
+  justify-content: center;
+}
+
+.celebration-art {
+  position: relative;
+  display: inline-block;
+  margin: 8px auto 4px;
+}
+
+.celebration-title {
+  margin-top: -8px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.badge-ring {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 6;
+}
+
+.badge-inner {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.badge-ribbon {
+  fill: var(--accent);
+}
+
+.badge-mark {
+  fill: var(--accent-text);
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.unit-complete {
+  padding: 8px 12px;
+  border: var(--line-width) solid var(--ok);
+  border-radius: 6px;
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+/* A burst of dots around the badge, once. Hidden when the device asks for less motion. */
+.burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.burst-dot {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: burst 1.1s ease-out 0.1s 1 both;
+}
+
+.burst-dot:nth-child(3n + 1) {
+  background: var(--ok);
+}
+
+.burst-dot:nth-child(3n + 2) {
+  background: var(--warning);
+}
+
+.dot-0 {
+  --dx: -90px;
+  --dy: -40px;
+}
+.dot-1 {
+  --dx: 90px;
+  --dy: -40px;
+}
+.dot-2 {
+  --dx: -70px;
+  --dy: 50px;
+}
+.dot-3 {
+  --dx: 70px;
+  --dy: 50px;
+}
+.dot-4 {
+  --dx: 0;
+  --dy: -85px;
+}
+.dot-5 {
+  --dx: -100px;
+  --dy: 5px;
+}
+.dot-6 {
+  --dx: 100px;
+  --dy: 5px;
+}
+.dot-7 {
+  --dx: -40px;
+  --dy: -80px;
+}
+.dot-8 {
+  --dx: 40px;
+  --dy: -80px;
+}
+.dot-9 {
+  --dx: 0;
+  --dy: 80px;
+}
+
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burst {
+    display: none;
+  }
+}

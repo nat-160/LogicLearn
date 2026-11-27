@@ -218,6 +218,11 @@ const PAGES: {
     seed: ['not-and/challenge'],
   },
   {
+    name: 'celebration',
+    hash: '#/lesson/signals/complete',
+    seed: ['signals/fan-out'],
+  },
+  {
     name: 'number display project',
     hash: '#/lesson/unit-2-project/2',
     seed: ['adders/two-bit-adder', 'unit-2-project/brief'],

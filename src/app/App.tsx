@@ -129,7 +129,8 @@ function useNoPagePinchZoom() {
 /** A new key per page (and per lesson step) gives each one a fresh editor. */
 function routeKey(route: Route): string {
   if (route.page !== 'lesson') return route.page;
-  return `lesson/${route.lessonId}/${route.practice ? `practice/${route.practice}` : route.step}`;
+  const where = route.view ?? (route.practice ? `practice/${route.practice}` : route.step);
+  return `lesson/${route.lessonId}/${where}`;
 }
 
 function Page({ route }: { route: Route }) {
@@ -141,7 +142,14 @@ function Page({ route }: { route: Route }) {
     case 'lessons':
       return <LessonList />;
     case 'lesson':
-      return <LessonPage lessonId={route.lessonId} step={route.step} practice={route.practice} />;
+      return (
+        <LessonPage
+          lessonId={route.lessonId}
+          step={route.step}
+          practice={route.practice}
+          view={route.view}
+        />
+      );
     case 'share':
       return <SharePage data={route.data} />;
     case 'not-found':

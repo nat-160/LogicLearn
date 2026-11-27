@@ -7,6 +7,8 @@
  *   #/lessons                lesson list
  *   #/lesson/<id>/<step>     a lesson step (step numbers start at 1)
  *   #/lesson/<id>/practice/<practice id>   a practice step, outside the numbering
+ *   #/lesson/<id>/complete   the celebration when a lesson is finished
+ *   #/lesson/<id>/walkthrough   the lesson's walkthrough (a step-by-step explanation)
  *   #/share/<data>           a circuit someone shared
  */
 import { useEffect, useState } from 'react';
@@ -15,9 +17,19 @@ export type Route =
   | { page: 'home' }
   | { page: 'sandbox' }
   | { page: 'lessons' }
-  | { page: 'lesson'; lessonId: string; step: number; practice?: string }
+  | {
+      page: 'lesson';
+      lessonId: string;
+      step: number;
+      practice?: string;
+      /** A page about the whole lesson rather than one step. */
+      view?: LessonView;
+    }
   | { page: 'share'; data: string }
   | { page: 'not-found'; path: string };
+
+export type LessonView = 'complete' | 'walkthrough';
+const LESSON_VIEWS: readonly string[] = ['complete', 'walkthrough'];
 
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/^#/, '') || '/';
@@ -25,6 +37,9 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 0) return { page: 'home' };
   if (parts[0] === 'sandbox' && parts.length === 1) return { page: 'sandbox' };
   if (parts[0] === 'lessons' && parts.length === 1) return { page: 'lessons' };
+  if (parts[0] === 'lesson' && parts[1] && LESSON_VIEWS.includes(parts[2])) {
+    return { page: 'lesson', lessonId: parts[1], step: 1, view: parts[2] as LessonView };
+  }
   if (parts[0] === 'lesson' && parts[1] && parts[2] === 'practice' && parts[3]) {
     return { page: 'lesson', lessonId: parts[1], step: 1, practice: parts[3] };
   }
@@ -42,6 +57,10 @@ export function parseRoute(hash: string): Route {
 
 export function lessonHref(lessonId: string, step = 1): string {
   return `#/lesson/${lessonId}/${step}`;
+}
+
+export function lessonViewHref(lessonId: string, view: LessonView): string {
+  return `#/lesson/${lessonId}/${view}`;
 }
 
 export function practiceHref(lessonId: string, practiceId: string): string {

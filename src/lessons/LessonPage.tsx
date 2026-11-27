@@ -13,13 +13,14 @@
  * see Settings); check results and revealed hints are announced to screen readers; and
  * the page heading receives focus when the step changes (App.tsx).
  */
-import { lessonHref } from '../app/routes';
+import { lessonHref, type LessonView } from '../app/routes';
 import { useLocale } from '../settings/display';
 import { BuildStepView } from './BuildStepView';
 import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
 import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
+import { CompletePage } from './CompletePage';
 import { practiceReturnIndex } from './practice';
 import { PredictStepView } from './PredictStepView';
 import { ProjectStepView } from './ProjectStepView';
@@ -29,11 +30,14 @@ export function LessonPage({
   lessonId,
   step,
   practice: practiceId,
+  view,
 }: {
   lessonId: string;
   step: number;
   /** A practice step's id (#/lesson/<id>/practice/<practice id>). */
   practice?: string;
+  /** A page about the whole lesson (#/lesson/<id>/complete). */
+  view?: LessonView;
 }) {
   const lessons = getLessons(useLocale());
   const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
@@ -68,6 +72,7 @@ export function LessonPage({
       </div>
     );
   }
+  if (view === 'complete') return <CompletePage lesson={lesson} lessons={lessons} />;
   if (practiceId !== undefined) {
     // Practice is open whenever its lesson is, and never required.
     const practice = lesson.practice.find((p) => p.practiceId === practiceId);

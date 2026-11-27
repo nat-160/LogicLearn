@@ -25,12 +25,24 @@ describe('preferences', () => {
 
   it('ignore broken or hostile saved data', () => {
     expect(
-      sanitizePreferences({ contrast: 'purple', speechRate: 99, dyslexiaFont: 'yes', voiceURI: 7 }),
+      sanitizePreferences({
+        contrast: 'purple',
+        speechRate: 99,
+        dyslexiaFont: 'yes',
+        voiceURI: 7,
+        sounds: 'loud',
+      }),
     ).toEqual({
       ...DEFAULT_PREFERENCES,
       speechRate: 2,
     });
     expect(sanitizePreferences(null)).toEqual(DEFAULT_PREFERENCES);
+  });
+
+  it('keep sound effects off unless they were turned on', () => {
+    expect(DEFAULT_PREFERENCES.sounds).toBe(false);
+    expect(sanitizePreferences({ sounds: true }).sounds).toBe(true);
+    expect(sanitizePreferences({ sounds: 1 }).sounds).toBe(false);
   });
 
   it('reset forgets every choice', () => {
