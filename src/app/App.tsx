@@ -6,6 +6,8 @@ import { useEffect, useRef } from 'react';
 import { useAnnouncer } from '../a11y/announcer';
 import { LessonList } from '../lessons/LessonList';
 import { LessonPage } from '../lessons/LessonPage';
+import { ReportPage } from '../lessons/ReportPage';
+import { TeacherPage } from '../lessons/TeacherPage';
 import { SettingsButton } from '../settings/SettingsDialog';
 import { HomePage } from './HomePage';
 import { useRoute, type Route } from './routes';
@@ -128,6 +130,7 @@ function useNoPagePinchZoom() {
 
 /** A new key per page (and per lesson step) gives each one a fresh editor. */
 function routeKey(route: Route): string {
+  if (route.page === 'teacher') return route.guide ? 'teacher/guide' : 'teacher';
   if (route.page !== 'lesson') return route.page;
   const where = route.view ?? (route.practice ? `practice/${route.practice}` : route.step);
   return `lesson/${route.lessonId}/${where}`;
@@ -152,6 +155,10 @@ function Page({ route }: { route: Route }) {
       );
     case 'share':
       return <SharePage data={route.data} />;
+    case 'report':
+      return <ReportPage />;
+    case 'teacher':
+      return <TeacherPage guideOnly={route.guide} />;
     case 'not-found':
       return (
         <div className="page narrow">

@@ -12,13 +12,14 @@ import { useEffect, useRef } from 'react';
 import { lessonHref } from '../app/routes';
 import { playChime } from '../app/sounds';
 import { usePreferences } from '../settings/preferences';
-import { isLessonComplete, lessonName, nextStepFor, useUnlockAll } from './gating';
+import { isLessonComplete, lessonName, nextStepFor, useUnlockAll, useUnlocked } from './gating';
 import { useProgress } from './progress';
 import type { Lesson } from './types';
 
 export function CompletePage({ lesson, lessons }: { lesson: Lesson; lessons: readonly Lesson[] }) {
   const steps = useProgress((s) => s.steps);
   const unlockAll = useUnlockAll((s) => s.unlockAll);
+  const unlocked = useUnlocked((s) => s.unlocked);
   const sounds = usePreferences((s) => s.sounds);
   const complete = isLessonComplete(steps, lesson);
   const name = lessonName(lesson);
@@ -44,7 +45,7 @@ export function CompletePage({ lesson, lessons }: { lesson: Lesson; lessons: rea
     );
   }
 
-  const next = nextStepFor(steps, lessons, unlockAll);
+  const next = nextStepFor(steps, lessons, unlockAll, unlocked);
   const unitLessons = lessons.filter(
     (l) => l.unit === lesson.unit && (l.kind ?? 'lesson') === 'lesson' && !l.optional,
   );
@@ -75,6 +76,12 @@ export function CompletePage({ lesson, lessons }: { lesson: Lesson; lessons: rea
         </p>
       )}
       {lesson.summary && <p className="muted">{lesson.summary}</p>}
+      {lesson.kind === 'test-out' && (
+        <p className="unit-complete" data-testid="unit-complete">
+          <strong>You tested out of Unit {lesson.unit}.</strong> Its lessons count as done, so you
+          can go straight on – and its project is open.
+        </p>
+      )}
       {unitDone && (
         <p className="unit-complete" data-testid="unit-complete">
           <strong>Unit {lesson.unit} complete!</strong>

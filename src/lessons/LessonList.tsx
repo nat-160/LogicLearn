@@ -6,7 +6,15 @@ import { lessonHref } from '../app/routes';
 import { IS_TEST_VERSION } from '../app/site';
 import { useLocale } from '../settings/display';
 import { getLessons, PLANNED_LESSONS, UNITS, unitText } from './catalog';
-import { isLessonUnlocked, lessonName, prerequisite, useUnlockAll } from './gating';
+import {
+  isLessonUnlocked,
+  isUnitTestedOut,
+  lessonName,
+  prerequisite,
+  useUnlockAll,
+  useUnlocked,
+} from './gating';
+import { UnlockCodeForm } from './UnlockCodeForm';
 import { lessonProgress, useProgress } from './progress';
 import { ProgressActions } from './ProgressActions';
 import type { Lesson } from './types';
@@ -18,6 +26,7 @@ type Entry =
 export function LessonList() {
   const steps = useProgress((s) => s.steps);
   const unlockAll = useUnlockAll((s) => s.unlockAll);
+  const unlocked = useUnlocked((s) => s.unlocked);
   const locale = useLocale();
   const lessons = getLessons(locale);
 
@@ -61,7 +70,7 @@ export function LessonList() {
                   );
                 }
                 const { lesson, index } = entry;
-                if (!isLessonUnlocked(steps, lessons, index, unlockAll)) {
+                if (!isLessonUnlocked(steps, lessons, index, unlockAll, unlocked)) {
                   const before = prerequisite(lessons, index);
                   return (
                     <li key={lesson.id} className="lesson-card is-locked">
@@ -75,10 +84,16 @@ export function LessonList() {
                         <span aria-hidden>🔒 </span>
                         {before ? `Finish ${lessonName(before)} first` : 'Locked'}
                       </span>
+                      <UnlockCodeForm lessonId={lesson.id} name={lessonName(lesson)} />
                     </li>
                   );
                 }
                 const { done, total } = lessonProgress(steps, lesson);
+                const testedOut =
+                  done < total &&
+                  (lesson.kind ?? 'lesson') === 'lesson' &&
+                  !lesson.optional &&
+                  isUnitTestedOut(steps, lessons, lesson.unit);
                 return (
                   <li key={lesson.id} className="lesson-card">
                     <a href={lessonHref(lesson.id)}>
@@ -93,6 +108,8 @@ export function LessonList() {
                           <>
                             <span aria-hidden>✔ </span>Done
                           </>
+                        ) : testedOut ? (
+                          'Tested out'
                         ) : (
                           `${done} of ${total} steps`
                         )}
@@ -126,8 +143,15 @@ function UnlockAllSwitch() {
   );
 }
 
-/** A lesson's number badge; a unit project gets a star instead. */
+/** A lesson's number badge; a unit project gets a star, a test-out a "skip" mark. */
 function LessonNumber({ lesson }: { lesson: Lesson }) {
+  if (lesson.kind === 'test-out') {
+    return (
+      <span className="lesson-number" aria-hidden>
+        »
+      </span>
+    );
+  }
   if (lesson.kind === 'project') {
     return (
       <span className="lesson-number" aria-hidden>
@@ -138,8 +162,8 @@ function LessonNumber({ lesson }: { lesson: Lesson }) {
   return <span className="lesson-number">{lesson.number}</span>;
 }
 
-/** "Unit 1 project" above a project's title (lessons need no tag: their number says it). */
+/** "Unit 1 project" or "Unit 1 test-out" above the title (lessons' numbers say it). */
 function LessonKind({ lesson }: { lesson: Lesson }) {
-  if (lesson.kind !== 'project') return null;
+  if (lesson.kind !== 'project' && lesson.kind !== 'test-out') return null;
   return <span className="lesson-kind">{lessonName(lesson)}</span>;
 }

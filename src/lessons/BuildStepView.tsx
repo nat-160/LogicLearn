@@ -158,17 +158,19 @@ function BuildPanel({
   const showNudge = nudgedAt === designVersion && untried.length > 0;
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
+  // A test-out is a test: no hints worked out from the circuit, and no offers of help.
+  const testOut = lesson.kind === 'test-out';
   // After the written hints come two worked out from the circuit as it is now – except in
   // a predict-first challenge before its first Check, where they would reveal values.
   const generated = useMemo<GeneratedHint[]>(
     () =>
-      blind
+      blind || testOut
         ? []
         : [
             { title: 'Look at your circuit', hint: lookHint(doc, step.spec) },
             { title: 'Try one row', hint: rowHint(doc, step.spec) },
           ],
-    [blind, doc, step.spec],
+    [blind, testOut, doc, step.spec],
   );
   const hints = useHintLadder(lesson, {
     ...step,
@@ -177,7 +179,7 @@ function BuildPanel({
   const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
   // After a failed check: a practice step on the recognized mistake (or after a few tries).
   const offer =
-    result && !result.pass && !practice
+    result && !result.pass && !practice && !testOut
       ? findPractice(lesson, step.id, result.misconception?.id, attempts)
       : undefined;
   const tell = useTell();
@@ -203,7 +205,10 @@ function BuildPanel({
     });
     onChecked();
     const practiceOffered =
-      !r.pass && !practice && findPractice(lesson, step.id, r.misconception?.id, attempts + 1);
+      !r.pass &&
+      !practice &&
+      !testOut &&
+      findPractice(lesson, step.id, r.misconception?.id, attempts + 1);
     tell(
       'result',
       summarizeCheck(r, words) + (practiceOffered ? ' A short practice is offered below.' : ''),
@@ -259,7 +264,7 @@ function BuildPanel({
       )}
       {result && <CheckResultView result={result} words={words} />}
       {offer && <PracticeOffer lesson={lesson} practice={offer} />}
-      {result && !result.pass && <WalkthroughOffer lesson={lesson} />}
+      {result && !result.pass && !testOut && <WalkthroughOffer lesson={lesson} />}
       {done && <NextStepButton lesson={lesson} index={index} practice={practice} />}
     </div>
   );

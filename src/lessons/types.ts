@@ -144,10 +144,11 @@ export interface LessonDef {
   /** The unit the lesson belongs to (docs/curriculum-outline.md). */
   unit: number;
   /**
-   * 'lesson' (the default) or 'project' (a unit's open project). Projects open when their
-   * unit's lessons are done, and never block the next unit.
+   * 'lesson' (the default), 'project' (a unit's open project: opens when the unit's
+   * lessons are done, never blocks the next unit) or 'test-out' (an optional quiz that
+   * lets a student skip the unit; no hints).
    */
-  kind?: 'lesson' | 'project';
+  kind?: 'lesson' | 'project' | 'test-out';
   /** An optional lesson (the editor tour): always open, and never required. */
   optional?: boolean;
   /** Gate types this lesson teaches, for the gate reminder card. */

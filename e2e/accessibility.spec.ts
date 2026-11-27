@@ -176,6 +176,8 @@ const PAGES: {
   add?: string[];
   /** Test ids to click once the page is open (in order). */
   click?: string[];
+  /** Open in teacher view. */
+  teacher?: boolean;
 }[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
@@ -222,6 +224,9 @@ const PAGES: {
     hash: '#/lesson/or-xor/walkthrough',
     seed: ['not-and/challenge'],
   },
+  { name: 'progress report', hash: '#/report', seed: ['not-and/challenge'] },
+  { name: 'teacher view', hash: '#/teacher', teacher: true },
+  { name: 'teacher guide', hash: '#/teacher/guide', teacher: true },
   {
     name: 'celebration',
     hash: '#/lesson/signals/complete',
@@ -271,6 +276,9 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
           theme.prefs,
         );
         if (target.seed) await seedProgress(page, target.seed);
+        if (target.teacher) {
+          await page.addInitScript(() => localStorage.setItem('logiclearn:teacher', '1'));
+        }
         await page.goto(target.hash);
         if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
         for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
@@ -296,6 +304,9 @@ test.describe('text alternatives', () => {
       page,
     }) => {
       if (target.seed) await seedProgress(page, target.seed);
+      if (target.teacher) {
+        await page.addInitScript(() => localStorage.setItem('logiclearn:teacher', '1'));
+      }
       await page.goto(target.hash);
       if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
       for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();

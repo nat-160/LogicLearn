@@ -2099,3 +2099,103 @@ a.button.next {
   margin: 0;
   line-height: var(--leading);
 }
+
+/* ---------- Teacher view, progress report, unlock codes ---------- */
+
+.teacher-section {
+  margin-top: 16px;
+}
+
+.teacher-section h2 {
+  margin-top: 0;
+}
+
+.teacher-code,
+.teacher-section form,
+.unlock-code form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.report-table th,
+.report-table td {
+  padding: 6px 8px;
+  border-bottom: var(--line-width) solid var(--border);
+  text-align: left;
+}
+
+.report-table td.code {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.completion-code strong {
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.06em;
+}
+
+.answer-key details {
+  margin: 8px 0;
+  padding: 6px 10px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+}
+
+.answer-key summary {
+  min-height: 32px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.answer-heading {
+  margin: 10px 0 4px;
+  font-size: 15px;
+}
+
+.answer-table {
+  width: auto;
+}
+
+.unlock-code {
+  flex-basis: 100%;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.unlock-code summary {
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .app-header,
+  .no-print,
+  .skip-link,
+  .report-name {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+    font-weight: 700;
+  }
+}
+
+/* A locked card's "Have a code from your teacher?" goes on its own line. */
+.lesson-card.is-locked {
+  flex-wrap: wrap;
+}

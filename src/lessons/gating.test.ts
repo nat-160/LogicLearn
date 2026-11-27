@@ -1,4 +1,4 @@
-import { isLessonUnlocked, lessonName, nextStepFor, prerequisite } from './gating';
+import { isLessonDone, isLessonUnlocked, lessonName, nextStepFor, prerequisite } from './gating';
 import type { ProgressMap, StepProgress } from './progress';
 import type { Lesson } from './types';
 
@@ -91,5 +91,50 @@ describe('nextStepFor', () => {
   it('skips complete lessons and projects, and ends when everything is done', () => {
     expect(nextStepFor(progress('one/c'), lessons)).toMatchObject({ lesson: { id: 'two' } });
     expect(nextStepFor(progress('one/c', 'two/c', 'three/c'), lessons)).toBeUndefined();
+  });
+});
+
+describe('test-outs and unlock codes', () => {
+  const testOut1 = lesson('test-out-1', 1, { kind: 'test-out' });
+  const testOut2 = lesson('test-out-2', 2, { kind: 'test-out' });
+  const four = lesson('four', 2);
+  const course = [tour, testOut1, one, two, project, testOut2, three, four];
+  const openIn = (steps: ProgressMap, unlocked: ReadonlySet<string> = new Set()) =>
+    course.map((l, i) => (isLessonUnlocked(steps, course, i, false, unlocked) ? l.id : '-'));
+
+  it("opens Unit 1's test-out from the start, and Unit 2's after Unit 1", () => {
+    expect(openIn({})).toEqual(['tour', 'test-out-1', 'one', '-', '-', '-', '-', '-']);
+    expect(openIn(progress('one/c', 'two/c'))).toEqual([
+      'tour',
+      'test-out-1',
+      'one',
+      'two',
+      'project-1',
+      'test-out-2',
+      'three',
+      '-',
+    ]);
+  });
+
+  it("passing a test-out counts the unit's lessons as done, without marking their steps", () => {
+    const passed = progress('test-out-1/c');
+    expect(isLessonDone(passed, course, two)).toBe(true);
+    expect(openIn(passed)).toEqual([
+      'tour',
+      'test-out-1',
+      'one',
+      'two',
+      'project-1',
+      'test-out-2',
+      'three',
+      '-',
+    ]);
+    expect(nextStepFor(passed, course)?.lesson.id).toBe('three');
+    expect(passed['two/c']).toBeUndefined();
+  });
+
+  it('opens a lesson unlocked with a code, and names test-outs', () => {
+    expect(openIn({}, new Set(['three']))[6]).toBe('three');
+    expect(lessonName(testOut2)).toBe('Unit 2 test-out');
   });
 });

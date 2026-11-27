@@ -126,8 +126,9 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         }
       });
 
-      it('has at least one hint', () => {
-        expect(step.hints.length).toBeGreaterThan(0);
+      it('has at least one hint (a test-out has none: it is a test)', () => {
+        if (def.kind === 'test-out') expect(step.hints).toEqual([]);
+        else expect(step.hints.length).toBeGreaterThanOrEqual(1);
       });
     });
   }
@@ -266,7 +267,9 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
       });
 
       it('has at least one written hint (two more are worked out from the circuit)', () => {
-        expect(step.hints.length).toBeGreaterThanOrEqual(1);
+        // A test-out is a test: no hints at all.
+        if (def.kind === 'test-out') expect(step.hints).toEqual([]);
+        else expect(step.hints.length).toBeGreaterThanOrEqual(1);
       });
 
       it("lists the spec's inputs and outputs in the order the truth table shows them", () => {

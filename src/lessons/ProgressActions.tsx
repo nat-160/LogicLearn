@@ -87,6 +87,12 @@ export function ProgressActions() {
           {message}
         </p>
       )}
+      <p className="small">
+        <a href="#/report" data-testid="report-link">
+          Print my progress report
+        </a>{' '}
+        (with a completion code your teacher can check)
+      </p>
     </section>
   );
 }

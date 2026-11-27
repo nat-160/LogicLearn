@@ -10,6 +10,8 @@
  *   #/lesson/<id>/complete   the celebration when a lesson is finished
  *   #/lesson/<id>/walkthrough   the lesson's walkthrough (a step-by-step explanation)
  *   #/share/<data>           a circuit someone shared
+ *   #/report                 the student's printable progress report
+ *   #/teacher                the teacher view (#/teacher/guide: the printable guide)
  */
 import { useEffect, useState } from 'react';
 
@@ -26,6 +28,8 @@ export type Route =
       view?: LessonView;
     }
   | { page: 'share'; data: string }
+  | { page: 'report' }
+  | { page: 'teacher'; guide: boolean }
   | { page: 'not-found'; path: string };
 
 export type LessonView = 'complete' | 'walkthrough';
@@ -37,6 +41,10 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 0) return { page: 'home' };
   if (parts[0] === 'sandbox' && parts.length === 1) return { page: 'sandbox' };
   if (parts[0] === 'lessons' && parts.length === 1) return { page: 'lessons' };
+  if (parts[0] === 'report' && parts.length === 1) return { page: 'report' };
+  if (parts[0] === 'teacher' && parts.length <= 2 && (parts[1] ?? 'guide') === 'guide') {
+    return { page: 'teacher', guide: parts[1] === 'guide' };
+  }
   if (parts[0] === 'lesson' && parts[1] && LESSON_VIEWS.includes(parts[2])) {
     return { page: 'lesson', lessonId: parts[1], step: 1, view: parts[2] as LessonView };
   }

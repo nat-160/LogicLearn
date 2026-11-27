@@ -18,7 +18,14 @@ import { useLocale } from '../settings/display';
 import { BuildStepView } from './BuildStepView';
 import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
-import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
+import {
+  isLessonUnlocked,
+  lessonName,
+  nextStepFor,
+  prerequisite,
+  useUnlockAll,
+  useUnlocked,
+} from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import { CompletePage } from './CompletePage';
 import { WalkthroughPage } from './WalkthroughPage';
@@ -45,6 +52,7 @@ export function LessonPage({
   const lesson = lessons[lessonIndex];
   const steps = useProgress((s) => s.steps);
   const unlockAll = useUnlockAll((s) => s.unlockAll);
+  const unlocked = useUnlocked((s) => s.unlocked);
   if (!lesson) {
     return (
       <div className="page narrow">
@@ -53,10 +61,10 @@ export function LessonPage({
       </div>
     );
   }
-  if (!isLessonUnlocked(steps, lessons, lessonIndex, unlockAll)) {
+  if (!isLessonUnlocked(steps, lessons, lessonIndex, unlockAll, unlocked)) {
     // Lessons open in order (gating.ts). Point to the lesson to do first.
     const before = prerequisite(lessons, lessonIndex);
-    const next = nextStepFor(steps, lessons, unlockAll);
+    const next = nextStepFor(steps, lessons, unlockAll, unlocked);
     return (
       <div className="page narrow">
         <h1>Not unlocked yet</h1>
