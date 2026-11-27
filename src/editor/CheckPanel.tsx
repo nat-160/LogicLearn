@@ -8,10 +8,17 @@
  * <CheckResultView>.
  */
 import { announce } from '../a11y/announcer';
-import type { CheckResult } from '../sim';
-import { checkerWords, summarizeCheck, type MisconceptionWordsFor } from './checkSummary';
+import type { Bit, CheckResult } from '../sim';
+import {
+  checkerWords,
+  exampleText,
+  rowText,
+  summarizeCheck,
+  type MisconceptionWordsFor,
+} from './checkSummary';
 import { TARGETS } from './targets';
-import { useCheck } from './useCheck';
+import { useEditorStore } from './editorContext';
+import { inputsForRow, useCheck } from './useCheck';
 
 export function CheckResultView({
   result,
@@ -24,6 +31,7 @@ export function CheckResultView({
   const errors = result.diagnostics.filter((d) => d.severity === 'error');
   const warnings = result.diagnostics.filter((d) => d.severity === 'warning');
   const wrong = result.mismatches.length;
+  const example = exampleText(result);
   return (
     <div
       className={`check-result ${result.pass ? 'pass' : 'fail'}`}
@@ -39,6 +47,11 @@ export function CheckResultView({
           </>
         )}
       </p>
+      {example && result.example && (
+        <p className="check-example" data-testid="check-example">
+          {example} <SetRowButton labels={result.labels.inputs} bits={result.example.inputs} />
+        </p>
+      )}
       {result.misconception && (
         <div className="misconception" data-misconception={result.misconception.id}>
           <p>{words(result.misconception).summary}</p>
@@ -64,6 +77,36 @@ export function CheckResultView({
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * Sets the switches to one row of the task, so the student can see what their circuit
+ * does there (wires and lights show the values). Inside an editor only.
+ */
+export function SetRowButton({
+  labels,
+  bits,
+  children = 'Set the switches to this row',
+}: {
+  labels: readonly string[];
+  bits: readonly Bit[];
+  children?: string;
+}) {
+  const store = useEditorStore();
+  return (
+    <button
+      type="button"
+      className="link-button"
+      onClick={() => {
+        const { doc, setInputs } = store.getState();
+        setInputs(inputsForRow(doc, labels, bits));
+        announce(`Switches set: ${rowText(labels, bits)}.`);
+      }}
+      data-testid="set-row"
+    >
+      {children}
+    </button>
   );
 }
 

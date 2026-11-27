@@ -46,6 +46,23 @@ export function useCheck() {
 }
 
 /**
+ * Switch settings for one row of a task, given by its input labels. Inputs the task
+ * doesn't mention are set to 0, as the checker does.
+ */
+export function inputsForRow(
+  doc: CircuitDoc,
+  labels: readonly string[],
+  bits: readonly Bit[],
+): Record<string, Bit> {
+  return Object.fromEntries(
+    findIO(doc).inputs.map((part) => {
+      const i = labels.indexOf(part.label);
+      return [part.id, i >= 0 ? bits[i] : 0];
+    }),
+  );
+}
+
+/**
  * The truth-table row (in the circuit's own input order) for a row of a spec. The circuit
  * may have extra inputs the spec doesn't mention; the checker holds those at 0.
  */

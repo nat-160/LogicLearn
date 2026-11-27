@@ -7,6 +7,7 @@
  * exactly which rows are wrong, and why – so the UI can highlight those rows and the hint
  * system can respond to the specific mistake.
  */
+import { pickExampleRow } from './trace';
 import { compile, findLoops, UNCONNECTED } from './compile';
 import type { CircuitDoc } from './circuit';
 import { diagnoseMisconception, type Misconception, type RulePart } from './misconceptions';
@@ -80,6 +81,13 @@ export interface CheckResult {
   diagnostics: Diagnostic[];
   /** A recognized mistake (see misconceptions.ts), if the wrong rows match one. */
   misconception?: Misconception;
+  /** The task's input and output labels, so a row can be put into words. */
+  labels: { inputs: string[]; outputs: string[] };
+  /**
+   * One wrong row to show as an example ("A = 1, B = 0: your circuit gives 1, the task
+   * wants 0"). Seeing a failing input helps more than "incorrect" alone.
+   */
+  example?: CheckedRow;
 }
 
 /**
@@ -232,7 +240,8 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
   const blocked = diagnostics.some(
     (d) => d.code === 'MISSING_IO' || d.code === 'DUPLICATE_LABEL' || d.code === 'HAS_CYCLE',
   );
-  if (blocked) return { pass: false, rows: [], mismatches: [], diagnostics };
+  const labels = { inputs: [...spec.inputs], outputs: [...spec.outputs] };
+  if (blocked) return { pass: false, rows: [], mismatches: [], diagnostics, labels };
 
   // --- Run every row ---
   const inputParts = specInputs as IOPart[];
@@ -277,7 +286,16 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
     rules: spec.rules,
   });
   const pass = mismatches.length === 0 && !diagnostics.some((d) => d.severity === 'error');
-  return { pass, rows, mismatches, diagnostics, ...(misconception && { misconception }) };
+  const example = pickExampleRow(mismatches);
+  return {
+    pass,
+    rows,
+    mismatches,
+    diagnostics,
+    labels,
+    ...(misconception && { misconception }),
+    ...(example && { example }),
+  };
 }
 
 /** The gates in a circuit: every part that isn't an input or output (switches, lights,

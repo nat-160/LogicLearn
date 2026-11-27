@@ -9,6 +9,8 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { debounce } from '../app/debounce';
+import { SetRowButton } from '../editor/CheckPanel';
+import { exampleText } from '../editor/checkSummary';
 import { useEditor, useEditorStore } from '../editor/editorContext';
 import { Editor } from '../editor/Editor';
 import { Inspector } from '../editor/Inspector';
@@ -297,6 +299,8 @@ function ProjectPanel({
     rule: unknown;
     results: CriterionResult[];
     errors: string[];
+    /** One wrong row in words, with the switch settings to try it. */
+    example?: { text: string; labels: string[]; bits: Bit[] };
   } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const isLast = index === lesson.steps.length - 1;
@@ -319,6 +323,14 @@ function ProjectPanel({
       rule: ruleVersion,
       results: result.criteria,
       errors: result.check.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message),
+      ...(exampleText(result.check) &&
+        result.check.example && {
+          example: {
+            text: exampleText(result.check)!,
+            labels: result.check.labels.inputs,
+            bits: result.check.example.inputs,
+          },
+        }),
     });
     recordAttempt(lesson.id, step.id, { pass: result.pass });
     const doneCount = result.criteria.filter((c) => c.pass).length;
@@ -327,7 +339,7 @@ function ProjectPanel({
       'result',
       result.pass
         ? 'Project complete! Every item on the checklist is done.'
-        : `${doneCount} of ${result.criteria.length} done. Not yet: ${criterionText(firstTodo!)}`,
+        : `${doneCount} of ${result.criteria.length} done. Not yet: ${criterionText(firstTodo!)} ${exampleText(result.check) ?? ''}`.trim(),
       INTERFACE_LOCALE,
     );
   };
@@ -382,6 +394,12 @@ function ProjectPanel({
       {shown && (
         <div className="project-result" data-testid="project-result">
           <CriteriaList results={shown.results} />
+          {shown.example && (
+            <p className="check-example" data-testid="check-example">
+              {shown.example.text}{' '}
+              <SetRowButton labels={shown.example.labels} bits={shown.example.bits} />
+            </p>
+          )}
           {shown.errors.length > 0 && (
             <ul className="diagnostics">
               {shown.errors.map((e, i) => (
