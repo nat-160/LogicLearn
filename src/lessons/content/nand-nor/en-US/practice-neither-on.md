@@ -9,4 +9,4 @@
 <!-- hints -->
 
 - When **neither** switch is on, are they "both on"? No – so "not both" is true.
-- Only the row A = 0, B = 0 differs: X is 1 and Y is 0.
+- Now look at the row where **neither** is on. Is that "exactly one"?

@@ -8,7 +8,7 @@
  */
 import { buildCircuit, rowsFromRules, type RulePart } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { gateExample, io, twoGates } from '../helpers';
+import { frames, gateExample, io, twoGates } from '../helpers';
 
 const IF_THEN: RulePart[] = [{ fn: 'IMPLY', inputs: ['A', 'B'] }];
 
@@ -200,4 +200,25 @@ export const xnorIfThenLesson: LessonDef = {
       from: ['three-rules'],
     },
   ],
+  walkthrough: {
+    // "If A then B" built another way: NOT (A AND NOT B) – "it is not the case that A
+    // happens and B doesn't". (The build step uses NOT and OR.)
+    circuit: buildCircuit({
+      name: 'If-then walkthrough',
+      parts: [
+        { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
+        { id: 'n', type: 'NOT', at: [6, 3], locked: true },
+        { id: 'g', type: 'NAND', at: [12, 0], locked: true },
+        { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
+      ],
+      wires: [
+        ['A', 'g.in0'],
+        ['B', 'n'],
+        ['n', 'g.in1'],
+        ['g', 'Y'],
+      ],
+    }),
+    frames: frames(['A', 'B'], ['11', '10', '00', '01'], ['n', 'g']),
+  },
 };

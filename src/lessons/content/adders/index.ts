@@ -7,7 +7,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, io } from '../helpers';
+import { b, frames, io } from '../helpers';
 
 const HALF = { colors: { C: 'red', S: 'green' } };
 const FULL = { colors: { Cout: 'red', S: 'green' }, outputX: 28 };
@@ -143,4 +143,22 @@ export const addersLesson: LessonDef = {
       truthTable: 'hidden',
     },
   ],
+  walkthrough: {
+    // Binary numbers, before any adding: two switches straight to two lights (no gates,
+    // so nothing here is a step's answer). T is the twos place, O the ones place.
+    circuit: buildCircuit({
+      name: 'Binary numbers walkthrough',
+      parts: [
+        { id: 'A1', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'A0', type: 'SWITCH', at: [0, 4], locked: true },
+        { id: 'T', type: 'LIGHT', at: [12, 0], locked: true, props: { color: 'green' } },
+        { id: 'O', type: 'LIGHT', at: [12, 4], locked: true, props: { color: 'green' } },
+      ],
+      wires: [
+        ['A1', 'T'],
+        ['A0', 'O'],
+      ],
+    }),
+    frames: frames(['A0', 'A1'], ['00', '10', '01', '11', '01']),
+  },
 };

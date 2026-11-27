@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - XNOR is 1 when both inputs are the **same** – both 1, or both 0.
-- Only the row A = 0, B = 0 differs: the inputs match, so Y is 1, but X is 0.
+- Look at the row where both are **off**: do the inputs match? Does AND give 1 there?

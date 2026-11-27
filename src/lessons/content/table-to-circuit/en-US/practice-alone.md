@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - Y = A is not enough: it also lights the row where B is on.
-- "By itself" means B must be off: Y = A AND (NOT B).
+- "By itself" means the other input must be **off** too. Which gate turns "B is off" into a 1?

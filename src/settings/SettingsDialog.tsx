@@ -185,6 +185,15 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
         </p>
       )}
 
+      <h3>Sound</h3>
+      <Toggle
+        id="sounds"
+        label="Sound effects"
+        hint="A short chime when you finish a lesson. Off unless you turn it on."
+        checked={prefs.sounds}
+        onChange={(on) => prefs.update({ sounds: on })}
+      />
+
       {LOCALES.length > 1 && (
         <>
           <h3>Language</h3>

@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - A NAND gate has two inputs, and you have one switch. A switch's output can go to more than one place.
-- Connect A to **both** inputs of the NAND: A NAND A = NOT (A AND A) = NOT A.
+- What does a NAND give when both of its inputs are the same? Try feeding it A twice.

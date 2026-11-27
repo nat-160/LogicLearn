@@ -26,6 +26,7 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
   const pinIds = Object.keys(geometry.pins);
   const values = useEditor(useShallow((s) => pinIds.map((pin) => s.values[`${id}.${pin}`])));
   const highlighted = useEditor((s) => s.highlight.componentIds.has(id));
+  const pointed = useEditor((s) => s.highlight.tone === 'pointer');
   const inLoop = useEditor((s) => s.loops.has(id));
   const unstable = useEditor((s) => s.report.unstable.includes(id));
   const toggleSwitch = useEditor((s) => s.toggleSwitch);
@@ -37,6 +38,7 @@ function PartNodeView({ id, data, selected }: NodeProps<PartNode>) {
     `part-${data.type.toLowerCase()}`,
     selected && 'is-selected',
     highlighted && 'is-highlighted',
+    highlighted && pointed && 'is-pointed',
     inLoop && 'is-in-loop',
     unstable && 'is-unstable',
     data.locked && 'is-locked',

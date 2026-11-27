@@ -62,6 +62,9 @@ lint rule keep it that way.
   input, gate counts, required parts). It returns codes and numbers; the lesson screens
   write the sentences.
 - `serialize.ts` – loading untrusted JSON (files, links, storage) safely.
+- `trace.ts` – one row traced through a circuit, gate by gate: what each gate receives
+  and gives. Check results ("for example, with A = 0, B = 1 …") and the "Try one row"
+  hint use it.
 
 **`src/editor` — the canvas.** One zustand store per editor holds the document, the
 switch settings, the latest simulation values, React Flow's nodes and edges, and the
@@ -79,7 +82,12 @@ text in `content/_shared/`). There are five step kinds, each with its own view:
 - `project` – choose a brief, write your own rule, build, get a checklist.
 
 Practice steps are build or predict steps kept outside the numbered steps (so they never
-shift the numbering), offered after a recognized mistake (`practice.ts`).
+shift the numbering), offered after a recognized mistake (`practice.ts`). Each lesson
+also has a walkthrough (`WalkthroughPage.tsx`), and each unit a test-out.
+
+Teachers have their own view (`TeacherPage.tsx`: guide, answer key, unlock codes,
+completion-code checker) behind a teacher code. Every code is checked in the browser with
+SHA-256 (`codes.ts`) – they discourage rather than secure, as the source is public.
 
 Lessons open in course order and steps in lesson order (`gating.ts`), with escapes: a
 started lesson stays open, projects never block the next unit, and the test version can

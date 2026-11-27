@@ -2,6 +2,7 @@
  * Small helpers for writing lesson content (the index.ts file of each lesson).
  */
 import { buildCircuit, type Bit } from '../../sim';
+import type { LessonDef, StepDef } from '../types';
 
 /** true/false (or 1/0) as a bit, for writing expected truth tables with rowsFrom(). */
 export const b = (v: boolean | number): Bit => (v ? 1 : 0);
@@ -58,6 +59,19 @@ export const twoGates = (name: string, typeX: string, typeY: string) =>
     ],
   });
 
+/**
+ * Walkthrough frames from rows written as bit strings: frames(['A', 'B'], ['00', '11'],
+ * ['g']) sets A and B for each row and points at part g in every frame.
+ */
+export const frames = (labels: string[], rows: string[], highlight: string[] = []) =>
+  rows.map((row) => ({
+    inputs: Object.fromEntries(labels.map((l, i) => [l, row[i] === '1' ? 1 : 0])) as Record<
+      string,
+      Bit
+    >,
+    ...(highlight.length > 0 && { highlight }),
+  }));
+
 /** An explain-step example: one 2-input gate between locked switches A, B and light Y. */
 export const gateExample = (name: string, type: string) =>
   buildCircuit({
@@ -74,3 +88,10 @@ export const gateExample = (name: string, type: string) =>
       ['g', 'Y'],
     ],
   });
+
+/** A step from another lesson under a new id (test-outs reuse the units' challenges). */
+export function reuseStep(lesson: LessonDef, stepId: string, newId: string): StepDef {
+  const step = lesson.steps.find((s) => s.id === stepId);
+  if (!step) throw new Error(`${lesson.id} has no step "${stepId}"`);
+  return { ...step, id: newId };
+}

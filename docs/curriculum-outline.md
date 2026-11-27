@@ -42,7 +42,10 @@ direct instruction → guided construction → open construction sequence from t
   `both-off`, `table-to-circuit` `alone` (A by itself).
 - **Habits in every lesson** (from Herman et al., ICER '08): check **every** row, starting
   with all zeros; re-read the rule and check each row before pressing Check.
-- **Test-outs (Phase 3)** before each unit let students who already know the material skip it.
+- **Test-outs (Phase 3, built):** `test-out-1` and `test-out-2`, each made of the unit's
+  three challenges (no hints). Passing one counts the unit's lessons as done.
+- **Walkthroughs (Phase 3, built):** one per lesson (1–8), a few frames on a circuit with
+  captions that explain why, offered after a failed check and on explain steps.
 
 Standards: IB CS A1.2.3 (purpose and use of logic gates), A1.2.4 (truth tables), A1.2.5
 (logic diagrams); CSTA 3B-CS-02. AP CSP Topic 3.5 covers Boolean expressions only.

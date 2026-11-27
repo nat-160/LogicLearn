@@ -66,6 +66,14 @@ Before pushing: `npm run lint && npm run typecheck && npm test && npm run e2e`.
 - Practice steps (`practice` in a `LessonDef`) are build or predict steps outside the
   numbered steps, offered after a matching mistake (`for`) on the steps in `from`. Their
   text is `<locale>/practice-<id>.md`; they never count towards finishing a lesson.
+- A lesson's `walkthrough` (a locked circuit plus frames) is explained in
+  `<locale>/walkthrough.md`: one caption per frame after `<!-- frames -->`.
+- `kind: 'test-out'` lessons reuse a unit's challenges (`reuseStep`) under new ids and
+  have no hints; passing one counts the unit's required lessons as done (`gating.ts`).
+- Hints never give the whole answer: written hints remind the student of the idea, then
+  two are worked out from their circuit (`circuitHints.ts`). Full answers are only in the
+  teacher view's answer key (`TeacherPage.tsx`, behind the teacher code in `codes.ts` –
+  only its hash is in the source; never commit the code itself).
 - Text used by many lessons (unit titles, the gate reminder, misconception feedback,
   nudges) is in `src/lessons/content/_shared/<locale>/`. A new misconception id needs a
   `misconception-<id>.md` there (a content test checks it).

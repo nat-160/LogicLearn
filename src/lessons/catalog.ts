@@ -10,6 +10,8 @@ import { notAndLesson } from './content/not-and';
 import { orXorLesson } from './content/or-xor';
 import { signalsLesson } from './content/signals';
 import { tableToCircuitLesson } from './content/table-to-circuit';
+import { testOut1Lesson } from './content/test-out-1';
+import { testOut2Lesson } from './content/test-out-2';
 import { unit1ProjectLesson } from './content/unit-1-project';
 import { unit2ProjectLesson } from './content/unit-2-project';
 import { xnorIfThenLesson } from './content/xnor-if-then';
@@ -19,11 +21,13 @@ import type { Lesson, LessonDef } from './types';
 /** Every built lesson, in course order. Lessons open in this order (gating.ts). */
 export const LESSON_DEFS: LessonDef[] = [
   editorTourLesson,
+  testOut1Lesson,
   signalsLesson,
   notAndLesson,
   orXorLesson,
   circuitToTableLesson,
   unit1ProjectLesson,
+  testOut2Lesson,
   nandNorLesson,
   xnorIfThenLesson,
   tableToCircuitLesson,

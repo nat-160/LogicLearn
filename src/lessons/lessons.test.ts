@@ -13,12 +13,14 @@ import {
   computeTruthTable,
   findComponentDef,
   findIO,
+  gateParts,
   GATE_TYPES,
   grade,
   gradeRule,
   MISCONCEPTION_IDS,
   rowNumber,
   rowsFromRules,
+  type CheckSpec,
   type CircuitDoc,
 } from '../sim';
 
@@ -28,6 +30,7 @@ function tableOf(circuit: CircuitDoc) {
   return result.table;
 }
 import { LESSON_DEFS, UNITS } from './catalog';
+import { LESSON_BITS } from './codes';
 import {
   findLessonFile,
   findSharedText,
@@ -69,10 +72,27 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
     }
   });
 
+  it('never gives the whole answer in a hint ("Show me how" is gone)', () => {
+    const all = [
+      ...lesson.steps,
+      ...lesson.practice,
+      ...lesson.steps.flatMap((s) => (isProjectStep(s) ? s.briefs : [])),
+    ];
+    for (const item of all) {
+      for (const hint of item.hints) expect(hint, item.id).not.toMatch(/^show me how/i);
+    }
+  });
+
   it('every text file belongs to a step (no misspelled file names)', () => {
     const briefIds = def.steps.flatMap((s) => (isProjectStep(s) ? s.briefs.map((b) => b.id) : []));
     const practiceIds = (def.practice ?? []).map((p) => `practice-${p.id}`);
-    const names = new Set(['lesson', ...def.steps.map((s) => s.id), ...briefIds, ...practiceIds]);
+    const names = new Set([
+      'lesson',
+      ...def.steps.map((s) => s.id),
+      ...briefIds,
+      ...practiceIds,
+      ...(def.walkthrough ? ['walkthrough'] : []),
+    ]);
     for (const file of listLessonFiles().filter((f) => f.lesson === def.id)) {
       expect(names.has(file.name), `${file.locale}/${file.name}.md`).toBe(true);
       expect(
@@ -109,8 +129,79 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         }
       });
 
-      it('has at least one hint', () => {
-        expect(step.hints.length).toBeGreaterThan(0);
+      it('has at least one hint (a test-out has none: it is a test)', () => {
+        if (def.kind === 'test-out') expect(step.hints).toEqual([]);
+        else expect(step.hints.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+  }
+
+  if (lesson.walkthrough) {
+    const walkthrough = lesson.walkthrough;
+    describe('walkthrough', () => {
+      it(`has ${DEFAULT_LOCALE} text: a title, and one caption for each frame`, () => {
+        expect(findLessonFile(def.id, DEFAULT_LOCALE, 'walkthrough')?.locale).toBe(DEFAULT_LOCALE);
+        expect(walkthrough.title).not.toBe('Walkthrough');
+        expect(walkthrough.captions).toHaveLength(walkthrough.frames.length);
+        for (const caption of walkthrough.captions) expect(caption.length).toBeGreaterThan(20);
+      });
+
+      it('never shows the answer to a step or practice in its lesson', () => {
+        // Walkthroughs are offered while students work, so they mustn't give away a
+        // prediction, a challenge, or a guided build's circuit. (A single gate the explain
+        // step already shows is fine.)
+        const tableOf = (doc: CircuitDoc) => {
+          const result = computeTruthTable(doc);
+          const io = findIO(doc);
+          return JSON.stringify({
+            inputs: io.inputs.map((p) => p.label),
+            outputs: io.outputs.map((p) => p.label),
+            rows: result.ok ? result.table.rows.map((r) => r.outputs) : null,
+          });
+        };
+        const specTable = (spec: CheckSpec) =>
+          JSON.stringify({
+            inputs: spec.inputs,
+            outputs: spec.outputs,
+            rows: spec.expected.map((r) => r.outputs),
+          });
+        const gates = (doc: CircuitDoc) =>
+          gateParts(doc)
+            .map((c) => c.type)
+            .sort()
+            .join(',');
+        const shown = tableOf(walkthrough.circuit);
+        for (const step of [...lesson.steps, ...lesson.practice]) {
+          if (isPredictStep(step)) {
+            for (const c of step.circuits) expect(tableOf(c), step.id).not.toBe(shown);
+          }
+          if (!isBuildStep(step)) continue;
+          // A challenge may share the table only when the walkthrough uses a gate the
+          // challenge doesn't offer (e.g. "exactly one, without an XOR gate"): then the
+          // construction is still the student's to find.
+          const usesOtherGates = gateParts(walkthrough.circuit).some(
+            (c) => !step.palette.includes(c.type),
+          );
+          if (step.kind === 'challenge' && !usesOtherGates) {
+            expect(specTable(step.spec), step.id).not.toBe(shown);
+          }
+          const sameGates = gates(step.solution) === gates(walkthrough.circuit);
+          if (gateParts(step.solution).length > 1 && sameGates) {
+            expect(specTable(step.spec), step.id).not.toBe(shown);
+          }
+        }
+      });
+
+      it('shows a locked circuit, with frames that use its switches and parts', () => {
+        const { circuit, frames } = walkthrough;
+        expect(circuit.components.every((c) => c.locked)).toBe(true);
+        const labels = findIO(circuit).inputs.map((p) => p.label);
+        const ids = new Set(circuit.components.map((c) => c.id));
+        expect(frames.length).toBeGreaterThanOrEqual(3);
+        for (const frame of frames) {
+          for (const label of Object.keys(frame.inputs)) expect(labels).toContain(label);
+          for (const id of frame.highlight ?? []) expect(ids.has(id), id).toBe(true);
+        }
       });
     });
   }
@@ -224,8 +315,10 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(check(step.starter, step.spec).pass).toBe(false);
       });
 
-      it('has enough hints (guided: at least 2, challenge: at least 1)', () => {
-        expect(step.hints.length).toBeGreaterThanOrEqual(step.kind === 'guided' ? 2 : 1);
+      it('has at least one written hint (two more are worked out from the circuit)', () => {
+        // A test-out is a test: no hints at all.
+        if (def.kind === 'test-out') expect(step.hints).toEqual([]);
+        else expect(step.hints.length).toBeGreaterThanOrEqual(1);
       });
 
       it("lists the spec's inputs and outputs in the order the truth table shows them", () => {
@@ -300,6 +393,42 @@ const REQUIRED_SHARED = [
 ];
 
 describe('lessons and units', () => {
+  it('gives every picture in lesson text a description (alt text)', () => {
+    // ![description](picture.png) – an empty description hides the picture from screen
+    // readers, which is only right for decoration (and lessons have none).
+    const files = import.meta.glob('./content/*/*/*.md', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    }) as Record<string, string>;
+    expect(Object.keys(files).length).toBeGreaterThan(50);
+    for (const [path, text] of Object.entries(files)) {
+      expect(text, path).not.toMatch(/!\[\s*\]\(/);
+    }
+  });
+
+  it('fits completion codes, whose bits follow this order', () => {
+    // A completion code has one bit per catalog entry, by position. If this list changes
+    // (an entry added in the middle, or more than LESSON_BITS entries), bump VERSION in
+    // codes.ts so old codes aren't misread, and update this list.
+    expect(LESSON_DEFS.length).toBeLessThanOrEqual(LESSON_BITS);
+    expect(LESSON_DEFS.map((l) => l.id)).toEqual([
+      'editor-tour',
+      'test-out-1',
+      'signals',
+      'not-and',
+      'or-xor',
+      'circuit-to-table',
+      'unit-1-project',
+      'test-out-2',
+      'nand-nor',
+      'xnor-if-then',
+      'table-to-circuit',
+      'adders',
+      'unit-2-project',
+    ]);
+  });
+
   it('lists lessons in course order (gating opens them in this order)', () => {
     const numbers = LESSON_DEFS.map((l) => l.number);
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));

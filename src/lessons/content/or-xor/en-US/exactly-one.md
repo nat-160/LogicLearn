@@ -8,5 +8,5 @@
 
 <!-- hints -->
 
-- "At least one" is A OR B. "Not both" is NOT (A AND B).
-- Y is on when both of those are true: combine them with one more AND gate.
+- Split it into two rules you can build: "at least one is on" and "not both are on". Which gates make each one?
+- Y must be on only when **both** rules hold. Which gate means "both"?

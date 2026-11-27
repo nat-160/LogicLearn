@@ -13,13 +13,22 @@
  * see Settings); check results and revealed hints are announced to screen readers; and
  * the page heading receives focus when the step changes (App.tsx).
  */
-import { lessonHref } from '../app/routes';
+import { lessonHref, type LessonView } from '../app/routes';
 import { useLocale } from '../settings/display';
 import { BuildStepView } from './BuildStepView';
 import { getLessons } from './catalog';
 import { ExplainStepView } from './ExplainStepView';
-import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
+import {
+  isLessonUnlocked,
+  lessonName,
+  nextStepFor,
+  prerequisite,
+  useUnlockAll,
+  useUnlocked,
+} from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
+import { CompletePage } from './CompletePage';
+import { WalkthroughPage } from './WalkthroughPage';
 import { practiceReturnIndex } from './practice';
 import { PredictStepView } from './PredictStepView';
 import { ProjectStepView } from './ProjectStepView';
@@ -29,17 +38,21 @@ export function LessonPage({
   lessonId,
   step,
   practice: practiceId,
+  view,
 }: {
   lessonId: string;
   step: number;
   /** A practice step's id (#/lesson/<id>/practice/<practice id>). */
   practice?: string;
+  /** A page about the whole lesson (#/lesson/<id>/complete). */
+  view?: LessonView;
 }) {
   const lessons = getLessons(useLocale());
   const lessonIndex = lessons.findIndex((l) => l.id === lessonId);
   const lesson = lessons[lessonIndex];
   const steps = useProgress((s) => s.steps);
   const unlockAll = useUnlockAll((s) => s.unlockAll);
+  const unlocked = useUnlocked((s) => s.unlocked);
   if (!lesson) {
     return (
       <div className="page narrow">
@@ -48,10 +61,10 @@ export function LessonPage({
       </div>
     );
   }
-  if (!isLessonUnlocked(steps, lessons, lessonIndex, unlockAll)) {
+  if (!isLessonUnlocked(steps, lessons, lessonIndex, unlockAll, unlocked)) {
     // Lessons open in order (gating.ts). Point to the lesson to do first.
     const before = prerequisite(lessons, lessonIndex);
-    const next = nextStepFor(steps, lessons, unlockAll);
+    const next = nextStepFor(steps, lessons, unlockAll, unlocked);
     return (
       <div className="page narrow">
         <h1>Not unlocked yet</h1>
@@ -68,6 +81,8 @@ export function LessonPage({
       </div>
     );
   }
+  if (view === 'complete') return <CompletePage lesson={lesson} lessons={lessons} />;
+  if (view === 'walkthrough') return <WalkthroughPage lesson={lesson} />;
   if (practiceId !== undefined) {
     // Practice is open whenever its lesson is, and never required.
     const practice = lesson.practice.find((p) => p.practiceId === practiceId);

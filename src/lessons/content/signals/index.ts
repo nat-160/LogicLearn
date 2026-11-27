@@ -80,4 +80,22 @@ export const signalsLesson: LessonDef = {
       truthTable: 'hidden',
     },
   ],
+  walkthrough: {
+    // A switch sends its signal along a wire; a light with no wire shows "unknown".
+    circuit: buildCircuit({
+      name: 'Signals walkthrough',
+      parts: [
+        { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'Y', type: 'LIGHT', at: [12, 0], locked: true },
+        { id: 'Z', type: 'LIGHT', at: [12, 5], locked: true },
+      ],
+      wires: [['A', 'Y']],
+    }),
+    frames: [
+      { inputs: { A: 0 }, highlight: ['A'] },
+      { inputs: { A: 1 }, highlight: ['A', 'Y'] },
+      { inputs: { A: 1 }, highlight: ['Z'] },
+      { inputs: { A: 0 } },
+    ],
+  },
 };

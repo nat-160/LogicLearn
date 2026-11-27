@@ -56,9 +56,14 @@ export type WireEdge = Edge<Record<string, never>, 'wire'>;
 export interface Highlight {
   componentIds: ReadonlySet<string>;
   rows: ReadonlySet<number>;
+  /**
+   * 'problem' (red): what a check found wrong. 'pointer' (blue): parts a hint or a
+   * walkthrough points at – nothing is wrong with them.
+   */
+  tone: 'problem' | 'pointer';
 }
 
-const NO_HIGHLIGHT: Highlight = { componentIds: new Set(), rows: new Set() };
+const NO_HIGHLIGHT: Highlight = { componentIds: new Set(), rows: new Set(), tone: 'problem' };
 const HISTORY_LIMIT = 100;
 
 export interface EditorState {
@@ -99,7 +104,11 @@ export interface EditorState {
   undo(): void;
   redo(): void;
   loadDoc(doc: CircuitDoc, options?: { keepHistory?: boolean }): void;
-  setHighlight(highlight: { componentIds?: Iterable<string>; rows?: Iterable<number> }): void;
+  setHighlight(highlight: {
+    componentIds?: Iterable<string>;
+    rows?: Iterable<number>;
+    tone?: Highlight['tone'];
+  }): void;
   setNotice(notice: string | null): void;
 }
 
@@ -294,8 +303,8 @@ export function createEditorStore(
         set({ ...rebuild(doc), past: [], future: [] });
       },
 
-      setHighlight({ componentIds = [], rows = [] }) {
-        set({ highlight: { componentIds: new Set(componentIds), rows: new Set(rows) } });
+      setHighlight({ componentIds = [], rows = [], tone = 'problem' }) {
+        set({ highlight: { componentIds: new Set(componentIds), rows: new Set(rows), tone } });
       },
 
       setNotice(notice) {

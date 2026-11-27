@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - Which row tells OR and XOR apart? Turn both switches on and look at Y.
-- Use the **XOR** gate: connect A and B to its inputs and its output to Y.
+- The **XOR** gate is in the parts list: it is 1 when exactly one input is 1.

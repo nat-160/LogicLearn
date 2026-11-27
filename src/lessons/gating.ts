@@ -8,8 +8,12 @@
  *    lesson is added before it later.
  *  - A unit's project opens when the unit's lessons are complete, but the next unit
  *    doesn't wait for the project: open-ended work shouldn't block progress.
+ *  - A unit test-out (an optional quiz made of the unit's challenges) lets a student who
+ *    already knows the material skip the unit: passing it counts the unit's lessons as
+ *    done for opening later lessons. Unit 1's test-out is open from the start; later ones
+ *    open after the unit before.
+ *  - A teacher's unlock code opens one lesson for a student (codes.ts).
  *  - The test version (dev branch) has an "Unlock all lessons" switch for testing.
- *    Teachers' bypass codes come in Phase 3.
  *
  * A lesson is complete when its last step is done.
  */
@@ -28,12 +32,32 @@ function isLessonStarted(steps: ProgressMap, lesson: Lesson): boolean {
   return lesson.steps.some((s) => isStepDone(steps, lesson.id, s.id));
 }
 
-/** How a lesson is named on screen: "Lesson 3", or "Unit 1 project". */
+/** How a lesson is named on screen: "Lesson 3", "Unit 1 project" or "Unit 1 test-out". */
 export function lessonName(lesson: Pick<Lesson, 'kind' | 'number' | 'unit'>): string {
-  return lesson.kind === 'project' ? `Unit ${lesson.unit} project` : `Lesson ${lesson.number}`;
+  if (lesson.kind === 'project') return `Unit ${lesson.unit} project`;
+  if (lesson.kind === 'test-out') return `Unit ${lesson.unit} test-out`;
+  return `Lesson ${lesson.number}`;
 }
 
 const isRequiredLesson = (l: Lesson) => (l.kind ?? 'lesson') === 'lesson' && !l.optional;
+
+/** Whether the student passed the test-out of `unit`. */
+export function isUnitTestedOut(steps: ProgressMap, lessons: readonly Lesson[], unit: number) {
+  return lessons.some(
+    (l) => l.kind === 'test-out' && l.unit === unit && isLessonComplete(steps, l),
+  );
+}
+
+/**
+ * Whether a lesson counts as done for opening later lessons: complete, or (for a
+ * required lesson) skipped by passing its unit's test-out.
+ */
+export function isLessonDone(steps: ProgressMap, lessons: readonly Lesson[], lesson: Lesson) {
+  if (isLessonComplete(steps, lesson)) return true;
+  return isRequiredLesson(lesson) && isUnitTestedOut(steps, lessons, lesson.unit);
+}
+
+const NO_CODES: ReadonlySet<string> = new Set();
 
 /**
  * The lesson that must be complete before `lessons[index]` opens, or undefined if it
@@ -47,6 +71,10 @@ export function prerequisite(lessons: readonly Lesson[], index: number): Lesson 
     // The last lesson of the project's own unit.
     return earlier.filter((l) => l.unit === lesson.unit).at(-1);
   }
+  if (lesson.kind === 'test-out') {
+    // The last lesson of the units before: Unit 1's test-out is open from the start.
+    return earlier.filter((l) => l.unit < lesson.unit).at(-1);
+  }
   return earlier.at(-1);
 }
 
@@ -55,11 +83,13 @@ export function isLessonUnlocked(
   lessons: readonly Lesson[],
   index: number,
   unlockAll = false,
+  /** Lessons opened with a teacher's unlock code. */
+  unlocked: ReadonlySet<string> = NO_CODES,
 ): boolean {
   const lesson = lessons[index];
-  if (unlockAll || isLessonStarted(steps, lesson)) return true;
+  if (unlockAll || unlocked.has(lesson.id) || isLessonStarted(steps, lesson)) return true;
   const before = prerequisite(lessons, index);
-  return !before || isLessonComplete(steps, before);
+  return !before || isLessonDone(steps, lessons, before);
 }
 
 /**
@@ -70,11 +100,12 @@ export function nextStepFor(
   steps: ProgressMap,
   lessons: readonly Lesson[],
   unlockAll = false,
+  unlocked: ReadonlySet<string> = NO_CODES,
 ): { lesson: Lesson; index: number } | undefined {
   for (let i = 0; i < lessons.length; i++) {
     const lesson = lessons[i];
-    if (!isRequiredLesson(lesson) || isLessonComplete(steps, lesson)) continue;
-    if (!isLessonUnlocked(steps, lessons, i, unlockAll)) return undefined;
+    if (!isRequiredLesson(lesson) || isLessonDone(steps, lessons, lesson)) continue;
+    if (!isLessonUnlocked(steps, lessons, i, unlockAll, unlocked)) return undefined;
     const index = lesson.steps.findIndex((s) => !isStepDone(steps, lesson.id, s.id));
     return { lesson, index: Math.max(0, index) };
   }
@@ -97,5 +128,37 @@ export const useUnlockAll = create<UnlockAllState>()((set) => ({
     if (!IS_TEST_VERSION) return;
     writeLocal(UNLOCK_KEY, on ? '1' : '0');
     set({ unlockAll: on });
+  },
+}));
+
+// --- Lessons opened with a teacher's unlock code ------------------------------------------
+
+const UNLOCKED_KEY = storageKey('unlocked');
+
+function loadUnlocked(): Set<string> {
+  try {
+    const raw: unknown = JSON.parse(readLocal(UNLOCKED_KEY) ?? '[]');
+    // Saved data is untrusted: keep only short lesson ids.
+    return new Set(
+      Array.isArray(raw)
+        ? raw.filter((id): id is string => typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id))
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+interface UnlockedState {
+  unlocked: ReadonlySet<string>;
+  unlock(lessonId: string): void;
+}
+
+export const useUnlocked = create<UnlockedState>()((set, get) => ({
+  unlocked: loadUnlocked(),
+  unlock: (lessonId) => {
+    const unlocked = new Set(get().unlocked).add(lessonId);
+    writeLocal(UNLOCKED_KEY, JSON.stringify([...unlocked]));
+    set({ unlocked });
   },
 }));

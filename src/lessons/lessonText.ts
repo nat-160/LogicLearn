@@ -20,10 +20,12 @@
 import { DEFAULT_LOCALE } from '../i18n/locales';
 import {
   DRAFT_PATTERN,
+  FRAMES_PATTERN,
   HINTS_PATTERN,
   type Lesson,
   type LessonDef,
   type Practice,
+  type Walkthrough,
   type Step,
   type StepText,
 } from './types';
@@ -86,6 +88,24 @@ function parseListItems(markdown: string): string[] {
     else if (line.trim() && items.length) items[items.length - 1] += ` ${line.trim()}`;
   }
   return items;
+}
+
+/** A walkthrough file: title, intro text, and one caption per frame (after the marker). */
+export function parseWalkthroughText(markdown: string): {
+  title: string;
+  intro: string;
+  captions: string[];
+  draft: boolean;
+} {
+  const { title, prose, draft } = parseStepText(markdown);
+  const marker = FRAMES_PATTERN.exec(prose);
+  if (!marker) return { title, intro: prose, captions: [], draft };
+  return {
+    title,
+    intro: prose.slice(0, marker.index).trim(),
+    captions: parseListItems(prose.slice(marker.index + marker[0].length)),
+    draft,
+  };
 }
 
 /** "# Title\n\nSummary…" → { title, summary } */
@@ -175,13 +195,28 @@ export function localizeLesson(def: LessonDef, locale: string, files: LessonFile
     const text = textOf(id);
     return { ...p, ...text, id, practiceId: p.id, title: text.title || id } as Practice;
   });
+  // The walkthrough's words, from walkthrough.md (falling back to en-US like steps).
+  let walkthrough: Walkthrough | undefined;
+  if (def.walkthrough) {
+    const file = findLessonFile(def.id, locale, 'walkthrough', files);
+    const text = parseWalkthroughText(file?.text ?? '');
+    walkthrough = {
+      ...def.walkthrough,
+      ...text,
+      title: text.title || 'Walkthrough',
+      locale: file?.locale ?? locale,
+    };
+  }
+  // (The definition's walkthrough is replaced by the one with words, below.)
+  const rest: Omit<LessonDef, 'walkthrough'> = def;
   return {
-    ...def,
+    ...rest,
     title: title || def.id,
     summary,
     locale: info?.locale ?? locale,
     steps,
     practice,
+    ...(walkthrough && { walkthrough }),
   };
 }
 

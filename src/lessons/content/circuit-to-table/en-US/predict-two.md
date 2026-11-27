@@ -9,4 +9,4 @@
 <!-- hints -->
 
 - Start with the all-zeros row: A = 0, so NOT A = 1. What does AND give with B = 0?
-- Y is 1 only when NOT A **and** B are both 1 – that is, when A is 0 and B is 1.
+- Y is 1 only when **both** of the AND gate's inputs are 1. In which row is NOT A equal to 1 and B equal to 1?

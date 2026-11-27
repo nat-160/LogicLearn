@@ -3,7 +3,13 @@
  * left off (gating.ts nextStepFor).
  */
 import { getLessons } from '../lessons/catalog';
-import { isLessonComplete, lessonName, nextStepFor, useUnlockAll } from '../lessons/gating';
+import {
+  isLessonComplete,
+  lessonName,
+  nextStepFor,
+  useUnlockAll,
+  useUnlocked,
+} from '../lessons/gating';
 import { useProgress } from '../lessons/progress';
 import { useLocale } from '../settings/display';
 import { lessonHref } from './routes';
@@ -11,8 +17,9 @@ import { lessonHref } from './routes';
 export function HomePage() {
   const steps = useProgress((s) => s.steps);
   const unlockAll = useUnlockAll((s) => s.unlockAll);
+  const unlocked = useUnlocked((s) => s.unlocked);
   const lessons = getLessons(useLocale());
-  const next = nextStepFor(steps, lessons, unlockAll);
+  const next = nextStepFor(steps, lessons, unlockAll, unlocked);
   const started = Object.values(steps).some((s) => s.done);
   const tour = lessons.find((l) => l.optional);
 

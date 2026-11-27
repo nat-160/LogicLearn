@@ -7,6 +7,5 @@
 
 <!-- hints -->
 
-- B is 1 in the row, so B goes straight in. A and C are 0, so each needs a NOT.
-- AND only takes two inputs: AND two of them first, then AND the result with the third.
-- Show me how: Y = ((NOT A) AND B) AND (NOT C).
+- In the row A = 0, B = 1, C = 0, which inputs are 0? Each of those needs a NOT.
+- An AND gate has two inputs, but this row has three. How could two AND gates work together?

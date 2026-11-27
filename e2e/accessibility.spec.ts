@@ -176,6 +176,8 @@ const PAGES: {
   add?: string[];
   /** Test ids to click once the page is open (in order). */
   click?: string[];
+  /** Open in teacher view. */
+  teacher?: boolean;
 }[] = [
   { name: 'home', hash: '#/' },
   { name: 'lessons', hash: '#/lessons' },
@@ -216,6 +218,19 @@ const PAGES: {
     name: 'practice step',
     hash: '#/lesson/or-xor/practice/both-on',
     seed: ['not-and/challenge'],
+  },
+  {
+    name: 'walkthrough',
+    hash: '#/lesson/or-xor/walkthrough',
+    seed: ['not-and/challenge'],
+  },
+  { name: 'progress report', hash: '#/report', seed: ['not-and/challenge'] },
+  { name: 'teacher view', hash: '#/teacher', teacher: true },
+  { name: 'teacher guide', hash: '#/teacher/guide', teacher: true },
+  {
+    name: 'celebration',
+    hash: '#/lesson/signals/complete',
+    seed: ['signals/fan-out'],
   },
   {
     name: 'number display project',
@@ -261,6 +276,9 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
           theme.prefs,
         );
         if (target.seed) await seedProgress(page, target.seed);
+        if (target.teacher) {
+          await page.addInitScript(() => localStorage.setItem('logiclearn:teacher', '1'));
+        }
         await page.goto(target.hash);
         if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
         for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
@@ -275,6 +293,48 @@ test.describe('automated WCAG 2.1 AA checks (axe-core)', () => {
         expect(serious).toEqual([]);
       });
     }
+  }
+});
+
+test.describe('text alternatives', () => {
+  test.skip(({ hasTouch }) => !!hasTouch, 'one run is enough');
+
+  for (const target of PAGES) {
+    test(`every graphic on the ${target.name} page is named, or hidden next to its text`, async ({
+      page,
+    }) => {
+      if (target.seed) await seedProgress(page, target.seed);
+      if (target.teacher) {
+        await page.addInitScript(() => localStorage.setItem('logiclearn:teacher', '1'));
+      }
+      await page.goto(target.hash);
+      if (target.open) await page.locator('summary', { hasText: target.open }).first().click();
+      for (const type of target.add ?? []) await page.getByTestId(`palette-${type}`).click();
+      for (const id of target.click ?? []) await page.getByTestId(id).click();
+      await page.waitForTimeout(300);
+      const problems = await page.evaluate(() => {
+        const found: string[] = [];
+        const hidden = (el: Element) => el.closest('[aria-hidden="true"]') !== null;
+        const named = (el: Element) =>
+          !!(el.getAttribute('aria-label')?.trim() || el.getAttribute('aria-labelledby'));
+        for (const img of document.querySelectorAll('img')) {
+          // alt="" marks a decorative image; a missing alt is a problem.
+          if (!hidden(img) && img.getAttribute('alt') === null) found.push(`img ${img.src}`);
+        }
+        for (const svg of document.querySelectorAll('svg')) {
+          if (hidden(svg)) continue;
+          if (svg.getAttribute('role') === 'img' && named(svg)) continue;
+          // A container whose parts have their own names (the canvas's wires).
+          if (svg.getAttribute('role') === 'presentation') continue;
+          found.push(`svg in ${svg.parentElement?.className ?? '?'}`);
+        }
+        for (const el of document.querySelectorAll('[role="img"]')) {
+          if (!hidden(el) && !named(el)) found.push(`role=img ${el.className}`);
+        }
+        return found;
+      });
+      expect(problems).toEqual([]);
+    });
   }
 });
 

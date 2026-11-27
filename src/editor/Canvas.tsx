@@ -16,7 +16,7 @@ import {
   type Connection,
   type IsValidConnection,
 } from '@xyflow/react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { GRID_CELL, pinDirection } from '../sim';
 import { useDisplay } from '../settings/display';
 import { useEditor, useEditorStore } from './editorContext';
@@ -74,6 +74,30 @@ export function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   );
 
   const onConnect = useCallback((c: Connection) => connect(c), [connect]);
+
+  // React Flow draws some pictures without saying what they are. Mark them: the dotted
+  // background and the zoom buttons' icons are decoration (the buttons have names), and
+  // the boxes that hold the wires are only containers (each wire has its own name).
+  useEffect(() => {
+    const root = region.current;
+    if (!root) return;
+    const mark = () => {
+      for (const svg of root.querySelectorAll(
+        'svg.react-flow__background, .react-flow__controls-button svg',
+      )) {
+        svg.setAttribute('aria-hidden', 'true');
+      }
+      for (const svg of root.querySelectorAll(
+        '.react-flow__edges svg, svg.react-flow__connectionline',
+      )) {
+        svg.setAttribute('role', 'presentation');
+      }
+    };
+    mark();
+    const observer = new MutationObserver(mark);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div

@@ -11,5 +11,5 @@
 <!-- hints -->
 
 - Tap light L1 to select it. The panel on the right shows its **Label**: change it to Y. Do the same for L2 → Z.
-- Connect each switch's dot (right side) to its light's dot (left side): A to Y, B to Z.
+- Each light should copy one switch. Which switch goes with Y, and which with Z?
 - Check the truth table: Y should match A, and Z should match B, in every row.

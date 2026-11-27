@@ -9,4 +9,4 @@
 <!-- hints -->
 
 - The rule "if A then B" is only broken when A is on and B is off.
-- When A is off, the rule can't be broken, so Y is 1 – but X (AND) is 0. That's where they differ.
+- When A is off, can the rule be broken? And what does AND give in those rows?

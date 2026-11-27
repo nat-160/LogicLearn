@@ -10,5 +10,5 @@
 
 <!-- hints -->
 
-- Rule 1 is (NOT A) OR B – you just built it. Rule 2 is B NAND C.
-- Y is 1 only when rule 1 and rule 2 are both 1: one AND gate joins them.
+- Build each rule on its own first. You built rule 1 in the last step. Which gate means "not both"?
+- Y needs **both** rules to be kept at once. Which gate means "both"?

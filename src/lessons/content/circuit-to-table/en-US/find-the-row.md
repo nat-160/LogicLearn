@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - The NOT gate means B has to be **0** for the first AND gate to give 1.
-- All three conditions must hold: A = 1, B = 0, C = 1. Every other row is 0.
+- For Y to be 1, every AND gate must get only 1s. Work out what each switch must be.

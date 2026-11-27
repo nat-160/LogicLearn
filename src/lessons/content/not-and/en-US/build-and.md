@@ -10,4 +10,4 @@
 <!-- hints -->
 
 - Which gate is on only when **all** of its inputs are on?
-- Add an AND gate, then wire **A** and **B** to its two inputs and its output to **Y**.
+- Y should light in just **one** row of the truth table. Which row is it?

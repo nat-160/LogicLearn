@@ -8,7 +8,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, io } from '../helpers';
+import { b, frames, gateExample, io } from '../helpers';
 
 export const notAndLesson: LessonDef = {
   id: 'not-and',
@@ -106,4 +106,9 @@ export const notAndLesson: LessonDef = {
       truthTable: 'hidden',
     },
   ],
+  walkthrough: {
+    // AND row by row: it is 1 only when every input is 1.
+    circuit: gateExample('AND walkthrough', 'AND'),
+    frames: frames(['A', 'B'], ['00', '01', '10', '11'], ['g']),
+  },
 };

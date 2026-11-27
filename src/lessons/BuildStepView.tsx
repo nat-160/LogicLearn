@@ -25,10 +25,17 @@ import { TargetTable } from '../editor/TargetTable';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { INTERFACE_LOCALE } from '../i18n/locales';
 import { findIO, type CircuitDoc, type Misconception } from '../sim';
-import { HintLadder } from './HintLadder';
+import { lookHint, rowHint } from './circuitHints';
+import { HintLadder, type GeneratedHint } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
 import { findPractice } from './practice';
-import { NextStepButton, PracticeOffer, StepHeader, type PracticePlace } from './PracticeNav';
+import {
+  NextStepButton,
+  PracticeOffer,
+  StepHeader,
+  WalkthroughOffer,
+  type PracticePlace,
+} from './PracticeNav';
 import { isStepDone, stepKey, useProgress } from './progress';
 import { stepSpeech } from './stepSpeech';
 import { StepText } from './StepText';
@@ -151,15 +158,35 @@ function BuildPanel({
   const showNudge = nudgedAt === designVersion && untried.length > 0;
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
-  const hints = useHintLadder(lesson, step);
+  // A test-out is a test: no hints worked out from the circuit, and no offers of help.
+  const testOut = lesson.kind === 'test-out';
+  // After the written hints come two worked out from the circuit as it is now – except in
+  // a predict-first challenge before its first Check, where they would reveal values.
+  const generated = useMemo<GeneratedHint[]>(
+    () =>
+      blind || testOut
+        ? []
+        : [
+            { title: 'Look at your circuit', hint: lookHint(doc, step.spec) },
+            { title: 'Try one row', hint: rowHint(doc, step.spec) },
+          ],
+    [blind, testOut, doc, step.spec],
+  );
+  // Written and generated hints together, for revealing, announcing and reading aloud.
+  const allHints = [...step.hints, ...generated.map((g) => `${g.title}: ${g.hint.text}`)];
+  const hints = useHintLadder(lesson, { ...step, hints: allHints });
   const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
   // After a failed check: a practice step on the recognized mistake (or after a few tries).
   const offer =
-    result && !result.pass && !practice
+    result && !result.pass && !practice && !testOut
       ? findPractice(lesson, step.id, result.misconception?.id, attempts)
       : undefined;
   const tell = useTell();
-  const words = (m: Misconception) => misconceptionText(m, step.locale);
+  // In a test-out the recognized mistake is named, but without its hint (it's a test).
+  const words = (m: Misconception) => {
+    const text = misconceptionText(m, step.locale);
+    return testOut ? { ...text, hint: '' } : text;
+  };
 
   const onCheck = () => {
     if (untried.length > 0 && nudgedAt !== designVersion) {
@@ -181,7 +208,10 @@ function BuildPanel({
     });
     onChecked();
     const practiceOffered =
-      !r.pass && !practice && findPractice(lesson, step.id, r.misconception?.id, attempts + 1);
+      !r.pass &&
+      !practice &&
+      !testOut &&
+      findPractice(lesson, step.id, r.misconception?.id, attempts + 1);
     tell(
       'result',
       summarizeCheck(r, words) + (practiceOffered ? ' A short practice is offered below.' : ''),
@@ -195,10 +225,16 @@ function BuildPanel({
       <StepText
         step={step}
         tag={practice ? 'Practice' : step.kind === 'challenge' ? 'Challenge' : undefined}
-        speech={() => stepSpeech(step, hints.shown, result, words)}
+        speech={() => stepSpeech({ ...step, hints: allHints }, hints.shown, result, words)}
       />
 
-      <HintLadder step={step} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />
+      <HintLadder
+        step={step}
+        generated={generated}
+        shown={hints.shown}
+        onShow={hints.show}
+        stuck={hints.stuck}
+      />
       <LessonGateReference lessonId={lesson.id} />
 
       <div className="lesson-actions">
@@ -231,6 +267,7 @@ function BuildPanel({
       )}
       {result && <CheckResultView result={result} words={words} />}
       {offer && <PracticeOffer lesson={lesson} practice={offer} />}
+      {result && !result.pass && !testOut && <WalkthroughOffer lesson={lesson} />}
       {done && <NextStepButton lesson={lesson} index={index} practice={practice} />}
     </div>
   );

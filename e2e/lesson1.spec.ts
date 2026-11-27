@@ -34,6 +34,12 @@ test('Lesson 1 can be completed, and then Lesson 2 opens', async ({ page }, test
   await expect(page.getByTestId('check-result')).toContainText('Correct');
   await press(page.getByTestId('next-step'), testInfo); // "Finish lesson"
 
+  // A celebration, then on to Lesson 2.
+  await expect(page).toHaveURL(/#\/lesson\/signals\/complete$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lesson 1 complete!');
+  await expect(page.getByRole('img', { name: 'Badge: Lesson 1 complete' })).toBeVisible();
+  await expect(page.getByTestId('celebration-next')).toHaveText('Next: Lesson 2 – NOT and AND');
+  await press(page.getByRole('link', { name: 'Back to lessons' }), testInfo);
   await expect(page).toHaveURL(/#\/lessons$/);
   await expect(page.getByRole('link', { name: /Signals.*Done/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /NOT and AND/ })).toBeVisible();

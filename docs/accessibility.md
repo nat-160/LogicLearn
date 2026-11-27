@@ -15,6 +15,7 @@ this device, and until you change one, LogicLearn follows the device's own setti
 | **Dark mode**                   | Light text on a dark background. Works together with high contrast, so there are four themes.                            |
 | **Dyslexia-friendly font**      | The OpenDyslexic font (drawn a little smaller, as its letters are wide), with wider spacing and bold instead of italics. |
 | **Read each lesson step aloud** | Reads each step when it opens. Every step also has a **Read this step aloud** button. Speed and voice can be changed.    |
+| **Sound effects**               | A short chime when you finish a lesson. Off unless you turn it on.                                                       |
 | **Use my device's settings**    | Forgets the choices above.                                                                                               |
 
 **Built-in narration** uses the browser's own speech, so it needs no account or download.
@@ -43,6 +44,11 @@ are used only if you choose one.
   moves focus to the first blank cell, if any.
 - A table too wide for its panel (such as the seven-segment display's) can be focused
   and scrolled with the arrow keys.
+- **Walkthroughs** move only when you press **Next** or **Back**; each new caption is
+  announced (and read aloud with automatic reading on).
+- After a failed check, **Set the switches to this row** (in the result and in the last
+  hint) sets the switches to the example row, so its values can be read in "Circuit as
+  text".
 
 ### Screen readers and other reading tools
 
@@ -70,10 +76,34 @@ The conventions:
 - In predict-first challenges, light values stay hidden from screen readers too, until
   Check.
 
+### Text alternatives
+
+Every picture either has a name for screen readers, or is hidden from them because the
+text next to it already says the same thing.
+
+| Picture                                                             | Its text alternative                                                                                                                                     |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LogicLearn logo (top left)                                          | Hidden (`alt=""`): the "LogicLearn" text is next to it.                                                                                                  |
+| Parts on the canvas (gates, switches, lights, push button, display) | Each part is named with its value: "AND gate 1: output is 0", "Light Y: on (red)", "Seven-segment display D: shows 2". The drawing itself is hidden.     |
+| Wires                                                               | Each wire is named: "Wire from Switch A to AND gate 1, input 1". The boxes that hold them are marked as containers only.                                 |
+| The canvas's dotted background and zoom-button icons                | Hidden: decoration. The zoom buttons have names.                                                                                                         |
+| Part icons in the parts list                                        | Hidden: each button's visible text names the part.                                                                                                       |
+| Gate shapes in the gate reminder                                    | Hidden: the gate's name, rule and truth table are next to it.                                                                                            |
+| Marks such as 💡 🔎 🔒 ★ ✓ ✗                                        | Hidden: the words beside them say the same ("Hint 1:", "Finish Lesson 1 first", "Unit 1 project", "Done:", "Not yet:", "✗ wrong" rows also say "wrong"). |
+| Pictures in lesson text                                             | Authors write a description (`![description](picture.png)`). A content test fails on an empty one.                                                       |
+| The badge on the celebration page                                   | Named: "Badge: Lesson 3 complete". The burst of dots around it is decoration (hidden, and left out with reduced motion).                                 |
+| Parts a hint or walkthrough points at                               | Outlined in blue (problems a check found are red); the hint or caption names the part in words.                                                          |
+
+`e2e/accessibility.spec.ts` ("text alternatives") checks every page for a picture that
+has neither a name nor a hidden marker.
+
 ## For developers
 
 - **Colors come only from theme tokens** in `src/styles/themes.css`. Never write a color
   in `app.css` or a component. Each theme redefines the tokens.
+- **Motion and sound:** the celebration's burst of dots plays once, never flashes, and is
+  left out under `prefers-reduced-motion`. The chime only plays with **Sound effects** on
+  (`Preferences.sounds`, off by default).
 - **Never use color as the only cue.**
   - Wires: thick = 1, thin = 0, dashed = unknown.
   - Wrong truth-table rows also say "✗ wrong"; prediction cells say "✓ right" or "✗ wrong".

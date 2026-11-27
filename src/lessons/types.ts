@@ -14,7 +14,7 @@
  *    text and hints, written in Markdown so they can be edited without touching code.
  * `localizeLesson()` (lessonText.ts) joins the two into a `Lesson` for the chosen language.
  */
-import type { CheckRow, CheckSpec, CircuitDoc, Criterion } from '../sim';
+import type { Bit, CheckRow, CheckSpec, CircuitDoc, Criterion } from '../sim';
 
 interface BaseStepDef {
   /** Stable id, used to save progress and to name the step's text file. Don't rename. */
@@ -110,22 +110,53 @@ export type PracticeDef = (BuildStepDef | PredictStepDef) & {
   from: string[];
 };
 
+/**
+ * A walkthrough: a short, step-by-step explanation of the lesson's idea on a circuit,
+ * paced by the student (Back / Next), offered after a failed check. Each frame sets the
+ * switches and can point at parts; its caption (in <locale>/walkthrough.md, one bullet
+ * per frame) explains why the circuit does what it does.
+ */
+export interface WalkthroughDef {
+  /** The circuit to explain. Every part locked. */
+  circuit: CircuitDoc;
+  frames: {
+    /** Switch settings, by label; switches not listed are off. */
+    inputs: Record<string, Bit>;
+    /** Parts to point at in this frame. */
+    highlight?: string[];
+  }[];
+}
+
+/** A walkthrough with its words in one language. */
+export interface Walkthrough extends WalkthroughDef {
+  title: string;
+  /** Text shown above the frames. */
+  intro: string;
+  /** One per frame. */
+  captions: string[];
+  draft: boolean;
+  locale: string;
+}
+
 export interface LessonDef {
   id: string;
   number: number;
   /** The unit the lesson belongs to (docs/curriculum-outline.md). */
   unit: number;
   /**
-   * 'lesson' (the default) or 'project' (a unit's open project). Projects open when their
-   * unit's lessons are done, and never block the next unit.
+   * 'lesson' (the default), 'project' (a unit's open project: opens when the unit's
+   * lessons are done, never blocks the next unit) or 'test-out' (an optional quiz that
+   * lets a student skip the unit; no hints).
    */
-  kind?: 'lesson' | 'project';
+  kind?: 'lesson' | 'project' | 'test-out';
   /** An optional lesson (the editor tour): always open, and never required. */
   optional?: boolean;
   /** Gate types this lesson teaches, for the gate reminder card. */
   introduces?: string[];
   /** Practice steps, offered from the lesson's steps (never required). */
   practice?: PracticeDef[];
+  /** A step-by-step explanation of the lesson's idea, offered after a failed check. */
+  walkthrough?: WalkthroughDef;
   /** Curriculum standards covered, e.g. "IB A1.2.3". */
   standards: string[];
   steps: StepDef[];
@@ -162,13 +193,14 @@ export type Practice = (BuildStep | PredictStep) & {
 };
 
 /** A lesson with its text in one language: what the lesson screens use. */
-export interface Lesson extends Omit<LessonDef, 'steps' | 'practice'> {
+export interface Lesson extends Omit<LessonDef, 'steps' | 'practice' | 'walkthrough'> {
   title: string;
   /** One sentence for the lesson list. */
   summary: string;
   locale: string;
   steps: Step[];
   practice: Practice[];
+  walkthrough?: Walkthrough;
 }
 
 export function isBuildStep<T extends StepDef>(step: T): step is T & BuildStepDef {
@@ -193,4 +225,6 @@ export function isProjectStep<T extends StepDef | Step>(
  *  - In a step file, the list after the hints marker is the step's hints.
  */
 export const DRAFT_PATTERN = /^<!--\s*draft\s*-->/i;
+/** In a walkthrough file, the list after this marker has one caption per frame. */
+export const FRAMES_PATTERN = /<!--\s*frames\s*-->/i;
 export const HINTS_PATTERN = /<!--\s*hints\s*-->/i;

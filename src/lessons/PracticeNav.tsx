@@ -2,9 +2,9 @@
  * The pieces that differ between a numbered lesson step and a practice step:
  *  - the header (step dots, or "Practice" with a link back);
  *  - the button at the end ("Next step", or "Back to the step");
- *  - the offer of a practice step after a failed check.
+ *  - the offers after a failed check: a practice step, and the lesson's walkthrough.
  */
-import { lessonHref, practiceHref } from '../app/routes';
+import { lessonHref, lessonViewHref, practiceHref } from '../app/routes';
 import { lessonName } from './gating';
 import { goNext } from './navigation';
 import { StepNav } from './StepNav';
@@ -77,6 +77,19 @@ export function PracticeOffer({ lesson, practice }: { lesson: Lesson; practice: 
     <p className="practice-offer" data-testid="practice-offer">
       Want a short practice on this first?{' '}
       <a href={practiceHref(lesson.id, practice.practiceId)}>Practice: {practice.title}</a>
+    </p>
+  );
+}
+
+/** "Watch how it works": the lesson's walkthrough, offered after a failed check. */
+export function WalkthroughOffer({ lesson }: { lesson: Lesson }) {
+  if (!lesson.walkthrough) return null;
+  return (
+    <p className="practice-offer" data-testid="walkthrough-offer">
+      See the idea explained step by step:{' '}
+      <a href={lessonViewHref(lesson.id, 'walkthrough')}>
+        Watch how it works – {lesson.walkthrough.title}
+      </a>
     </p>
   );
 }
