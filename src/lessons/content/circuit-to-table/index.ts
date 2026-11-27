@@ -6,6 +6,7 @@
  */
 import { buildCircuit, type CircuitDoc } from '../../../sim';
 import type { LessonDef } from '../../types';
+import { frames } from '../helpers';
 
 type Part = { id: string; type: string; at: [number, number] };
 
@@ -156,4 +157,27 @@ export const circuitToTableLesson: LessonDef = {
       ],
     },
   ],
+  walkthrough: {
+    // Working out a truth table: each row in counting order, gate by gate.
+    circuit: buildCircuit({
+      name: 'From circuit to table walkthrough',
+      parts: [
+        { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
+        { id: 'n', type: 'NOT', at: [6, -1], locked: true },
+        { id: 'g', type: 'AND', at: [12, 0], locked: true },
+        { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
+      ],
+      wires: [
+        ['A', 'n'],
+        ['n', 'g.in0'],
+        ['B', 'g.in1'],
+        ['g', 'Y'],
+      ],
+    }),
+    frames: [
+      ...frames(['A', 'B'], ['00'], ['n']),
+      ...frames(['A', 'B'], ['00', '01', '10', '11'], ['g']),
+    ],
+  },
 };

@@ -58,6 +58,19 @@ export const twoGates = (name: string, typeX: string, typeY: string) =>
     ],
   });
 
+/**
+ * Walkthrough frames from rows written as bit strings: frames(['A', 'B'], ['00', '11'],
+ * ['g']) sets A and B for each row and points at part g in every frame.
+ */
+export const frames = (labels: string[], rows: string[], highlight: string[] = []) =>
+  rows.map((row) => ({
+    inputs: Object.fromEntries(labels.map((l, i) => [l, row[i] === '1' ? 1 : 0])) as Record<
+      string,
+      Bit
+    >,
+    ...(highlight.length > 0 && { highlight }),
+  }));
+
 /** An explain-step example: one 2-input gate between locked switches A, B and light Y. */
 export const gateExample = (name: string, type: string) =>
   buildCircuit({

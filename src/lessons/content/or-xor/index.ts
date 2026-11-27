@@ -7,7 +7,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, gateExample, io, twoGates } from '../helpers';
+import { b, frames, gateExample, io, twoGates } from '../helpers';
 
 const twoToOne = (name: string) => buildCircuit({ name, parts: io(['A', 'B'], ['Y']) });
 
@@ -118,4 +118,9 @@ export const orXorLesson: LessonDef = {
       from: ['build-xor', 'exactly-one'],
     },
   ],
+  walkthrough: {
+    // OR (light X) and XOR (light Y) side by side: they differ only when both are on.
+    circuit: twoGates('OR and XOR walkthrough', 'OR', 'XOR'),
+    frames: frames(['A', 'B'], ['00', '01', '10', '11', '11'], ['gx', 'gy']),
+  },
 };

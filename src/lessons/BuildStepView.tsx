@@ -29,7 +29,13 @@ import { lookHint, rowHint } from './circuitHints';
 import { HintLadder, type GeneratedHint } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
 import { findPractice } from './practice';
-import { NextStepButton, PracticeOffer, StepHeader, type PracticePlace } from './PracticeNav';
+import {
+  NextStepButton,
+  PracticeOffer,
+  StepHeader,
+  WalkthroughOffer,
+  type PracticePlace,
+} from './PracticeNav';
 import { isStepDone, stepKey, useProgress } from './progress';
 import { stepSpeech } from './stepSpeech';
 import { StepText } from './StepText';
@@ -253,6 +259,7 @@ function BuildPanel({
       )}
       {result && <CheckResultView result={result} words={words} />}
       {offer && <PracticeOffer lesson={lesson} practice={offer} />}
+      {result && !result.pass && <WalkthroughOffer lesson={lesson} />}
       {done && <NextStepButton lesson={lesson} index={index} practice={practice} />}
     </div>
   );

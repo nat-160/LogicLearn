@@ -591,6 +591,11 @@ select {
   outline-offset: 5px;
 }
 
+/* Pointed out by a hint or a walkthrough: nothing is wrong, so not red. */
+.part.is-highlighted.is-pointed {
+  outline-color: var(--accent);
+}
+
 /* A selected part that is also outlined for a problem keeps the dashes of a selection. */
 .part.is-selected.is-highlighted,
 .part.is-selected.is-in-loop {
@@ -2070,4 +2075,27 @@ a.button.next {
   .burst {
     display: none;
   }
+}
+
+/* ---------- Walkthroughs (WalkthroughPage.tsx) ---------- */
+
+.walkthrough-frame {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: var(--line-width) solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.frame-count {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.frame-caption {
+  margin: 0;
+  line-height: var(--leading);
 }

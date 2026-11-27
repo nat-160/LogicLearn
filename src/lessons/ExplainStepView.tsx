@@ -7,6 +7,7 @@ import { Editor } from '../editor/Editor';
 import { createEditorStore } from '../editor/store';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { LessonGateReference } from './LessonGateReference';
+import { WalkthroughOffer } from './PracticeNav';
 import { goNext } from './navigation';
 import { useProgress } from './progress';
 import { stepSpeech } from './stepSpeech';
@@ -33,6 +34,7 @@ export function ExplainStepView({
       <StepNav lesson={lesson} index={index} />
       <StepText step={step} speech={() => stepSpeech(step, 0, null)} />
       <LessonGateReference lessonId={lesson.id} />
+      <WalkthroughOffer lesson={lesson} />
       <button
         type="button"
         className="primary"

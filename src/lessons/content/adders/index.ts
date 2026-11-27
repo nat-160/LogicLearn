@@ -7,7 +7,7 @@
  */
 import { buildCircuit, rowsFrom } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, io } from '../helpers';
+import { b, frames, io } from '../helpers';
 
 const HALF = { colors: { C: 'red', S: 'green' } };
 const FULL = { colors: { Cout: 'red', S: 'green' }, outputX: 28 };
@@ -143,4 +143,24 @@ export const addersLesson: LessonDef = {
       truthTable: 'hidden',
     },
   ],
+  walkthrough: {
+    // A half adder: S (green) is the sum bit, C (red) the carry.
+    circuit: buildCircuit({
+      name: 'Half adder walkthrough',
+      parts: [
+        ...io(['A', 'B'], ['C', 'S'], HALF),
+        { id: 'and-1', type: 'AND', at: [10, -1], locked: true },
+        { id: 'xor-1', type: 'XOR', at: [10, 4], locked: true },
+      ],
+      wires: [
+        ['A', 'and-1.in0'],
+        ['B', 'and-1.in1'],
+        ['A', 'xor-1.in0'],
+        ['B', 'xor-1.in1'],
+        ['and-1', 'C'],
+        ['xor-1', 'S'],
+      ],
+    }),
+    frames: frames(['A', 'B'], ['00', '01', '10', '11'], ['and-1', 'xor-1']),
+  },
 };

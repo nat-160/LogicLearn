@@ -21,6 +21,7 @@ import { ExplainStepView } from './ExplainStepView';
 import { isLessonUnlocked, lessonName, nextStepFor, prerequisite, useUnlockAll } from './gating';
 import { isStepDone, isStepUnlocked, useProgress } from './progress';
 import { CompletePage } from './CompletePage';
+import { WalkthroughPage } from './WalkthroughPage';
 import { practiceReturnIndex } from './practice';
 import { PredictStepView } from './PredictStepView';
 import { ProjectStepView } from './ProjectStepView';
@@ -73,6 +74,7 @@ export function LessonPage({
     );
   }
   if (view === 'complete') return <CompletePage lesson={lesson} lessons={lessons} />;
+  if (view === 'walkthrough') return <WalkthroughPage lesson={lesson} />;
   if (practiceId !== undefined) {
     // Practice is open whenever its lesson is, and never required.
     const practice = lesson.practice.find((p) => p.practiceId === practiceId);

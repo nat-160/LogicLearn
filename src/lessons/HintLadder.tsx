@@ -95,7 +95,7 @@ function CircuitHintView({ number, title, hint }: GeneratedHint & { number: numb
               type="button"
               className="link-button"
               onClick={() => {
-                store.getState().setHighlight({ componentIds: partIds });
+                store.getState().setHighlight({ componentIds: partIds, tone: 'pointer' });
                 announce(
                   `Marked on the canvas: ${partIds.length === 1 ? 'one part' : `${partIds.length} parts`}.`,
                 );

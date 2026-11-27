@@ -83,7 +83,13 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
   it('every text file belongs to a step (no misspelled file names)', () => {
     const briefIds = def.steps.flatMap((s) => (isProjectStep(s) ? s.briefs.map((b) => b.id) : []));
     const practiceIds = (def.practice ?? []).map((p) => `practice-${p.id}`);
-    const names = new Set(['lesson', ...def.steps.map((s) => s.id), ...briefIds, ...practiceIds]);
+    const names = new Set([
+      'lesson',
+      ...def.steps.map((s) => s.id),
+      ...briefIds,
+      ...practiceIds,
+      ...(def.walkthrough ? ['walkthrough'] : []),
+    ]);
     for (const file of listLessonFiles().filter((f) => f.lesson === def.id)) {
       expect(names.has(file.name), `${file.locale}/${file.name}.md`).toBe(true);
       expect(
@@ -122,6 +128,30 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
 
       it('has at least one hint', () => {
         expect(step.hints.length).toBeGreaterThan(0);
+      });
+    });
+  }
+
+  if (lesson.walkthrough) {
+    const walkthrough = lesson.walkthrough;
+    describe('walkthrough', () => {
+      it(`has ${DEFAULT_LOCALE} text: a title, and one caption for each frame`, () => {
+        expect(findLessonFile(def.id, DEFAULT_LOCALE, 'walkthrough')?.locale).toBe(DEFAULT_LOCALE);
+        expect(walkthrough.title).not.toBe('Walkthrough');
+        expect(walkthrough.captions).toHaveLength(walkthrough.frames.length);
+        for (const caption of walkthrough.captions) expect(caption.length).toBeGreaterThan(20);
+      });
+
+      it('shows a locked circuit, with frames that use its switches and parts', () => {
+        const { circuit, frames } = walkthrough;
+        expect(circuit.components.every((c) => c.locked)).toBe(true);
+        const labels = findIO(circuit).inputs.map((p) => p.label);
+        const ids = new Set(circuit.components.map((c) => c.id));
+        expect(frames.length).toBeGreaterThanOrEqual(3);
+        for (const frame of frames) {
+          for (const label of Object.keys(frame.inputs)) expect(labels).toContain(label);
+          for (const id of frame.highlight ?? []) expect(ids.has(id), id).toBe(true);
+        }
       });
     });
   }

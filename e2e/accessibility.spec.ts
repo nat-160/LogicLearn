@@ -218,6 +218,11 @@ const PAGES: {
     seed: ['not-and/challenge'],
   },
   {
+    name: 'walkthrough',
+    hash: '#/lesson/or-xor/walkthrough',
+    seed: ['not-and/challenge'],
+  },
+  {
     name: 'celebration',
     hash: '#/lesson/signals/complete',
     seed: ['signals/fan-out'],

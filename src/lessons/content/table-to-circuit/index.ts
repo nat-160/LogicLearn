@@ -8,7 +8,7 @@
  */
 import { buildCircuit, rowNumber, rowsFrom, type Bit } from '../../../sim';
 import type { LessonDef } from '../../types';
-import { b, io } from '../helpers';
+import { b, frames, io } from '../helpers';
 
 /** Y is 1 exactly on the listed rows (written as input bits, e.g. '011'). */
 const onRows =
@@ -168,4 +168,28 @@ export const tableToCircuitLesson: LessonDef = {
       from: ['by-itself', 'two-rows', 'any-table'],
     },
   ],
+  walkthrough: {
+    // One row by itself: A AND (NOT B) lights only the row A = 1, B = 0.
+    circuit: buildCircuit({
+      name: 'One row walkthrough',
+      parts: [
+        { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
+        { id: 'n', type: 'NOT', at: [6, 3], locked: true },
+        { id: 'g', type: 'AND', at: [12, 0], locked: true },
+        { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
+      ],
+      wires: [
+        ['A', 'g.in0'],
+        ['B', 'n'],
+        ['n', 'g.in1'],
+        ['g', 'Y'],
+      ],
+    }),
+    frames: [
+      ...frames(['A', 'B'], ['10'], ['g']),
+      ...frames(['A', 'B'], ['11'], ['n']),
+      ...frames(['A', 'B'], ['00', '01'], ['g']),
+    ],
+  },
 };
