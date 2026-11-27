@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - The rule is broken in only one row: A is on and B is off. Y is 1 in every other row.
-- Rows where A is 0 never break the rule, so Y = (NOT A) OR B.
+- When A is 0, the rule can't be broken. What does that tell you about Y in those rows?

@@ -373,13 +373,7 @@ function ProjectPanel({
         <h2 id="brief-title">{brief.title}</h2>
         <Markdown source={brief.prose} draft={brief.draft} />
       </section>
-      {/* A brief's last hint shows how, as in guided steps. */}
-      <HintLadder
-        step={{ ...brief, kind: 'guided' }}
-        shown={hints.shown}
-        onShow={hints.show}
-        stuck={hints.stuck}
-      />
+      <HintLadder step={brief} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />
       <LessonGateReference lessonId={lesson.id} />
       <div className="lesson-actions">
         <button type="button" className="primary" onClick={onCheck} data-testid="check-project">

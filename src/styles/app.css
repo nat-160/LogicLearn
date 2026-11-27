@@ -1162,6 +1162,18 @@ select {
   line-height: var(--leading);
 }
 
+/* A hint about the student's own circuit (HintLadder.tsx), with its buttons below. */
+.hint-circuit p {
+  margin: 0;
+}
+
+.hint-circuit .hint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .lesson-actions {
   display: flex;
   gap: 8px;

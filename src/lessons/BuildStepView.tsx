@@ -25,7 +25,8 @@ import { TargetTable } from '../editor/TargetTable';
 import { TruthTablePanel } from '../editor/TruthTablePanel';
 import { INTERFACE_LOCALE } from '../i18n/locales';
 import { findIO, type CircuitDoc, type Misconception } from '../sim';
-import { HintLadder } from './HintLadder';
+import { lookHint, rowHint } from './circuitHints';
+import { HintLadder, type GeneratedHint } from './HintLadder';
 import { LessonGateReference } from './LessonGateReference';
 import { findPractice } from './practice';
 import { NextStepButton, PracticeOffer, StepHeader, type PracticePlace } from './PracticeNav';
@@ -151,7 +152,22 @@ function BuildPanel({
   const showNudge = nudgedAt === designVersion && untried.length > 0;
   const recordAttempt = useProgress((s) => s.recordAttempt);
   const done = useProgress((s) => isStepDone(s.steps, lesson.id, step.id));
-  const hints = useHintLadder(lesson, step);
+  // After the written hints come two worked out from the circuit as it is now – except in
+  // a predict-first challenge before its first Check, where they would reveal values.
+  const generated = useMemo<GeneratedHint[]>(
+    () =>
+      blind
+        ? []
+        : [
+            { title: 'Look at your circuit', hint: lookHint(doc, step.spec) },
+            { title: 'Try one row', hint: rowHint(doc, step.spec) },
+          ],
+    [blind, doc, step.spec],
+  );
+  const hints = useHintLadder(lesson, {
+    ...step,
+    hints: [...step.hints, ...generated.map((g) => `${g.title}: ${g.hint.text}`)],
+  });
   const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
   // After a failed check: a practice step on the recognized mistake (or after a few tries).
   const offer =
@@ -198,7 +214,13 @@ function BuildPanel({
         speech={() => stepSpeech(step, hints.shown, result, words)}
       />
 
-      <HintLadder step={step} shown={hints.shown} onShow={hints.show} stuck={hints.stuck} />
+      <HintLadder
+        step={step}
+        generated={generated}
+        shown={hints.shown}
+        onShow={hints.show}
+        stuck={hints.stuck}
+      />
       <LessonGateReference lessonId={lesson.id} />
 
       <div className="lesson-actions">

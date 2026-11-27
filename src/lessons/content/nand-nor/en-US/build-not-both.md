@@ -9,4 +9,3 @@
 <!-- hints -->
 
 - "Not both" is the opposite of "both". Which gate means "both"?
-- Put a NOT after an AND: Y = NOT (A AND B).

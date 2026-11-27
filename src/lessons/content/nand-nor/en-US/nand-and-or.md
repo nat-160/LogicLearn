@@ -11,4 +11,3 @@
 
 - X: NAND is "NOT AND". What do you get if you put a NOT after it? (You know how to make a NOT from a NAND.)
 - Y: A OR B is the same as "not (neither A nor B)" – that is, (NOT A) NAND (NOT B).
-- Show me how: X = (A NAND B) NAND (A NAND B). Y = (A NAND A) NAND (B NAND B).

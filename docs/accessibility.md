@@ -70,6 +70,25 @@ The conventions:
 - In predict-first challenges, light values stay hidden from screen readers too, until
   Check.
 
+### Text alternatives
+
+Every picture either has a name for screen readers, or is hidden from them because the
+text next to it already says the same thing.
+
+| Picture                                                             | Its text alternative                                                                                                                                     |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LogicLearn logo (top left)                                          | Hidden (`alt=""`): the "LogicLearn" text is next to it.                                                                                                  |
+| Parts on the canvas (gates, switches, lights, push button, display) | Each part is named with its value: "AND gate 1: output is 0", "Light Y: on (red)", "Seven-segment display D: shows 2". The drawing itself is hidden.     |
+| Wires                                                               | Each wire is named: "Wire from Switch A to AND gate 1, input 1". The boxes that hold them are marked as containers only.                                 |
+| The canvas's dotted background and zoom-button icons                | Hidden: decoration. The zoom buttons have names.                                                                                                         |
+| Part icons in the parts list                                        | Hidden: each button's visible text names the part.                                                                                                       |
+| Gate shapes in the gate reminder                                    | Hidden: the gate's name, rule and truth table are next to it.                                                                                            |
+| Marks such as 💡 🔎 🔒 ★ ✓ ✗                                        | Hidden: the words beside them say the same ("Hint 1:", "Finish Lesson 1 first", "Unit 1 project", "Done:", "Not yet:", "✗ wrong" rows also say "wrong"). |
+| Pictures in lesson text                                             | Authors write a description (`![description](picture.png)`). A content test fails on an empty one.                                                       |
+
+`e2e/accessibility.spec.ts` ("text alternatives") checks every page for a picture that
+has neither a name nor a hidden marker.
+
 ## For developers
 
 - **Colors come only from theme tokens** in `src/styles/themes.css`. Never write a color

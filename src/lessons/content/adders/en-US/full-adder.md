@@ -11,4 +11,3 @@
 
 - S: add A and B first (XOR), then add Cin to the result (another XOR).
 - Cout: there is a carry if A AND B, **or** if (A XOR B) AND Cin.
-- Show me how: S = (A XOR B) XOR Cin; Cout = (A AND B) OR ((A XOR B) AND Cin).

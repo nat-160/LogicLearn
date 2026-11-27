@@ -69,6 +69,17 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
     }
   });
 
+  it('never gives the whole answer in a hint ("Show me how" is gone)', () => {
+    const all = [
+      ...lesson.steps,
+      ...lesson.practice,
+      ...lesson.steps.flatMap((s) => (isProjectStep(s) ? s.briefs : [])),
+    ];
+    for (const item of all) {
+      for (const hint of item.hints) expect(hint, item.id).not.toMatch(/^show me how/i);
+    }
+  });
+
   it('every text file belongs to a step (no misspelled file names)', () => {
     const briefIds = def.steps.flatMap((s) => (isProjectStep(s) ? s.briefs.map((b) => b.id) : []));
     const practiceIds = (def.practice ?? []).map((p) => `practice-${p.id}`);
@@ -224,8 +235,8 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(check(step.starter, step.spec).pass).toBe(false);
       });
 
-      it('has enough hints (guided: at least 2, challenge: at least 1)', () => {
-        expect(step.hints.length).toBeGreaterThanOrEqual(step.kind === 'guided' ? 2 : 1);
+      it('has at least one written hint (two more are worked out from the circuit)', () => {
+        expect(step.hints.length).toBeGreaterThanOrEqual(1);
       });
 
       it("lists the spec's inputs and outputs in the order the truth table shows them", () => {
@@ -300,6 +311,20 @@ const REQUIRED_SHARED = [
 ];
 
 describe('lessons and units', () => {
+  it('gives every picture in lesson text a description (alt text)', () => {
+    // ![description](picture.png) – an empty description hides the picture from screen
+    // readers, which is only right for decoration (and lessons have none).
+    const files = import.meta.glob('./content/*/*/*.md', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    }) as Record<string, string>;
+    expect(Object.keys(files).length).toBeGreaterThan(50);
+    for (const [path, text] of Object.entries(files)) {
+      expect(text, path).not.toMatch(/!\[\s*\]\(/);
+    }
+  });
+
   it('lists lessons in course order (gating opens them in this order)', () => {
     const numbers = LESSON_DEFS.map((l) => l.number);
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
