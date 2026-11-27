@@ -1,5 +1,5 @@
 import { Simulator, buildCircuit, removeItems } from '../sim';
-import { describeCircuit, describeRemoval, partName } from './describe';
+import { describeCircuit, describeDisplay, describeRemoval, partName } from './describe';
 
 const doc = buildCircuit({
   parts: [
@@ -60,5 +60,34 @@ describe('describeRemoval', () => {
 
   it('is empty when nothing was removed', () => {
     expect(describeRemoval(doc, doc)).toBe('');
+  });
+});
+
+describe('new parts in words', () => {
+  const doc2 = buildCircuit({
+    parts: [
+      { id: 'P', type: 'PUSH_BUTTON' },
+      { id: 'D', type: 'SEVEN_SEG' },
+    ],
+    wires: [
+      ['P', 'D.b'],
+      ['P', 'D.c'],
+    ],
+  });
+
+  it('says whether a push button is held down', () => {
+    const up = describeCircuit(doc2, new Simulator(doc2).snapshot());
+    expect(up.parts[0]).toBe('Push button P: up (0)');
+    const down = describeCircuit(doc2, new Simulator(doc2, { P: 1 }).snapshot());
+    expect(down.parts[0]).toBe('Push button P: held down (1)');
+  });
+
+  it('says what a display shows, and names its segments', () => {
+    const shown = describeCircuit(doc2, new Simulator(doc2, { P: 1 }).snapshot());
+    expect(shown.parts[1]).toBe('Seven-segment display D: some segments are not connected');
+    expect(shown.wires[0].text).toBe('Push button P → Seven-segment display D, segment b');
+    expect(describeDisplay([0, 1, 1, 0, 0, 0, 0])).toBe('shows 1');
+    expect(describeDisplay([0, 0, 0, 0, 0, 0, 0])).toBe('blank');
+    expect(describeDisplay([1, 0, 0, 0, 1, 0, 0])).toBe('no digit (segments a, e on)');
   });
 });

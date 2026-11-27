@@ -6,6 +6,7 @@
  *   #/sandbox                free building
  *   #/lessons                lesson list
  *   #/lesson/<id>/<step>     a lesson step (step numbers start at 1)
+ *   #/lesson/<id>/practice/<practice id>   a practice step, outside the numbering
  *   #/share/<data>           a circuit someone shared
  */
 import { useEffect, useState } from 'react';
@@ -14,7 +15,7 @@ export type Route =
   | { page: 'home' }
   | { page: 'sandbox' }
   | { page: 'lessons' }
-  | { page: 'lesson'; lessonId: string; step: number }
+  | { page: 'lesson'; lessonId: string; step: number; practice?: string }
   | { page: 'share'; data: string }
   | { page: 'not-found'; path: string };
 
@@ -24,6 +25,9 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 0) return { page: 'home' };
   if (parts[0] === 'sandbox' && parts.length === 1) return { page: 'sandbox' };
   if (parts[0] === 'lessons' && parts.length === 1) return { page: 'lessons' };
+  if (parts[0] === 'lesson' && parts[1] && parts[2] === 'practice' && parts[3]) {
+    return { page: 'lesson', lessonId: parts[1], step: 1, practice: parts[3] };
+  }
   if (parts[0] === 'lesson' && parts[1]) {
     const step = Number(parts[2] ?? '1');
     return {
@@ -38,6 +42,10 @@ export function parseRoute(hash: string): Route {
 
 export function lessonHref(lessonId: string, step = 1): string {
   return `#/lesson/${lessonId}/${step}`;
+}
+
+export function practiceHref(lessonId: string, practiceId: string): string {
+  return `#/lesson/${lessonId}/practice/${practiceId}`;
 }
 
 export function useRoute(): Route {

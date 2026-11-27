@@ -33,6 +33,25 @@ export function readLocal(key: string): string | null {
   }
 }
 
+/**
+ * The names of everything saved under storageKey(prefix), with the site's own prefix
+ * removed: listLocalKeys('work:') → ['work:not-and/build-not', …].
+ */
+export function listLocalKeys(prefix: string): string[] {
+  const start = storageKey(prefix);
+  const own = storageKey('');
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key?.startsWith(start)) keys.push(key.slice(own.length));
+    }
+    return keys;
+  } catch {
+    return [];
+  }
+}
+
 export function writeLocal(key: string, value: string): boolean {
   try {
     window.localStorage.setItem(key, value);
@@ -78,26 +97,35 @@ export function saveSandbox(doc: CircuitDoc): void {
 
 export const FILE_EXTENSION = '.circuit.json';
 
-/** Download the circuit as a file the student can keep or send to a teacher. */
-export function downloadCircuit(doc: CircuitDoc): void {
-  const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+/** Files bigger than this are refused before they are read. */
+export const MAX_FILE_BYTES = 2_000_000;
+
+/** Download a value as a JSON file (nothing is uploaded: the browser saves it). */
+export function downloadJson(fileName: string, value: unknown): void {
+  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${safeFileName(doc.name)}${FILE_EXTENSION}`;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** Download the circuit as a file the student can keep or send to a teacher. */
+export function downloadCircuit(doc: CircuitDoc): void {
+  downloadJson(`${safeFileName(doc.name)}${FILE_EXTENSION}`, doc);
+}
+
 export async function readCircuitFile(file: File): Promise<LoadResult> {
-  if (file.size > 2_000_000)
+  if (file.size > MAX_FILE_BYTES)
     return { ok: false, errors: ['That file is too big to be a circuit.'] };
   return parseCircuit(await file.text());
 }
 
-function safeFileName(name: string): string {
+/** A name that is safe to use in a file name: letters, digits, dashes. */
+export function safeFileName(name: string): string {
   return (
     name
       .replace(/[^a-z0-9-_ ]/gi, '')

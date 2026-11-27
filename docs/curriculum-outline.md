@@ -1,8 +1,28 @@
 # Curriculum outline (scaffolded lesson plan)
 
-> **Status:** draft for the author. Order confirmed (see `PROJECT_PLAN.md` §5). These
-> bullets become each step's placeholder text (`<!-- draft -->` Markdown files) until the
-> author writes the final prose. Lesson 2 is built as the Phase 1 demo lesson.
+> **Status:** all of Units 1 and 2 are built (Phase 2), with draft text for the author.
+> Order confirmed (see `PROJECT_PLAN.md` §5). These bullets became each step's
+> placeholder text (`<!-- draft -->` Markdown files) until the author writes the final
+> prose. Where the built lesson differs from the outline, the built version is described
+> in [phase-2-plan.md](phase-2-plan.md) §5; the steps are listed below.
+
+## Built lessons and their step ids
+
+Step ids name the text files and key saved progress, so they never change once released.
+
+| Lesson                        | Folder             | Steps (kind)                                                                                                                            |
+| ----------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Editor tour (optional)      | `editor-tour`      | `the-editor` (explain), `add-and-connect`, `fix-it` (guided)                                                                            |
+| 1 Signals                     | `signals`          | `on-and-off`, `unknown-x` (explain), `label-and-wire` (guided), `fan-out` (challenge)                                                   |
+| 2 NOT and AND                 | `not-and`          | `what-is-a-gate` (explain), `build-not` (guided), `meet-and` (explain), `build-and` (guided), `challenge`                               |
+| 3 OR and XOR                  | `or-xor`           | `meet-or` (explain), `build-or` (guided), `exclusive-or` (explain), `build-xor`, `table-to-circuit` (guided), `exactly-one` (challenge) |
+| 4 From circuit to truth table | `circuit-to-table` | `count-the-rows` (explain), `predict-two`, `find-the-row` (predict), `challenge` (predict challenge)                                    |
+| Unit 1 project                | `unit-1-project`   | `brief` (explain), `build` (project: briefs `door-alarm`, `voting`)                                                                     |
+| 5 NAND and NOR                | `nand-nor`         | `not-both` (explain), `build-not-both`, `nand-not`, `nand-and-or` (guided), `neither` (challenge)                                       |
+| 6 XNOR, if … then             | `xnor-if-then`     | `match`, `if-then` (explain), `build-if-then`, `two-rules` (guided), `three-rules` (challenge)                                          |
+| 7 From truth table to circuit | `table-to-circuit` | `one-row-at-a-time` (explain), `by-itself`, `two-rows` (guided), `any-table` (challenge)                                                |
+| 8 Adders                      | `adders`           | `adding-bits` (explain), `half-adder`, `full-adder` (guided), `two-bit-adder` (challenge)                                               |
+| Unit 2 project                | `unit-2-project`   | `brief` (explain), `build` (project: brief `digits`)                                                                                    |
 
 ## How every lesson is built
 
@@ -13,11 +33,16 @@ direct instruction → guided construction → open construction sequence from t
 - **Guided:** locked switches/lights, a limited parts list, hints revealed one at a time.
 - **Challenge:** less help. At least one challenge per lesson is **predict-first**: outputs
   and the truth table stay hidden until Check.
-- **Remediation (Phase 2):** a failed challenge leads to smaller steps chosen by the
-  _misconception signature_ (the pattern of wrong rows).
+- **Feedback (Phase 2):** a failed check names the recognized mistake (the
+  _misconception signature_, the pattern of wrong rows), and pressing Check before
+  trying every row suggests trying the rest first.
+- **Practice steps (Phase 2):** after a recognized mistake (or 3 failed checks), an
+  offered short practice step on just that idea. Built: `or-xor` `both-on` (OR or XOR?),
+  `nand-nor` `neither-on` (not both, or exactly one?), `xnor-if-then` `false-if` and
+  `both-off`, `table-to-circuit` `alone` (A by itself).
 - **Habits in every lesson** (from Herman et al., ICER '08): check **every** row, starting
   with all zeros; re-read the rule and check each row before pressing Check.
-- **Test-outs (Phase 2)** before each unit let students who already know the material skip it.
+- **Test-outs (Phase 3)** before each unit let students who already know the material skip it.
 
 Standards: IB CS A1.2.3 (purpose and use of logic gates), A1.2.4 (truth tables), A1.2.5
 (logic diagrams); CSTA 3B-CS-02. AP CSP Topic 3.5 covers Boolean expressions only.
@@ -41,7 +66,7 @@ Standards: IB CS A1.2.3 (purpose and use of logic gates), A1.2.4 (truth tables),
 - Challenge: "Light Y shows A, and light Z shows A too" (fan-out: one output to two inputs).
 - Standards: A1.2.3.
 
-### Lesson 2: NOT and AND _(built: demo lesson)_
+### Lesson 2: NOT and AND
 
 - Explain: a logic gate follows a rule; NOT outputs the opposite (example to explore).
 - Guided: build NOT (locked A and Y; palette: NOT).
@@ -119,9 +144,10 @@ Standards: IB CS A1.2.3 (purpose and use of logic gates), A1.2.4 (truth tables),
 
 ### Unit 2 project (open)
 
-- **Seven-segment display** (Phase 2 part): show digits 0–3 from two switches; or a
-  2-bit adder whose answer lights up on the display.
-- Automatic criteria: correct for every input; uses a seven-segment display.
+- **Seven-segment display** (Phase 2 part): show digits 0–3 from two switches (built:
+  brief `digits`, a fixed rule). A second brief, a 2-bit adder whose answer lights up on
+  the display, is planned for Phase 3.
+- Automatic criteria: correct for every input.
 - Hidden teacher rubric: as Unit 1, plus reuse of earlier circuits.
 
 ---

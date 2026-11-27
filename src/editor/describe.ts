@@ -11,7 +11,9 @@
  * In predict-first mode, values other than the switches' are hidden.
  */
 import {
+  digitShown,
   findComponent,
+  SEGMENTS,
   findComponentDef,
   pinsOf,
   type CircuitDoc,
@@ -30,9 +32,14 @@ export function partName(c: ComponentInstance): string {
   return `${def.name} ${number ? number[1] : c.id}`;
 }
 
-/** "input 1" for in0, "input" for a part's only input, "output" for its only output. */
+/**
+ * "input 1" for in0, "input" for a part's only input, "output" for its only output, or the
+ * pin's own name ("segment a").
+ */
 function pinPhrase(c: ComponentInstance, pin: string): string {
   const pins = pinsOf(c.type, c.props);
+  const named = [...pins.inputs, ...pins.outputs].find((p) => p.id === pin)?.label;
+  if (named) return named;
   if (pins.outputs.some((p) => p.id === pin))
     return pins.outputs.length > 1 ? `output ${pin}` : 'output';
   const index = pins.inputs.findIndex((p) => p.id === pin);
@@ -50,6 +57,23 @@ export function pinName(doc: CircuitDoc, ref: PinRef): string {
 
 const spoken = (v: Value | undefined) => (v === 1 ? 'on (1)' : v === 0 ? 'off (0)' : 'unknown');
 
+/** What a seven-segment display shows, in words: "shows 2", "blank", "no digit (b, e on)". */
+export function describeDisplay(segments: readonly (Value | undefined)[]): string {
+  if (segments.some((v) => v !== 0 && v !== 1)) return 'some segments are not connected';
+  const lit = SEGMENTS.filter((_, i) => segments[i] === 1);
+  if (lit.length === 0) return 'blank';
+  const digit = digitShown(segments as Value[]);
+  return digit !== undefined ? `shows ${digit}` : `no digit (segments ${lit.join(', ')} on)`;
+}
+
+/** A display's segment values, a–g, from the simulator's pin values. */
+export function displaySegments(
+  id: string,
+  values: Readonly<Record<string, Value>>,
+): (Value | undefined)[] {
+  return SEGMENTS.map((s) => values[`${id}.${s}`]);
+}
+
 export interface CircuitDescription {
   parts: string[];
   wires: { id: string; text: string }[];
@@ -65,8 +89,12 @@ export function describeCircuit(
   const parts = doc.components.map((c) => {
     const def = findComponentDef(c.type);
     const name = partName(c);
+    if (c.type === 'PUSH_BUTTON') {
+      return `${name}: ${values[`${c.id}.out`] === 1 ? 'held down (1)' : 'up (0)'}`;
+    }
     if (def?.io === 'input') return `${name}: ${spoken(values[`${c.id}.out`])}`;
     if (hideValues) return `${name}: value hidden until you check`;
+    if (c.type === 'SEVEN_SEG') return `${name}: ${describeDisplay(displaySegments(c.id, values))}`;
     if (def?.io === 'output') {
       const v = values[`${c.id}.in`];
       return `${name}: ${v === 'X' || v === undefined ? 'unknown – check its wire' : spoken(v)}`;

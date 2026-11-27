@@ -11,15 +11,22 @@
  */
 import { compile, type CompiledCircuit } from './compile';
 import type { CircuitDoc } from './circuit';
-import { findComponentDef } from './registry';
+import { findComponentDef, getComponentDef, pinsOf } from './registry';
 import { Simulator, type InputValues } from './simulator';
 import { allInputRows, type Bit, type Value } from './values';
 
 export interface IOPart {
   id: string;
-  /** The label, or the id when the part has no label. */
+  /**
+   * The label, or the id when the part has no label. For a part with several pins (a
+   * seven-segment display), each pin is its own column: "D.a", "D.b", …
+   */
   label: string;
   role: 'input' | 'output';
+  /** The pin, for a column of a part with several pins. */
+  pin?: string;
+  /** The part's own label, for a column of a part with several pins ("D"). */
+  partLabel?: string;
 }
 
 export interface CircuitIO {
@@ -30,19 +37,38 @@ export interface CircuitIO {
 /** Natural label order: "A" < "B" < "In2" < "In10". */
 const labelOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'variant' });
 
-/** The circuit's inputs and outputs, each sorted by label. */
+/**
+ * The circuit's inputs and outputs, sorted by label. An output part with several input
+ * pins (a seven-segment display) gives one entry per pin, labelled "D.a" … "D.g" and kept
+ * in pin order, so every segment is its own truth-table column.
+ */
 export function findIO(doc: CircuitDoc): CircuitIO {
   const io: CircuitIO = { inputs: [], outputs: [] };
+  const parts: {
+    component: CircuitDoc['components'][number];
+    role: 'input' | 'output';
+    label: string;
+  }[] = [];
   for (const c of doc.components) {
     const role = findComponentDef(c.type)?.io;
-    if (!role) continue;
-    const part = { id: c.id, label: c.label?.trim() || c.id, role };
-    (role === 'input' ? io.inputs : io.outputs).push(part);
+    if (role) parts.push({ component: c, role, label: c.label?.trim() || c.id });
   }
-  const byLabel = (a: IOPart, b: IOPart) =>
-    labelOrder.compare(a.label, b.label) || labelOrder.compare(a.id, b.id);
-  io.inputs.sort(byLabel);
-  io.outputs.sort(byLabel);
+  parts.sort(
+    (a, b) =>
+      labelOrder.compare(a.label, b.label) || labelOrder.compare(a.component.id, b.component.id),
+  );
+  for (const { component: c, role, label } of parts) {
+    const layout = pinsOf(c.type, c.props);
+    // An input part drives its output pin; an output part reads its input pins.
+    const pins = role === 'input' ? layout.outputs : layout.inputs;
+    const list = role === 'input' ? io.inputs : io.outputs;
+    if (pins.length <= 1) list.push({ id: c.id, label, role });
+    else {
+      for (const pin of pins) {
+        list.push({ id: c.id, label: `${label}.${pin.id}`, role, pin: pin.id, partLabel: label });
+      }
+    }
+  }
   return io;
 }
 
@@ -67,17 +93,17 @@ export function evaluateRow(
   inputs.forEach((part, i) => (values[part.id] = bits[i]));
   const sim = new Simulator(circuit, values);
   return {
-    outputs: outputs.map((part) => outputValue(sim, circuit, part.id)),
+    outputs: outputs.map((part) => outputValue(sim, circuit, part)),
     settled: sim.lastReport.settled,
   };
 }
 
-/** What an output part (light) is showing: the value on its first input pin. */
-function outputValue(sim: Simulator, circuit: CompiledCircuit, id: string): Value {
-  const index = circuit.indexById.get(id);
+/** What an output shows: the value on its pin (a light's only input pin). */
+function outputValue(sim: Simulator, circuit: CompiledCircuit, part: IOPart): Value {
+  const index = circuit.indexById.get(part.id);
   if (index === undefined) return 'X';
-  const pin = circuit.components[index].inputPins[0];
-  return pin === undefined ? 'X' : sim.pinValue(id, pin);
+  const pin = part.pin ?? circuit.components[index].inputPins[0];
+  return pin === undefined ? 'X' : sim.pinValue(part.id, pin);
 }
 
 export interface TruthTableRow {
@@ -112,4 +138,58 @@ export function computeTruthTable(
     ...evaluateRow(circuit, inputs, bits, outputs),
   }));
   return { ok: true, table: { inputs, outputs, rows } };
+}
+
+/**
+ * A gate's own truth table, computed from its definition in the registry (so the gate
+ * reminder card can never disagree with the simulator). Rows are in counting order.
+ */
+export function gateTruthTable(type: string): {
+  inputs: number;
+  rows: { inputs: Bit[]; output: Value }[];
+} {
+  const def = getComponentDef(type);
+  const inputs = pinsOf(type, def.defaultProps).inputs.length;
+  const rows = allInputRows(inputs).map((row) => ({
+    inputs: row,
+    output: def.evaluate(row, def.defaultProps, def.initialState?.(def.defaultProps)).outputs[0],
+  }));
+  return { inputs, rows };
+}
+
+/** A student's prediction for one output in one row: 0, 1, or not filled in yet. */
+export type Prediction = Bit | null;
+
+export interface PredictionResult {
+  /** right[row][output]: whether that prediction matches the circuit. */
+  right: boolean[][];
+  /** Rows where every output was predicted right. */
+  rowsRight: number;
+  rows: number;
+  /** Whether every prediction is filled in. */
+  complete: boolean;
+}
+
+/**
+ * Compare a student's predicted truth table with the real one, row by row. `cells` is
+ * [row][output], in the table's own row and output order. A missing prediction is wrong.
+ */
+export function comparePredictions(
+  table: TruthTable,
+  cells: readonly (readonly Prediction[])[],
+): PredictionResult {
+  const right = table.rows.map((row, r) =>
+    row.outputs.map((actual, o) => {
+      const guess = cells[r]?.[o] ?? null;
+      return guess !== null && guess === actual;
+    }),
+  );
+  return {
+    right,
+    rowsRight: right.filter((row) => row.every(Boolean)).length,
+    rows: table.rows.length,
+    complete: table.rows.every((row, r) =>
+      row.outputs.every((_, o) => (cells[r]?.[o] ?? null) !== null),
+    ),
+  };
 }

@@ -9,11 +9,18 @@
  */
 import { announce } from '../a11y/announcer';
 import type { CheckResult } from '../sim';
-import { summarizeCheck } from './checkSummary';
+import { checkerWords, summarizeCheck, type MisconceptionWordsFor } from './checkSummary';
 import { TARGETS } from './targets';
 import { useCheck } from './useCheck';
 
-export function CheckResultView({ result }: { result: CheckResult }) {
+export function CheckResultView({
+  result,
+  words = checkerWords,
+}: {
+  result: CheckResult;
+  /** Words for a recognized misconception (lessons pass the author's text). */
+  words?: MisconceptionWordsFor;
+}) {
   const errors = result.diagnostics.filter((d) => d.severity === 'error');
   const warnings = result.diagnostics.filter((d) => d.severity === 'warning');
   const wrong = result.mismatches.length;
@@ -33,9 +40,9 @@ export function CheckResultView({ result }: { result: CheckResult }) {
         )}
       </p>
       {result.misconception && (
-        <div className="misconception">
-          <p>{result.misconception.summary}</p>
-          <p className="hint">💡 {result.misconception.hint}</p>
+        <div className="misconception" data-misconception={result.misconception.id}>
+          <p>{words(result.misconception).summary}</p>
+          <p className="hint">💡 {words(result.misconception).hint}</p>
         </div>
       )}
       {errors.length > 0 && (
@@ -64,9 +71,11 @@ export function CheckResultView({ result }: { result: CheckResult }) {
 export function TargetCheckPanel({
   targetId,
   onTargetChange,
+  words = checkerWords,
 }: {
   targetId: string;
   onTargetChange: (id: string) => void;
+  words?: MisconceptionWordsFor;
 }) {
   const { result, run, clear } = useCheck();
   const target = TARGETS.find((t) => t.id === targetId);
@@ -101,14 +110,14 @@ export function TargetCheckPanel({
           <button
             type="button"
             className="primary"
-            onClick={() => announce(summarizeCheck(run(target.spec)))}
+            onClick={() => announce(summarizeCheck(run(target.spec), words))}
             data-testid="check-button"
           >
             Check my circuit
           </button>
         </>
       )}
-      {result && <CheckResultView result={result} />}
+      {result && <CheckResultView result={result} words={words} />}
     </section>
   );
 }

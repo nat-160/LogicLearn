@@ -12,6 +12,7 @@
 import { useMemo } from 'react';
 import { computeTruthTable, rowNumber, type Bit, type CheckSpec, type Value } from '../sim';
 import { useEditor } from './editorContext';
+import { TableScroll } from './TableScroll';
 
 /** Show the table for up to this many inputs (64 rows). */
 const MAX_SHOWN_INPUTS = 6;
@@ -78,7 +79,7 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
           Label your switches {spec.inputs.join(', ')} to compare with the target.
         </p>
       )}
-      <div className="table-scroll">
+      <TableScroll label="Truth table">
         <table className="truth-table" data-testid="truth-table">
           <caption className="sr-only">
             Truth table. Inputs: {table.inputs.map((p) => p.label).join(', ')}. Outputs:{' '}
@@ -96,7 +97,7 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
                 </th>
               ))}
               {table.outputs.map((p) => (
-                <th key={p.id} scope="col" className="col-output">
+                <th key={`${p.id}.${p.pin ?? ''}`} scope="col" className="col-output">
                   {p.label}
                 </th>
               ))}
@@ -169,7 +170,7 @@ export function TruthTablePanel({ spec }: { spec?: CheckSpec }) {
             })}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       <p className="muted small">
         ✓ = a row you have tried with the switches. Tap a row to try it.
       </p>

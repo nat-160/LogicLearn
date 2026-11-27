@@ -10,7 +10,7 @@
  * modify the old one. The editor's undo/redo is just a list of previous documents.
  */
 import './components'; // registers the built-in parts
-import { findComponentDef, pinsOf, type Props } from './registry';
+import { findComponentDef, normalizeProps, pinsOf, type Props } from './registry';
 
 export const SCHEMA_VERSION = 1;
 
@@ -123,7 +123,7 @@ export function addComponent(
     id,
     type,
     position: { ...position },
-    props: { ...options.props },
+    props: options.props ? normalizeProps(type, { ...options.props }) : {},
     ...(label !== undefined && { label }),
     ...(options.locked && { locked: true }),
   };
@@ -164,7 +164,7 @@ export function setLabel(doc: CircuitDoc, id: string, label: string): CircuitDoc
 export function setProps(doc: CircuitDoc, id: string, props: Props): CircuitDoc {
   const target = findComponent(doc, id);
   if (!target || target.locked) return doc;
-  const updated = { ...target, props: { ...target.props, ...props } };
+  const updated = { ...target, props: normalizeProps(target.type, { ...target.props, ...props }) };
   const pins = pinsOf(updated.type, updated.props);
   const inputs = new Set(pins.inputs.map((p) => p.id));
   const outputs = new Set(pins.outputs.map((p) => p.id));

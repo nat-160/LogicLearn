@@ -1,5 +1,5 @@
-import { allComponentDefs, getComponentDef } from './registry';
-import './components';
+import { allComponentDefs, getComponentDef, normalizeProps, pinsOf } from './registry';
+import { DIGIT_SEGMENTS, digitShown, SEGMENTS } from './components';
 import { X, type Value } from './values';
 
 /** Full truth tables for every gate, rows 00, 01, 10, 11. */
@@ -53,12 +53,47 @@ describe('gate truth tables', () => {
 });
 
 describe('registry', () => {
-  it('registers the nine Phase 1 parts', () => {
+  it('registers the eleven parts', () => {
     expect(
       allComponentDefs()
         .map((d) => d.type)
         .sort(),
-    ).toEqual(['AND', 'LIGHT', 'NAND', 'NOR', 'NOT', 'OR', 'SWITCH', 'XNOR', 'XOR'].sort());
+    ).toEqual(
+      [
+        'AND',
+        'LIGHT',
+        'NAND',
+        'NOR',
+        'NOT',
+        'OR',
+        'PUSH_BUTTON',
+        'SEVEN_SEG',
+        'SWITCH',
+        'XNOR',
+        'XOR',
+      ].sort(),
+    );
+  });
+
+  it('marks push buttons as inputs and displays as outputs', () => {
+    expect(getComponentDef('PUSH_BUTTON').io).toBe('input');
+    expect(getComponentDef('SEVEN_SEG').io).toBe('output');
+    expect(pinsOf('SEVEN_SEG').inputs.map((p) => p.id)).toEqual([...SEGMENTS]);
+  });
+
+  it('keeps only known light colors', () => {
+    expect(normalizeProps('LIGHT', { color: 'red' })).toEqual({ color: 'red' });
+    expect(normalizeProps('LIGHT', { color: 'x" onclick="evil' })).toEqual({});
+    expect(normalizeProps('LIGHT', {})).toEqual({});
+    expect(normalizeProps('AND', { inputs: 3 })).toEqual({ inputs: 3 });
+  });
+
+  it('says which digit a display shows', () => {
+    const show = (lit: string) => SEGMENTS.map((s) => (lit.includes(s) ? 1 : 0));
+    DIGIT_SEGMENTS.forEach((lit, digit) => expect(digitShown(show(lit))).toBe(digit));
+    expect(digitShown(show('cdefg'))).toBe(6); // a 6 without its top bar
+    expect(digitShown(show('ae'))).toBeUndefined();
+    expect(digitShown(['X', 1, 1, 1, 1, 1, 1])).toBeUndefined();
   });
 
   it('marks switches as inputs and lights as outputs', () => {

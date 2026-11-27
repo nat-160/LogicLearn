@@ -69,6 +69,14 @@
   --light-unknown-text: #334155;
   --canvas-bg: #f8fafc;
   --grid-dot: #cbd5e1;
+  /* Seven-segment display: lit segments are filled, unlit ones only outlined. */
+  --display-face: #0f172a;
+  --segment-on: #f87171;
+  --segment-off: #334155;
+  --display-text: #f8fafc;
+  /* Push button: its cap, up and held down. */
+  --button-cap: #f87171;
+  --button-cap-down: #b91c1c;
 
   /* Status colors */
   --error: #dc2626;
@@ -144,6 +152,12 @@
   --light-unknown-text: #e5e7eb;
   --canvas-bg: #0f172a;
   --grid-dot: #334155;
+  --display-face: #020617;
+  --segment-on: #fca5a5;
+  --segment-off: #475569;
+  --display-text: #f8fafc;
+  --button-cap: #f87171;
+  --button-cap-down: #fecaca;
 
   --error: #f87171;
   --error-bg: #3f1d1d;
@@ -218,6 +232,12 @@
   --light-unknown-text: #000000;
   --canvas-bg: #ffffff;
   --grid-dot: #8a8a8a;
+  --display-face: #000000;
+  --segment-on: #ffffff;
+  --segment-off: #8a8a8a;
+  --display-text: #ffffff;
+  --button-cap: #000000;
+  --button-cap-down: #ffffff;
 
   --error: #b00000;
   --error-bg: #ffffff;
@@ -284,6 +304,12 @@
   --light-unknown-text: #ffffff;
   --canvas-bg: #000000;
   --grid-dot: #6b6b6b;
+  --display-face: #000000;
+  --segment-on: #ffdd00;
+  --segment-off: #8a8a8a;
+  --display-text: #ffffff;
+  --button-cap: #ffffff;
+  --button-cap-down: #000000;
 
   --error: #ff6b6b;
   --error-bg: #000000;
@@ -333,6 +359,12 @@
     --light-red: Highlight;
     --light-green: Highlight;
     --light-blue: Highlight;
+    --display-face: Canvas;
+    --segment-on: Highlight;
+    --segment-off: GrayText;
+    --display-text: CanvasText;
+    --button-cap: ButtonText;
+    --button-cap-down: Highlight;
     --row-current-bg: Highlight;
     --row-current-text: HighlightText;
     --row-current-bar: HighlightText;

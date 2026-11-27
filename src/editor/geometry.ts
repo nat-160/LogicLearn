@@ -17,8 +17,17 @@ export interface PartGeometry {
 
 export function partGeometry(type: string, props: Record<string, unknown> = {}): PartGeometry {
   const layout = pinsOf(type, props);
-  if (type === 'SWITCH') {
+  if (type === 'SWITCH' || type === 'PUSH_BUTTON') {
     return { width: 60, height: 40, pins: { out: { x: 60, y: 20, side: 'right' } } };
+  }
+  if (type === 'SEVEN_SEG') {
+    // Seven inputs (a–g) down the left side, 40px apart like every pin; the digit to
+    // their right.
+    const pins: PartGeometry['pins'] = {};
+    layout.inputs.forEach((pin, i) => {
+      pins[pin.id] = { x: 0, y: 20 + 40 * i, side: 'left' };
+    });
+    return { width: 120, height: 40 * layout.inputs.length, pins };
   }
   if (type === 'LIGHT') {
     return { width: 40, height: 40, pins: { in: { x: 0, y: 20, side: 'left' } } };

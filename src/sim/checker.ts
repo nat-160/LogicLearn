@@ -9,7 +9,7 @@
  */
 import { compile, findLoops, UNCONNECTED } from './compile';
 import type { CircuitDoc } from './circuit';
-import { diagnoseMisconception, type Misconception } from './misconceptions';
+import { diagnoseMisconception, type Misconception, type RulePart } from './misconceptions';
 import { findComponentDef } from './registry';
 import { evaluateRow, findIO, type IOPart } from './truthTable';
 import { allInputRows, type Bit, type Value } from './values';
@@ -26,6 +26,12 @@ export interface CheckSpec {
   outputs: string[];
   /** The rows to check. Use `rowsFrom()` to generate a full table from a function. */
   expected: CheckRow[];
+  /**
+   * For word problems: the rules the expected output is made of (all must hold, so the
+   * output is their AND). Lets the checker say which rule a mistake is in. Lesson tests
+   * check that `expected` matches rowsFromRules().
+   */
+  rules?: RulePart[];
   /** Rules about gates. Input and output parts (switches, lights) never count. */
   constraints?: {
     /** Only these gate types may be used, e.g. ["NAND"]. */
@@ -95,16 +101,35 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
   const all = [...io.inputs, ...io.outputs];
 
   // --- Inputs and outputs: are the right ones there, with unique labels? ---
-  const labelCounts = new Map<string, IOPart[]>();
-  for (const part of all)
-    labelCounts.set(part.label, [...(labelCounts.get(part.label) ?? []), part]);
-  for (const [label, parts] of labelCounts) {
-    if (parts.length > 1) {
+  // (Counted per part: a display's seven columns share one label.)
+  const partsByLabel = new Map<string, Set<string>>();
+  for (const part of all) {
+    const label = part.partLabel ?? part.label;
+    partsByLabel.set(label, (partsByLabel.get(label) ?? new Set()).add(part.id));
+  }
+  for (const [label, ids] of partsByLabel) {
+    if (ids.size > 1) {
       diagnostics.push({
         code: 'DUPLICATE_LABEL',
         severity: 'error',
-        message: `${parts.length} parts are labeled "${label}". Give each input and output its own label.`,
-        componentIds: parts.map((p) => p.id),
+        message: `${ids.size} parts are labeled "${label}". Give each input and output its own label.`,
+        componentIds: [...ids],
+      });
+    }
+  }
+  // Different labels can still make the same column: a light labeled "D.a" next to a
+  // display labeled "D". Then the checker couldn't tell which one is meant.
+  const partsByColumn = new Map<string, Set<string>>();
+  for (const part of all) {
+    partsByColumn.set(part.label, (partsByColumn.get(part.label) ?? new Set()).add(part.id));
+  }
+  for (const [label, ids] of partsByColumn) {
+    if (ids.size > 1 && (partsByLabel.get(label)?.size ?? 0) < 2) {
+      diagnostics.push({
+        code: 'DUPLICATE_LABEL',
+        severity: 'error',
+        message: `Two parts both make the truth-table column "${label}". Change one of their labels.`,
+        componentIds: [...ids],
       });
     }
   }
@@ -121,31 +146,34 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
       });
     }
   });
-  spec.outputs.forEach((label, i) => {
-    if (!specOutputs[i]) {
-      diagnostics.push({
-        code: 'MISSING_IO',
-        severity: 'error',
-        message: `Your circuit needs an output (light) labeled "${label}".`,
-      });
-    }
-  });
+  // A missing display is one message, not one per segment ("D.a", "D.b", …).
+  const missingOutputs = new Set(
+    spec.outputs.filter((_, i) => !specOutputs[i]).map((label) => label.split('.')[0]),
+  );
+  for (const label of missingOutputs) {
+    const display = spec.outputs.some((l) => l.startsWith(`${label}.`));
+    diagnostics.push({
+      code: 'MISSING_IO',
+      severity: 'error',
+      message: display
+        ? `Your circuit needs a seven-segment display labeled "${label}".`
+        : `Your circuit needs an output (light) labeled "${label}".`,
+    });
+  }
   const expectedLabels = new Set([...spec.inputs, ...spec.outputs]);
   const extras = all.filter((p) => !expectedLabels.has(p.label));
   if (extras.length) {
+    const names = [...new Set(extras.map((p) => p.partLabel ?? p.label))];
     diagnostics.push({
       code: 'EXTRA_IO',
       severity: 'warning',
-      message: `This task doesn't use ${extras.map((p) => `"${p.label}"`).join(', ')}. Extra switches are kept off during the check.`,
-      componentIds: extras.map((p) => p.id),
+      message: `This task doesn't use ${names.map((label) => `"${label}"`).join(', ')}. Extra switches are kept off during the check.`,
+      componentIds: [...new Set(extras.map((p) => p.id))],
     });
   }
 
   // --- Gate rules: every part except inputs and outputs counts ---
-  const gates = doc.components.filter((c) => {
-    const def = findComponentDef(c.type);
-    return def !== undefined && !def.io;
-  });
+  const gates = gateParts(doc);
   const rules = spec.constraints ?? {};
   if (rules.allowedTypes) {
     const banned = gates.filter((g) => !rules.allowedTypes!.includes(g.type));
@@ -244,9 +272,21 @@ export function check(doc: CircuitDoc, spec: CheckSpec): CheckResult {
     inputCount: spec.inputs.length,
     outputCount: spec.outputs.length,
     rows,
+    inputs: spec.inputs,
+    outputs: spec.outputs,
+    rules: spec.rules,
   });
   const pass = mismatches.length === 0 && !diagnostics.some((d) => d.severity === 'error');
   return { pass, rows, mismatches, diagnostics, ...(misconception && { misconception }) };
+}
+
+/** The gates in a circuit: every part that isn't an input or output (switches, lights,
+ * displays never count towards gate limits). */
+export function gateParts(doc: CircuitDoc): CircuitDoc['components'] {
+  return doc.components.filter((c) => {
+    const def = findComponentDef(c.type);
+    return def !== undefined && !def.io;
+  });
 }
 
 /** Catch mistakes in a spec itself (a lesson-authoring bug, not a student mistake). */

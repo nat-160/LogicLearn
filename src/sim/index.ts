@@ -24,3 +24,4 @@ export * from './truthTable';
 export * from './checker';
 export * from './misconceptions';
 export * from './serialize';
+export * from './grader';

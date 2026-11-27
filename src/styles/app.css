@@ -223,7 +223,8 @@ select {
 }
 
 .lesson-card > a,
-.lesson-card.is-planned {
+.lesson-card.is-planned,
+.lesson-card.is-locked {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -267,6 +268,49 @@ select {
 .lesson-progress {
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* A locked lesson isn't a link: a muted background, and its text says what to finish. */
+.lesson-card.is-locked {
+  background: var(--surface-alt);
+}
+
+/* "Your progress" on the lesson list: a card, not a side-panel section. */
+.progress-actions {
+  margin: 0 0 24px;
+  border: var(--line-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.progress-actions p {
+  margin: 0 0 10px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.unit + .unit {
+  margin-top: 28px;
+}
+
+.unit h2 {
+  margin-bottom: 4px;
+}
+
+.unlock-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: var(--line-width) solid var(--warning);
+  border-radius: var(--radius);
+  background: var(--warning-bg);
+  color: var(--warning-text);
 }
 
 /* ---------- Editor layout ---------- */
@@ -812,6 +856,12 @@ select {
   overflow-x: auto;
 }
 
+/* Only focusable while it scrolls (TableScroll.tsx). */
+.table-scroll:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
 .truth-table {
   width: 100%;
   border-collapse: collapse;
@@ -1093,9 +1143,28 @@ select {
   margin-top: 12px;
 }
 
-button.next {
+button.next,
+a.button.next {
   margin-top: 12px;
   width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ---------- Practice steps (PracticeNav.tsx) ---------- */
+
+.practice-offer {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: var(--line-width) solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.practice-offer a,
+.lesson-header > a {
+  font-weight: 700;
 }
 
 /* ---------- Share page ---------- */
@@ -1422,4 +1491,409 @@ button.next {
 
 .connect-form select {
   width: 100%;
+}
+
+/* ---------- Gate reminder card and hints ---------- */
+
+.gate-reference {
+  margin: 12px 0;
+  border: var(--line-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 4px 10px;
+}
+
+.panel .gate-reference {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.gate-reference > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.gate-card {
+  padding: 10px 0;
+  border-top: var(--line-width) solid var(--border);
+}
+
+.gate-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gate-card-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* The canvas drawings are 80px; half size is plenty for a reminder. */
+.gate-card-symbol .gate-svg {
+  width: 48px;
+  height: 48px;
+}
+
+.gate-card .prose {
+  font-size: 14px;
+}
+
+.gate-table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.gate-table th,
+.gate-table td {
+  padding: 2px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.gate-table-out {
+  font-weight: 700;
+  background: var(--output-col-bg);
+}
+
+.stuck-note {
+  margin: 0;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+/* ---------- Prediction table (PredictTable.tsx) ---------- */
+
+.predict-count {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+}
+
+.predict-table td.col-output {
+  padding: 2px 4px;
+}
+
+/* A cell: two radio choices, 0 and 1, each a large enough target to tap. */
+.predict-cell {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.predict-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 4px;
+  border: var(--line-width) solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.predict-choice input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* The chosen value is shown by the filled radio and a stronger border, not color alone. */
+.predict-choice:has(input:checked) {
+  border-color: var(--accent);
+  border-width: 2px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.predict-choice:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.predict-cell:disabled .predict-choice {
+  cursor: default;
+}
+
+.predict-given {
+  font-weight: 700;
+}
+
+.right-mark {
+  color: var(--ok);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.predict-message {
+  margin: 10px 0 0;
+  font-weight: 600;
+}
+
+.predict-reveal {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.predict-reveal h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.truth-table-panel + .panel button.primary,
+.panel > button.primary {
+  margin-top: 10px;
+}
+
+/* ---------- Projects (ProjectStepView.tsx) ---------- */
+
+.lesson-kind {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.brief-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 8px 10px 10px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+}
+
+.brief-choice legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+/* Each choice is a large target; the chosen one shows a filled radio and a stronger border. */
+.brief-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: var(--line-width) solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.brief-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.brief-option:has(input:checked) {
+  border-color: var(--accent);
+  border-width: 2px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.brief-option:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: 2px;
+}
+
+.brief {
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-alt);
+}
+
+.brief h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+/* The checklist: each line starts with a mark and the words "Done:" or "Not yet:". */
+.criteria {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.criteria li {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border: var(--line-width) solid var(--border);
+  border-radius: 6px;
+}
+
+.criterion-done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+.criterion-todo {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.project-result {
+  margin-top: 10px;
+}
+
+/* ---------- Tried-rows nudge ---------- */
+
+.nudge {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: var(--line-width) solid var(--accent);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.nudge-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.nudge .prose {
+  font-size: 14px;
+}
+
+.nudge .button-row {
+  margin: 8px 0 0;
+}
+
+/* ---------- Push button and seven-segment display ---------- */
+
+/* A push button: a square body with a round cap that sinks while held. */
+.button-body {
+  position: relative;
+  width: 60px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  border: 2.5px solid var(--part-stroke);
+  border-radius: 8px;
+  background: var(--switch-off-bg);
+  color: var(--switch-off-text);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.button-body.down {
+  background: var(--switch-on-bg);
+  color: var(--switch-on-text);
+}
+
+.button-cap {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--part-stroke);
+  background: var(--button-cap);
+  box-shadow: 0 3px 0 var(--part-stroke);
+}
+
+/* Held down: the cap sinks (no shadow, lower) – shape changes, not just color. */
+.button-body.down .button-cap {
+  top: 8px;
+  box-shadow: none;
+  background: var(--button-cap-down);
+}
+
+.button-body .switch-value {
+  right: 9px;
+}
+
+.seven-seg-body {
+  position: relative;
+  width: 120px;
+  height: 280px;
+}
+
+.seven-seg-body svg {
+  display: block;
+  overflow: visible;
+}
+
+.seg-face {
+  fill: var(--display-face);
+  stroke: var(--part-stroke);
+  stroke-width: var(--part-stroke-width);
+}
+
+/* Lit: filled. Unlit: outline only. Unknown (not connected): dashed outline. */
+.seg {
+  stroke-width: 1.5;
+}
+
+.seg.v1 {
+  fill: var(--segment-on);
+  stroke: var(--segment-on);
+}
+
+.seg.v0 {
+  fill: none;
+  stroke: var(--segment-off);
+}
+
+.seg.vx {
+  fill: none;
+  stroke: var(--segment-off);
+  stroke-dasharray: 4 3;
+}
+
+.seg-pin-label {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  dominant-baseline: middle;
+}
+
+/* Predict-first mode: segments show nothing, and the display shows "?". */
+.editor.is-blind .seg {
+  fill: none;
+  stroke: var(--segment-off);
+  stroke-dasharray: none;
+}
+
+.seg-hidden {
+  position: absolute;
+  left: 28px;
+  top: 40px;
+  width: 88px;
+  height: 200px;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--display-text);
+}
+
+.icon-segment {
+  fill: var(--segment-on);
 }

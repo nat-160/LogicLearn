@@ -3,9 +3,11 @@
  *
  * A ComponentDef describes a part's *behavior* only – its pins and how it turns input
  * values into output values. How it *looks* lives in the editor (src/editor/nodes).
- * Later phases add parts (push buttons, seven-segment displays, flip-flops) by
- * registering new definitions; the simulator and checker never change, because they
- * only ever talk to parts through this interface.
+ * New parts (push buttons, seven-segment displays, later flip-flops) are added by
+ * registering new definitions; the simulator and checker don't change, because they
+ * only ever talk to parts through this interface. (An input or output part may have
+ * several pins – a display's seven segments – and each pin is then its own column in
+ * the truth table.)
  */
 import type { Value } from './values';
 
@@ -14,6 +16,8 @@ export type Props = Record<string, unknown>;
 export interface PinDef {
   /** Stable id used in wires, e.g. "in0", "out". */
   id: string;
+  /** How to say the pin's name, e.g. "segment a" (default: input 1, output, …). */
+  label?: string;
 }
 
 export interface PinLayout {
@@ -46,6 +50,11 @@ export interface ComponentDef {
   /** Starting internal state, for parts that have one. */
   initialState?(props: Props): unknown;
   /**
+   * Props cleaned up to values the part understands (e.g. a light's color from a fixed
+   * list). Called whenever props come from outside: a loaded file, a share link, an edit.
+   */
+  normalizeProps?(props: Props): Props;
+  /**
    * Compute output values from input values. Must be a pure function of its arguments:
    * the simulator may call it any number of times.
    */
@@ -73,6 +82,12 @@ export function getComponentDef(type: string): ComponentDef {
 
 export function allComponentDefs(): ComponentDef[] {
   return [...registry.values()];
+}
+
+/** A part's props cleaned up by its definition (unchanged if it has no rule for that). */
+export function normalizeProps(type: string, props: Props): Props {
+  const def = getComponentDef(type);
+  return def.normalizeProps ? def.normalizeProps({ ...props }) : props;
 }
 
 /** The pin layout of a part with the given props (merged over its defaults). */
