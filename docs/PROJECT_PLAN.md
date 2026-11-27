@@ -778,6 +778,12 @@ signatures; the progress store; the lesson step types and options.
 
 ### Phase 3: Instructor support and beta (Nov 16 – Nov 27, M3)
 
+> **Detailed plan:** [phase-3-plan.md](phase-3-plan.md) (approved Nov 27): a sprint to
+> Nov 30 that answers the Milestone 2 peer feedback (hints that get more specific without
+> giving the answer, a failing row shown with a trace, in-app walkthroughs, text
+> alternatives, a celebration on finishing) and builds the teacher tools below plus unit
+> test-outs. The beta and survey are not part of this sprint.
+
 - **Teacher materials:** a teacher guide (onboarding, pacing for 45/50/90-minute periods,
   hidden rubrics) and downloadable PDFs.
 - **Bypass codes**, checked as hashes in the browser. They discourage students but are not
