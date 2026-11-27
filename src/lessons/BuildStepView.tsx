@@ -172,10 +172,9 @@ function BuildPanel({
           ],
     [blind, testOut, doc, step.spec],
   );
-  const hints = useHintLadder(lesson, {
-    ...step,
-    hints: [...step.hints, ...generated.map((g) => `${g.title}: ${g.hint.text}`)],
-  });
+  // Written and generated hints together, for revealing, announcing and reading aloud.
+  const allHints = [...step.hints, ...generated.map((g) => `${g.title}: ${g.hint.text}`)];
+  const hints = useHintLadder(lesson, { ...step, hints: allHints });
   const attempts = useProgress((s) => s.steps[stepKey(lesson.id, step.id)]?.attempts ?? 0);
   // After a failed check: a practice step on the recognized mistake (or after a few tries).
   const offer =
@@ -183,7 +182,11 @@ function BuildPanel({
       ? findPractice(lesson, step.id, result.misconception?.id, attempts)
       : undefined;
   const tell = useTell();
-  const words = (m: Misconception) => misconceptionText(m, step.locale);
+  // In a test-out the recognized mistake is named, but without its hint (it's a test).
+  const words = (m: Misconception) => {
+    const text = misconceptionText(m, step.locale);
+    return testOut ? { ...text, hint: '' } : text;
+  };
 
   const onCheck = () => {
     if (untried.length > 0 && nudgedAt !== designVersion) {
@@ -222,7 +225,7 @@ function BuildPanel({
       <StepText
         step={step}
         tag={practice ? 'Practice' : step.kind === 'challenge' ? 'Challenge' : undefined}
-        speech={() => stepSpeech(step, hints.shown, result, words)}
+        speech={() => stepSpeech({ ...step, hints: allHints }, hints.shown, result, words)}
       />
 
       <HintLadder

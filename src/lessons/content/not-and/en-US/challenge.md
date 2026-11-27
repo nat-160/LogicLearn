@@ -10,4 +10,4 @@
 <!-- hints -->
 
 - "B is off" is the same as "NOT B is on".
-- Y should be on when A is on AND (NOT B) is on.
+- Which gate turns "B is off" into a 1? Then Y needs A and that, both at once.

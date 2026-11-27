@@ -5,7 +5,7 @@
  */
 import { useId, useState } from 'react';
 import { announce } from '../a11y/announcer';
-import { lessonForUnlockCode } from './codes';
+import { canUseCodes, lessonForUnlockCode } from './codes';
 import { useUnlocked } from './gating';
 
 export function UnlockCodeForm({ lessonId, name }: { lessonId: string; name: string }) {
@@ -13,6 +13,7 @@ export function UnlockCodeForm({ lessonId, name }: { lessonId: string; name: str
   const [code, setCode] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const id = useId();
+  if (!canUseCodes()) return null; // codes need a secure page (codes.ts)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

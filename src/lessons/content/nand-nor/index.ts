@@ -153,8 +153,8 @@ export const nandNorLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // NAND (light X, "not both") and XOR (light Y, "exactly one"): only 0, 0 tells them apart.
-    circuit: twoGates('NAND and XOR walkthrough', 'NAND', 'XOR'),
-    frames: frames(['A', 'B'], ['11', '01', '10', '00'], ['gx', 'gy']),
+    // The NAND gate row by row (the explain step's example), compared with XOR in words.
+    circuit: gateExample('NAND walkthrough', 'NAND'),
+    frames: frames(['A', 'B'], ['11', '01', '10', '00'], ['g']),
   },
 };

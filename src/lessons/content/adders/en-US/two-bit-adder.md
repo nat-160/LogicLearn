@@ -8,4 +8,4 @@
 
 <!-- hints -->
 
-- Bit 0 is a half adder. Bit 1 is a full adder whose carry in is bit 0's carry; its carry out is S2.
+- Add one column at a time, as on paper: the ones column first. What does the twos column need from it?

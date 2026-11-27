@@ -144,23 +144,21 @@ export const addersLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // A half adder: S (green) is the sum bit, C (red) the carry.
+    // Binary numbers, before any adding: two switches straight to two lights (no gates,
+    // so nothing here is a step's answer). T is the twos place, O the ones place.
     circuit: buildCircuit({
-      name: 'Half adder walkthrough',
+      name: 'Binary numbers walkthrough',
       parts: [
-        ...io(['A', 'B'], ['C', 'S'], HALF),
-        { id: 'and-1', type: 'AND', at: [10, -1], locked: true },
-        { id: 'xor-1', type: 'XOR', at: [10, 4], locked: true },
+        { id: 'A1', type: 'SWITCH', at: [0, 0], locked: true },
+        { id: 'A0', type: 'SWITCH', at: [0, 4], locked: true },
+        { id: 'T', type: 'LIGHT', at: [12, 0], locked: true, props: { color: 'green' } },
+        { id: 'O', type: 'LIGHT', at: [12, 4], locked: true, props: { color: 'green' } },
       ],
       wires: [
-        ['A', 'and-1.in0'],
-        ['B', 'and-1.in1'],
-        ['A', 'xor-1.in0'],
-        ['B', 'xor-1.in1'],
-        ['and-1', 'C'],
-        ['xor-1', 'S'],
+        ['A1', 'T'],
+        ['A0', 'O'],
       ],
     }),
-    frames: frames(['A', 'B'], ['00', '01', '10', '11'], ['and-1', 'xor-1']),
+    frames: frames(['A0', 'A1'], ['00', '10', '01', '11', '01']),
   },
 };

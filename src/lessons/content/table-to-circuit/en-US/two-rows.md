@@ -7,5 +7,5 @@
 
 <!-- hints -->
 
-- Row 0, 0: both inputs are 0, so both need a NOT: (NOT A) AND (NOT B).
-- Row 1, 1: A AND B. Join the two with OR.
+- Each row where Y is 1 gets its own AND. An input that is 0 in that row goes in through a NOT.
+- Y should be 1 when **either** row's AND is 1. Which gate joins them?

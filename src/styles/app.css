@@ -57,7 +57,8 @@ button:hover:not(:disabled),
   border-color: var(--text);
 }
 
-button:disabled {
+button:disabled,
+button[aria-disabled='true'] {
   opacity: 0.45;
   cursor: default;
 }
@@ -591,9 +592,10 @@ select {
   outline-offset: 5px;
 }
 
-/* Pointed out by a hint or a walkthrough: nothing is wrong, so not red. */
+/* Pointed out by a hint or a walkthrough: nothing is wrong, so not red – and a double
+   line, so it differs from a problem outline by more than color. */
 .part.is-highlighted.is-pointed {
-  outline-color: var(--accent);
+  outline: 5px double var(--accent);
 }
 
 /* A selected part that is also outlined for a problem keeps the dashes of a selection. */
@@ -1278,7 +1280,8 @@ a.button.next {
   border-width: var(--line-width);
 }
 
-:root[data-contrast='high'] button:disabled {
+:root[data-contrast='high'] button:disabled,
+:root[data-contrast='high'] button[aria-disabled='true'] {
   opacity: 1;
   border-style: dashed;
   color: var(--text-muted);

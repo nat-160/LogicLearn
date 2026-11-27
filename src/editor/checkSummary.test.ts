@@ -32,4 +32,12 @@ describe('the example wrong row in words', () => {
     expect(rowText(['A', 'B'], [1, 'X'])).toBe('A = 1, B = ? (unknown)');
     expect(exampleText(check(oneGate('AND'), AND))).toBeUndefined();
   });
+
+  it('leaves out an empty misconception hint (test-outs have none)', () => {
+    const XOR = { inputs: ['A', 'B'], outputs: ['Y'], expected: rowsFrom(2, (x, y) => b(x !== y)) };
+    const result = check(oneGate('OR'), XOR);
+    expect(result.misconception).toBeDefined();
+    const text = summarizeCheck(result, (m) => ({ summary: m.summary, hint: '' }));
+    expect(text).not.toContain('Hint:');
+  });
 });

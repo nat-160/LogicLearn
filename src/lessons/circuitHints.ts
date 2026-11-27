@@ -18,6 +18,7 @@ import {
   check,
   findComponent,
   findComponentDef,
+  findIO,
   traceRow,
   type Bit,
   type CheckSpec,
@@ -40,11 +41,9 @@ const ALREADY_RIGHT: CircuitHint = {
 
 /** The output part (and its pin, for a display) behind a truth-table column label. */
 function outputPart(doc: CircuitDoc, label: string): { id: string; pin?: string } | undefined {
-  const [partLabel, pin] = label.split('.');
-  const part = doc.components.find(
-    (c) => findComponentDef(c.type)?.io === 'output' && (c.label ?? c.id) === partLabel,
-  );
-  return part && { id: part.id, ...(pin && { pin }) };
+  // The same lookup as the truth table (findIO), so labels like "Y " still match.
+  const part = findIO(doc).outputs.find((p) => p.label === label);
+  return part && { id: part.id, ...(part.pin && { pin: part.pin }) };
 }
 
 /** The component whose output is wired to an output part's pin, if any. */
@@ -165,6 +164,13 @@ export function rowHint(doc: CircuitDoc, spec: CheckSpec): CircuitHint {
     .map(
       (s) => `${name(doc, s.id)} gets ${getsText(s.inputs)} and gives ${valueText(s.outputs[0])}.`,
     );
+  // No gate on the way (the output is wired straight to a switch): say that instead.
+  if (steps.length === 0) {
+    return {
+      ...lookHint(doc, spec),
+      row: { labels: [...labels], bits: [...example.inputs] },
+    };
+  }
   const shows = trace.outputs.find((t) => t.label === label)?.value ?? example.actual[o];
   return {
     text: [

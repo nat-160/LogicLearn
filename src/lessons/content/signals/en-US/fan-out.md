@@ -8,4 +8,4 @@
 
 <!-- hints -->
 
-- Connect A to Y, then connect A to Z as well: tap A's dot again, then Z's dot.
+- A switch's output can feed more than one input. How many wires can start at A's dot?

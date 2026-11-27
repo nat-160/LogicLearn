@@ -22,7 +22,14 @@ import {
 } from '../sim';
 import { encodeShareData } from '../storage/storage';
 import { getLessons } from './catalog';
-import { dayToDate, isTeacherCode, readCompletionCode, unlockCode } from './codes';
+import {
+  canUseCodes,
+  dayToDate,
+  isTeacherCode,
+  NO_CODES_MESSAGE,
+  readCompletionCode,
+  unlockCode,
+} from './codes';
 import { lessonName } from './gating';
 import { findLessonFile, parseStepText } from './lessonText';
 import { Markdown } from './Markdown';
@@ -31,6 +38,14 @@ import { isBuildStep, isPredictStep, isProjectStep, type Lesson } from './types'
 
 export function TeacherPage({ guideOnly = false }: { guideOnly?: boolean }) {
   const on = useTeacher((s) => s.on);
+  if (!canUseCodes()) {
+    return (
+      <div className="page narrow">
+        <h1>Teacher view</h1>
+        <p>{NO_CODES_MESSAGE}</p>
+      </div>
+    );
+  }
   if (!on) return <TeacherCodeForm />;
   return guideOnly ? <TeacherGuide /> : <TeacherHome />;
 }

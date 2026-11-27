@@ -21,7 +21,8 @@ export function summarizeCheck(
   if (example) parts.push(example);
   if (result.misconception) {
     const { summary, hint } = words(result.misconception);
-    parts.push(summary, `Hint: ${hint}`);
+    parts.push(summary);
+    if (hint) parts.push(`Hint: ${hint}`);
   }
   for (const d of result.diagnostics.filter((d) => d.severity === 'error')) parts.push(d.message);
   return parts.join(' ');

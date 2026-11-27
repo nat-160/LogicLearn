@@ -95,7 +95,9 @@ function CircuitHintView({ number, title, hint }: GeneratedHint & { number: numb
               type="button"
               className="link-button"
               onClick={() => {
-                store.getState().setHighlight({ componentIds: partIds, tone: 'pointer' });
+                // Keep the check's wrong-row marks in the truth table.
+                const { rows } = store.getState().highlight;
+                store.getState().setHighlight({ componentIds: partIds, rows, tone: 'pointer' });
                 announce(
                   `Marked on the canvas: ${partIds.length === 1 ? 'one part' : `${partIds.length} parts`}.`,
                 );

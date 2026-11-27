@@ -23,13 +23,14 @@ test('a failed check offers the walkthrough, which steps through the rows', asyn
   await expect(page).toHaveURL(/#\/lesson\/or-xor\/walkthrough$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('OR or XOR?');
   await expect(page.getByTestId('frame-count')).toHaveText('Frame 1 of 5');
-  await expect(light(page, 'X')).toHaveAttribute('aria-label', /Light X: off/);
+  await expect(light(page, 'Y')).toHaveAttribute('aria-label', /Light Y: off/);
+  await press(page.getByTestId('frame-next'), testInfo); // only B on: XOR gives 1
+  await expect(light(page, 'Y')).toHaveAttribute('aria-label', /Light Y: on/);
 
-  // On to "both on": OR (X) is on, XOR (Y) is off.
-  for (let i = 0; i < 3; i++) await press(page.getByTestId('frame-next'), testInfo);
+  // On to "both on": XOR gives 0 (where OR would give 1).
+  for (let i = 0; i < 2; i++) await press(page.getByTestId('frame-next'), testInfo);
   await expect(page.getByTestId('frame-count')).toHaveText('Frame 4 of 5');
   await expect(page.getByTestId('frame-caption')).toContainText('Both on.');
-  await expect(light(page, 'X')).toHaveAttribute('aria-label', /Light X: on/);
   await expect(light(page, 'Y')).toHaveAttribute('aria-label', /Light Y: off/);
   await expect(page.getByTestId('announcer')).toContainText('Frame 4 of 5. Both on.');
 
@@ -38,6 +39,9 @@ test('a failed check offers the walkthrough, which steps through the rows', asyn
 
   for (let i = 0; i < 2; i++) await press(page.getByTestId('frame-next'), testInfo);
   await expect(page.getByTestId('walkthrough-done')).toHaveText('Back to step 4 →');
+  // The last frame: Next stays in place (marked unavailable), so keyboard focus isn't lost.
+  await expect(page.getByTestId('frame-next')).toHaveAttribute('aria-disabled', 'true');
+  if (!testInfo.project.use.hasTouch) await expect(page.getByTestId('frame-next')).toBeFocused();
   await press(page.getByTestId('walkthrough-done'), testInfo);
   await expect(page).toHaveURL(/#\/lesson\/or-xor\/4$/);
 });

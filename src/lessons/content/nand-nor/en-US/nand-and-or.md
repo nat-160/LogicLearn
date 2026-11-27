@@ -10,4 +10,4 @@
 <!-- hints -->
 
 - X: NAND is "NOT AND". What do you get if you put a NOT after it? (You know how to make a NOT from a NAND.)
-- Y: A OR B is the same as "not (neither A nor B)" – that is, (NOT A) NAND (NOT B).
+- Y: A OR B means "not neither". What does a NAND give when both of its inputs are flipped first?

@@ -13,12 +13,14 @@ import {
   computeTruthTable,
   findComponentDef,
   findIO,
+  gateParts,
   GATE_TYPES,
   grade,
   gradeRule,
   MISCONCEPTION_IDS,
   rowNumber,
   rowsFromRules,
+  type CheckSpec,
   type CircuitDoc,
 } from '../sim';
 
@@ -28,6 +30,7 @@ function tableOf(circuit: CircuitDoc) {
   return result.table;
 }
 import { LESSON_DEFS, UNITS } from './catalog';
+import { LESSON_BITS } from './codes';
 import {
   findLessonFile,
   findSharedText,
@@ -141,6 +144,52 @@ describe.each(LESSON_DEFS.map((l) => [l.id, l] as const))('lesson %s', (_id, def
         expect(walkthrough.title).not.toBe('Walkthrough');
         expect(walkthrough.captions).toHaveLength(walkthrough.frames.length);
         for (const caption of walkthrough.captions) expect(caption.length).toBeGreaterThan(20);
+      });
+
+      it('never shows the answer to a step or practice in its lesson', () => {
+        // Walkthroughs are offered while students work, so they mustn't give away a
+        // prediction, a challenge, or a guided build's circuit. (A single gate the explain
+        // step already shows is fine.)
+        const tableOf = (doc: CircuitDoc) => {
+          const result = computeTruthTable(doc);
+          const io = findIO(doc);
+          return JSON.stringify({
+            inputs: io.inputs.map((p) => p.label),
+            outputs: io.outputs.map((p) => p.label),
+            rows: result.ok ? result.table.rows.map((r) => r.outputs) : null,
+          });
+        };
+        const specTable = (spec: CheckSpec) =>
+          JSON.stringify({
+            inputs: spec.inputs,
+            outputs: spec.outputs,
+            rows: spec.expected.map((r) => r.outputs),
+          });
+        const gates = (doc: CircuitDoc) =>
+          gateParts(doc)
+            .map((c) => c.type)
+            .sort()
+            .join(',');
+        const shown = tableOf(walkthrough.circuit);
+        for (const step of [...lesson.steps, ...lesson.practice]) {
+          if (isPredictStep(step)) {
+            for (const c of step.circuits) expect(tableOf(c), step.id).not.toBe(shown);
+          }
+          if (!isBuildStep(step)) continue;
+          // A challenge may share the table only when the walkthrough uses a gate the
+          // challenge doesn't offer (e.g. "exactly one, without an XOR gate"): then the
+          // construction is still the student's to find.
+          const usesOtherGates = gateParts(walkthrough.circuit).some(
+            (c) => !step.palette.includes(c.type),
+          );
+          if (step.kind === 'challenge' && !usesOtherGates) {
+            expect(specTable(step.spec), step.id).not.toBe(shown);
+          }
+          const sameGates = gates(step.solution) === gates(walkthrough.circuit);
+          if (gateParts(step.solution).length > 1 && sameGates) {
+            expect(specTable(step.spec), step.id).not.toBe(shown);
+          }
+        }
       });
 
       it('shows a locked circuit, with frames that use its switches and parts', () => {
@@ -356,6 +405,28 @@ describe('lessons and units', () => {
     for (const [path, text] of Object.entries(files)) {
       expect(text, path).not.toMatch(/!\[\s*\]\(/);
     }
+  });
+
+  it('fits completion codes, whose bits follow this order', () => {
+    // A completion code has one bit per catalog entry, by position. If this list changes
+    // (an entry added in the middle, or more than LESSON_BITS entries), bump VERSION in
+    // codes.ts so old codes aren't misread, and update this list.
+    expect(LESSON_DEFS.length).toBeLessThanOrEqual(LESSON_BITS);
+    expect(LESSON_DEFS.map((l) => l.id)).toEqual([
+      'editor-tour',
+      'test-out-1',
+      'signals',
+      'not-and',
+      'or-xor',
+      'circuit-to-table',
+      'unit-1-project',
+      'test-out-2',
+      'nand-nor',
+      'xnor-if-then',
+      'table-to-circuit',
+      'adders',
+      'unit-2-project',
+    ]);
   });
 
   it('lists lessons in course order (gating opens them in this order)', () => {

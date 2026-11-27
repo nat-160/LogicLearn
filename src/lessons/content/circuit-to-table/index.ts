@@ -158,20 +158,20 @@ export const circuitToTableLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // Working out a truth table: each row in counting order, gate by gate.
+    // Working out a truth table for A OR (NOT B) – a circuit no step asks about.
     circuit: buildCircuit({
       name: 'From circuit to table walkthrough',
       parts: [
         { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
         { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
-        { id: 'n', type: 'NOT', at: [6, -1], locked: true },
-        { id: 'g', type: 'AND', at: [12, 0], locked: true },
+        { id: 'n', type: 'NOT', at: [6, 3], locked: true },
+        { id: 'g', type: 'OR', at: [12, 0], locked: true },
         { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
       ],
       wires: [
-        ['A', 'n'],
-        ['n', 'g.in0'],
-        ['B', 'g.in1'],
+        ['A', 'g.in0'],
+        ['B', 'n'],
+        ['n', 'g.in1'],
         ['g', 'Y'],
       ],
     }),

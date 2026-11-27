@@ -103,29 +103,35 @@ function WalkthroughView({ lesson, walkthrough }: { lesson: Lesson; walkthrough:
           <MarkdownInline source={caption} lang={lang} />
         </p>
       </section>
+      {/* aria-disabled (not disabled) keeps a button focusable, so keyboard focus
+          doesn't drop to the page when the first or last frame is reached. */}
       <div className="lesson-actions">
-        <button type="button" onClick={() => go(frame - 1)} disabled={frame === 0}>
+        <button
+          type="button"
+          onClick={() => frame > 0 && go(frame - 1)}
+          aria-disabled={frame === 0}
+        >
           ← Back
         </button>
-        {frame < total - 1 ? (
-          <button
-            type="button"
-            className="primary"
-            onClick={() => go(frame + 1)}
-            data-testid="frame-next"
-          >
-            Next →
-          </button>
-        ) : (
-          <a
-            className="button primary"
-            href={lessonHref(lesson.id, backIndex + 1)}
-            data-testid="walkthrough-done"
-          >
-            Back to step {backIndex + 1} →
-          </a>
-        )}
+        <button
+          type="button"
+          className="primary"
+          onClick={() => frame < total - 1 && go(frame + 1)}
+          aria-disabled={frame === total - 1}
+          data-testid="frame-next"
+        >
+          Next →
+        </button>
       </div>
+      {frame === total - 1 && (
+        <a
+          className="button primary next"
+          href={lessonHref(lesson.id, backIndex + 1)}
+          data-testid="walkthrough-done"
+        >
+          Back to step {backIndex + 1} →
+        </a>
+      )}
     </div>
   );
 

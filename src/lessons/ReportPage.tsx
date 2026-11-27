@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from '../settings/display';
 import { getLessons } from './catalog';
-import { completionCode, dayNumber } from './codes';
+import { canUseCodes, completionCode, dayNumber, NO_CODES_MESSAGE } from './codes';
 import { isLessonComplete, isUnitTestedOut, lessonName } from './gating';
 import { isStepDone, lessonProgress, stepKey, useProgress, type ProgressMap } from './progress';
 import type { Lesson } from './types';
@@ -44,6 +44,7 @@ export function ReportPage() {
     .filter(Boolean).length;
 
   useEffect(() => {
+    if (!canUseCodes()) return;
     const finished = lessons.flatMap((l, i) => (isLessonComplete(steps, l) ? [i] : []));
     let current = true;
     void completionCode({ finished, day: dayNumber(new Date()) }).then((c) => {
@@ -89,7 +90,10 @@ export function ReportPage() {
       </table>
       <p>Practice steps finished: {practiceDone}</p>
       <p className="completion-code">
-        Completion code: <strong data-testid="completion-code">{code || '…'}</strong>
+        Completion code:{' '}
+        <strong data-testid="completion-code">
+          {canUseCodes() ? code || '…' : NO_CODES_MESSAGE}
+        </strong>
       </p>
       <p className="small muted">
         Your teacher can check this code in the teacher view. It shows which lessons are finished

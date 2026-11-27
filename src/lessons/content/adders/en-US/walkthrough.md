@@ -1,12 +1,13 @@
 <!-- draft -->
 
-# Adding two bits
+# Numbers in binary
 
-The **S** light (green) shows the sum bit, and **C** (red) shows the carry. Watch A + B, one row at a time.
+Before adding, a look at how bits make numbers. Switch **A1** lights **T** (the twos place) and **A0** lights **O** (the ones place).
 
 <!-- frames -->
 
-- **0 + 0 = 0.** No sum, no carry: both lights are off.
-- **0 + 1 = 1.** The sum bit is **1** (XOR: exactly one input on). No carry.
-- **1 + 0 = 1.** The same: **S = 1**, **C = 0**.
-- **1 + 1 = 2**, which is **10** in binary. The sum bit is **0** (XOR: not exactly one) and the carry is **1** (AND: both on) – like writing 0 and carrying 1.
+- Both off: **00** in binary is **0**.
+- Only the ones place on: **01** is **1**.
+- Only the twos place on: **10** is **2** – the same digit 1 is worth twice as much one place to the left.
+- Both on: **11** is 2 + 1 = **3**.
+- Now **1 + 1**: the ones place can't hold 2, so it becomes 0 and a 1 is **carried** to the twos place: **10**. Adding two bits always gives a sum bit and a carry bit.

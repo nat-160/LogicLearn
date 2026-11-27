@@ -64,7 +64,13 @@ export function CompletePage({ lesson, lessons }: { lesson: Lesson; lessons: rea
         </span>
         <Badge
           label={`Badge: ${name} complete`}
-          mark={lesson.kind === 'project' ? '★' : String(lesson.number)}
+          mark={
+            lesson.kind === 'project'
+              ? '★'
+              : lesson.kind === 'test-out'
+                ? '»'
+                : String(lesson.number)
+          }
         />
       </div>
       <h1>{name} complete!</h1>

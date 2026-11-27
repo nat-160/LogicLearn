@@ -169,27 +169,27 @@ export const tableToCircuitLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // One row by itself: A AND (NOT B) lights only the row A = 1, B = 0.
+    // One row by itself: (NOT A) AND B lights only the row A = 0, B = 1.
     circuit: buildCircuit({
       name: 'One row walkthrough',
       parts: [
         { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
         { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
-        { id: 'n', type: 'NOT', at: [6, 3], locked: true },
+        { id: 'n', type: 'NOT', at: [6, -1], locked: true },
         { id: 'g', type: 'AND', at: [12, 0], locked: true },
         { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
       ],
       wires: [
-        ['A', 'g.in0'],
-        ['B', 'n'],
-        ['n', 'g.in1'],
+        ['A', 'n'],
+        ['n', 'g.in0'],
+        ['B', 'g.in1'],
         ['g', 'Y'],
       ],
     }),
     frames: [
-      ...frames(['A', 'B'], ['10'], ['g']),
+      ...frames(['A', 'B'], ['01'], ['g']),
       ...frames(['A', 'B'], ['11'], ['n']),
-      ...frames(['A', 'B'], ['00', '01'], ['g']),
+      ...frames(['A', 'B'], ['00', '10'], ['g']),
     ],
   },
 };

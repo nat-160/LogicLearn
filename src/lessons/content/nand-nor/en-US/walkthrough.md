@@ -2,11 +2,11 @@
 
 # Not both, or exactly one?
 
-Light **X** is A NAND B ("not both"), and light **Y** is A XOR B ("exactly one"). They sound alike. Watch the rows.
+This is a NAND gate – "not both". Watch its light **Y**, and compare it with XOR ("exactly one"), which sounds alike.
 
 <!-- frames -->
 
-- **Both on.** Both inputs are on, so "not both" is false: NAND gives **0**. And it's not "exactly one": XOR gives **0** too.
-- **Only B on.** Not both (NAND: **1**), and exactly one (XOR: **1**). They agree.
-- **Only A on.** Again they agree: both give **1**.
-- **Both off.** Are both on? No – so "not both" is true: NAND gives **1**. But _exactly one_ isn't true when none are on: XOR gives **0**. "Neither" counts as "not both".
+- **Both on.** Both inputs are on, so "not both" is false: NAND gives **0**. XOR would also give 0 – two isn't "exactly one".
+- **Only B on.** They aren't both on, so NAND gives **1**. XOR would too: exactly one is on.
+- **Only A on.** Same again: NAND gives **1**, and so would XOR.
+- **Both off.** Are both on? No – so "not both" is true and NAND gives **1**. XOR would give **0**: none on isn't "exactly one". "Neither" still counts as "not both" – that's the row that tells them apart.

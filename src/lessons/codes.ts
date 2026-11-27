@@ -24,6 +24,16 @@ export function normalizeCode(text: string): string {
   return text.toUpperCase().replace(/[^0-9A-Z]/g, '');
 }
 
+/**
+ * Whether this browser can check codes. Web Crypto needs a secure page (https or this
+ * computer); on plain http, code features say so instead of failing silently.
+ */
+export const canUseCodes = () => typeof crypto !== 'undefined' && !!crypto.subtle;
+
+/** Shown where a code feature can't work (see canUseCodes). */
+export const NO_CODES_MESSAGE =
+  'Codes need a secure (https) page. Open LogicLearn from its https:// address to use them.';
+
 async function sha256(text: string): Promise<Uint8Array> {
   const bytes = new TextEncoder().encode(text);
   return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
@@ -86,7 +96,8 @@ export async function lessonForUnlockCode(
 // and the day the code was made), then a 20-bit checksum.
 
 const VERSION = 1;
-const LESSON_BITS = 16;
+/** How many catalog entries a completion code can hold. */
+export const LESSON_BITS = 16;
 const DAY_BITS = 12;
 const EPOCH = Date.UTC(2026, 0, 1);
 const DAY = 24 * 60 * 60 * 1000;
@@ -98,8 +109,12 @@ export interface Completion {
   day: number;
 }
 
-export const dayNumber = (date: Date) =>
-  Math.max(0, Math.min(2 ** DAY_BITS - 1, Math.floor((date.getTime() - EPOCH) / DAY)));
+/** The day of `date` on the student's own calendar (so a report printed in the evening
+ * shows the same date as the teacher sees), counted from 1 Jan 2026. */
+export const dayNumber = (date: Date) => {
+  const local = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.max(0, Math.min(2 ** DAY_BITS - 1, Math.round((local - EPOCH) / DAY)));
+};
 export const dayToDate = (day: number) => new Date(EPOCH + day * DAY);
 
 async function checksum(payload: string): Promise<string> {
@@ -108,7 +123,9 @@ async function checksum(payload: string): Promise<string> {
 
 export async function completionCode({ finished, day }: Completion): Promise<string> {
   let lessons = 0;
-  for (const i of finished) if (i >= 0 && i < LESSON_BITS) lessons += 2 ** i;
+  for (const i of new Set(finished)) {
+    if (Number.isInteger(i) && i >= 0 && i < LESSON_BITS) lessons += 2 ** i;
+  }
   const value = (VERSION * 2 ** LESSON_BITS + lessons) * 2 ** DAY_BITS + (day % 2 ** DAY_BITS);
   const payload = toCode(value, 6);
   return `LL-${payload}-${await checksum(payload)}`;

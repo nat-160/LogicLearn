@@ -55,7 +55,9 @@ export function CheckResultView({
       {result.misconception && (
         <div className="misconception" data-misconception={result.misconception.id}>
           <p>{words(result.misconception).summary}</p>
-          <p className="hint">💡 {words(result.misconception).hint}</p>
+          {words(result.misconception).hint && (
+            <p className="hint">💡 {words(result.misconception).hint}</p>
+          )}
         </div>
       )}
       {errors.length > 0 && (

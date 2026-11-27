@@ -201,20 +201,21 @@ export const xnorIfThenLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // "If A then B" = (NOT A) OR B: broken only when A is on and B is off.
+    // "If A then B" built another way: NOT (A AND NOT B) – "it is not the case that A
+    // happens and B doesn't". (The build step uses NOT and OR.)
     circuit: buildCircuit({
       name: 'If-then walkthrough',
       parts: [
         { id: 'A', type: 'SWITCH', at: [0, 0], locked: true },
         { id: 'B', type: 'SWITCH', at: [0, 4], locked: true },
-        { id: 'n', type: 'NOT', at: [6, -1], locked: true },
-        { id: 'g', type: 'OR', at: [12, 0], locked: true },
+        { id: 'n', type: 'NOT', at: [6, 3], locked: true },
+        { id: 'g', type: 'NAND', at: [12, 0], locked: true },
         { id: 'Y', type: 'LIGHT', at: [19, 1], locked: true },
       ],
       wires: [
-        ['A', 'n'],
-        ['n', 'g.in0'],
-        ['B', 'g.in1'],
+        ['A', 'g.in0'],
+        ['B', 'n'],
+        ['n', 'g.in1'],
         ['g', 'Y'],
       ],
     }),

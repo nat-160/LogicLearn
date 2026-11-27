@@ -119,8 +119,8 @@ export const orXorLesson: LessonDef = {
     },
   ],
   walkthrough: {
-    // OR (light X) and XOR (light Y) side by side: they differ only when both are on.
-    circuit: twoGates('OR and XOR walkthrough', 'OR', 'XOR'),
-    frames: frames(['A', 'B'], ['00', '01', '10', '11', '11'], ['gx', 'gy']),
+    // The XOR gate row by row (the explain step's example), compared with OR in words.
+    circuit: gateExample('XOR walkthrough', 'XOR'),
+    frames: frames(['A', 'B'], ['00', '01', '10', '11', '11'], ['g']),
   },
 };

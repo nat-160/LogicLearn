@@ -9,5 +9,5 @@
 
 <!-- hints -->
 
-- S: add A and B first (XOR), then add Cin to the result (another XOR).
-- Cout: there is a carry if A AND B, **or** if (A XOR B) AND Cin.
+- S: add the three bits one pair at a time. Which gate gives the sum bit of two bits?
+- Cout: there's a carry when **two or more** of A, B and Cin are 1. In which ways can that happen?

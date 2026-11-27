@@ -27,13 +27,45 @@ teacher tools and test-outs, as a minimum working version of each by about Nov 3
 - **Unit test-outs**: three challenges per unit, no hints. Passing one counts the unit's lessons as done.
 - All codes are checked in the browser and documented as discouraging, not secure.
 
-**Tests:** 653 unit and content tests; 217 browser tests passing locally in Chromium with a
+**Tests:** 666 unit and content tests; 217 browser tests passing locally in Chromium with a
 mouse and with taps only (CI adds Firefox and WebKit). New pages have axe scans in all four
 themes and the text-alternatives check.
 
 ## Independent review
 
-_To be filled in when the review finishes._
+A separate reviewer agent read the whole Phase 3 change without seeing the reasoning
+behind it. Its findings, all fixed:
+
+1. **Walkthroughs gave away answers.**
+   - Lesson 4's walkthrough was step 2's prediction circuit.
+   - Lesson 8's was the half adder the next step asks for.
+   - Lessons 3, 5, 6 and 7 matched a practice step or a build step's circuit.
+
+   Each now uses a different circuit (binary place value for Lesson 8), and a new
+   content test rejects a walkthrough that matches a prediction, a challenge (unless the
+   challenge withholds the walkthrough's gate) or a guided build's circuit. The test
+   would have caught every one of the old walkthroughs.
+
+2. **Some written hints still spelled out the answer:** the full adder, "two rows", "two
+   rules", "one row by itself", and a few others. About 20 hints were rewritten to point
+   at the idea instead.
+3. **Walkthrough Back and Next lost keyboard focus** on the first and last frames. They
+   now stay in place and are marked unavailable.
+4. **Read aloud left out the generated hints.** They are read now.
+5. **The test-out badge showed "0.5".** It shows » now.
+6. **A completion code's date could be a day off** for an evening report. It now uses the
+   student's own calendar day.
+7. **Completion codes depend on catalog order.** A test now pins the order and the
+   16-entry limit (change the order → bump the code version), and repeated positions
+   can't spill into the next bit.
+8. **Hints found outputs differently from the truth table** (a label like "Y "). They now
+   use the same lookup.
+9. **"Try one row" asked "which gate should change?"** when there was no gate. It now says
+   the output is wired straight to a switch.
+10. **Test-outs showed a recognized mistake's hint.** They show the mistake only.
+11. **"Pointed at" differed from "problem" only by color.** It is a double outline now.
+12. **"Show it on the canvas" cleared the wrong-row marks** (now kept). On a non-https
+    page, code features now say they need a secure page instead of failing silently.
 
 ## Changes from the plan
 

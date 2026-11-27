@@ -47,4 +47,11 @@ describe('codes', () => {
     expect(await readCompletionCode('LL-12345')).toBeNull();
     expect(await readCompletionCode('hello')).toBeNull();
   });
+
+  it("count days on the student's own calendar, and ignore repeated or odd positions", async () => {
+    // 11pm local time on 30 Nov is still day "30 Nov", whatever the time zone.
+    expect(dayNumber(new Date(2026, 10, 30, 23, 0))).toBe(dayNumber(new Date(2026, 10, 30, 1, 0)));
+    const code = await completionCode({ finished: [3, 3, -1, 99, 1.5], day: 10 });
+    expect(await readCompletionCode(code)).toEqual({ finished: [3], day: 10 });
+  });
 });

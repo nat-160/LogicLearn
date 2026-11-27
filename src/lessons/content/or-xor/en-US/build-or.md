@@ -8,4 +8,4 @@
 <!-- hints -->
 
 - You need just one gate. Which gate is 1 when at least one input is 1?
-- Add an **OR** gate, connect A and B to its two inputs, and its output to Y.
+- The **OR** gate is in the parts list. Which of its pins should A, B and Y connect to?
