@@ -22,6 +22,9 @@ src/lessons/content/
       voting.md
   or-xor/en-US/
       practice-both-on.md   a practice step: "practice-" and the practice's id
+      walkthrough.md        the lesson's walkthrough (see below)
+  _teacher/en-US/
+      guide.md              the teacher guide (teacher view → Teacher guide)
   _shared/                  text used by many lessons
     en-US/
       unit-1.md             a unit's title and summary
@@ -34,6 +37,10 @@ Some shared files contain placeholders in braces, such as `{output}`, `{input}` 
 `{tried}`. Keep them exactly as they are (don't translate the word inside the braces):
 the app fills them in. `npm test` checks that each file only uses the placeholders it is
 given.
+
+A walkthrough file has a title, a short introduction, and then – after the
+`<!-- frames -->` marker – one bullet per frame of the walkthrough, in order. Keep the
+number of bullets the same as in English (`npm test` checks it).
 
 A step file looks like this:
 

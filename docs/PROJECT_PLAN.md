@@ -783,6 +783,11 @@ signatures; the progress store; the lesson step types and options.
 > giving the answer, a failing row shown with a trace, in-app walkthroughs, text
 > alternatives, a celebration on finishing) and builds the teacher tools below plus unit
 > test-outs. The beta and survey are not part of this sprint.
+>
+> **Status:** built (P3.1–P3.10). Summary: [phase-3-report.md](phase-3-report.md); demo
+> script: [milestone-3-demo.md](milestone-3-demo.md). Bypass codes are per-lesson unlock
+> codes; the "completion code" and the printable progress report are both built; the
+> teacher "PDFs" are the guide and report pages printed or saved as PDF.
 
 - **Teacher materials:** a teacher guide (onboarding, pacing for 45/50/90-minute periods,
   hidden rubrics) and downloadable PDFs.
@@ -1003,3 +1008,16 @@ details are in [phase-2-report.md](phase-2-report.md). Spec changes:
   `parseProgress`/`mergeProgress`, and lesson gating. `truthTable: "predict"` became the
   `predict` step kind; remediation became practice steps (built, since Phase 2 ran ahead).
 - §6: Phase 2 status. Test-outs move to Phase 3, as the author decided.
+
+**v6, Phase 3** (2026-11-27). Built from [phase-3-plan.md](phase-3-plan.md), answering the
+Milestone 2 peer feedback; details in [phase-3-report.md](phase-3-report.md).
+
+- §3.6: check results carry an example wrong row, and `trace.ts` walks one row through a
+  circuit.
+- §3.7: hints never give the whole answer ("Show me how" is gone): written hints, then
+  two worked out from the student's circuit. New: walkthroughs per lesson, the
+  `test-out` lesson kind, the celebration page.
+- §3.9: a "Sound effects" setting (off by default); reduced motion respected; a
+  text-alternatives check on every page.
+- §6 Phase 3: teacher view (guide, answer key, unlock codes, completion-code checker),
+  progress report with completion code, unit test-outs.
